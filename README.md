@@ -31,6 +31,34 @@ Go back to the root directory and navigate to the frontend folder: cd ../fronten
 Install Node.js packages: npm install
 
 
+Front-end setup
+1- create frontend folder in the LDA project
+2- cd frontend
+3- npm init -y
+4-npm install react react-dom react-router-dom
+5- npm install -D vite
+6- npm install -D tailwindcss postcss autoprefixer
+7- npx tailwindcss init -p
+8- open tailwind.config.js and put:
 
+module.exports = {
+  content: ['./index.html', './src/*/.{js,jsx,ts,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+9- in frontend, npm create vite@latest
+ 9.1- choose . as project name, then ignore the files
+ 9.2- select React
+ 9.3- select typescript
+ 9.4- npm install
+ 9.5- npm run dev
+
+10- go to index.css in src and import the following:
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 
