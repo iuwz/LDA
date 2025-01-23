@@ -5,3 +5,4 @@ python-jose
 pymongo
 motor
 python-dotenv
+passlib[bcrypt]

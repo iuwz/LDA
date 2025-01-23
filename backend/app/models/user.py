@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from bson import ObjectId
 
 class User(BaseModel):
     username: str
@@ -8,7 +7,7 @@ class User(BaseModel):
     hashed_password: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {  # Updated for Pydantic v2+
             "example": {
                 "username": "johndoe",
                 "email": "johndoe@example.com",
@@ -17,7 +16,6 @@ class User(BaseModel):
         }
 
 
-# Helper to convert MongoDB ObjectId to string
 class UserInDB(User):
     id: Optional[str]
 
