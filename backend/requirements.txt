@@ -6,3 +6,4 @@ pymongo
 motor
 python-dotenv
 passlib[bcrypt]
+pyjwt

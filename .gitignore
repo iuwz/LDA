@@ -4,6 +4,7 @@
 /backend/.env
 /backend/app/views/__pycache__
 /backend/__pycache__
+/backend/app/utils/__pycache__
 # Ignore everything in the frontend env
 /frontend/node_modules/*
 /frontend/.env
