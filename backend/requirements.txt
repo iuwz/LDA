@@ -1,6 +1,5 @@
 fastapi[all]
 uvicorn
-spacy
 google-cloud-translate
 python-jose
 pymongo
