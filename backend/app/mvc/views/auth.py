@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from app.models.user import User
-from app.services.auth_service import register_user, login_user
+from app.mvc.models.user import User
+from app.mvc.controllers.auth import register_user, login_user
 
 router = APIRouter()
 

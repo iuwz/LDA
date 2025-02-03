@@ -1,4 +1,4 @@
-from app.models.user import User, UserInDB
+from app.mvc.models.user import User, UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import HTTPException
 from passlib.context import CryptContext

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from app.views.auth import router as auth_router
-from app.views.documents import router as documents_router
-from app.views.analysis import router as analysis_router
+from app.mvc.views.auth import router as auth_router
+from app.mvc.views.documents import router as documents_router
+from app.mvc.views.analysis import router as analysis_router
 from fastapi.middleware.cors import CORSMiddleware
 #
 # Initialize FastAPI app
