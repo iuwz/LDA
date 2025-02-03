@@ -2,7 +2,9 @@
 /backend/env/*
 /backend/node_modules/*
 /backend/.env
-/backend/app/views/__pycache__
+/backend/app/mvc/views/__pycache__
+/backend/app/mvc/models/__pycache__
+/backend/app/mvc/controllers/__pycache__
 /backend/__pycache__
 /backend/app/utils/__pycache__
 # Ignore everything in the frontend env
