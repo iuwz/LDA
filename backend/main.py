@@ -14,6 +14,7 @@ from app.middleware.jwt_middleware import JWTMiddleware
 # Routers
 from app.mvc.views.auth import router as auth_router
 from app.mvc.views.documents import router as documents_router
+from app.mvc.views.compliance import router as compliance_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,6 +45,8 @@ def create_app() -> FastAPI:
     # Include your routers
     app.include_router(auth_router, prefix="/auth", tags=["Auth"])
     app.include_router(documents_router, prefix="/documents", tags=["Documents"])
+    app.include_router(compliance_router, prefix="/compliance", tags=["Compliance"])
+
 
     @app.get("/")
     async def root():
