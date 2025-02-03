@@ -15,6 +15,7 @@ from app.middleware.jwt_middleware import JWTMiddleware
 from app.mvc.views.auth import router as auth_router
 from app.mvc.views.documents import router as documents_router
 from app.mvc.views.compliance import router as compliance_router
+from app.mvc.views.rephrase import router as rephrase_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/auth", tags=["Auth"])
     app.include_router(documents_router, prefix="/documents", tags=["Documents"])
     app.include_router(compliance_router, prefix="/compliance", tags=["Compliance"])
+    app.include_router(rephrase_router, prefix="/rephrase", tags=["Rephrase"])
 
 
     @app.get("/")
