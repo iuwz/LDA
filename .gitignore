@@ -13,3 +13,4 @@
 frontend/package-lock.json
 /backend/app/models/__pycache__
 /backend/app/services/__pycache__
+backend/__pycache__/main.cpython-313.pyc
