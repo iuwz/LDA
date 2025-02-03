@@ -16,6 +16,8 @@ from app.mvc.views.auth import router as auth_router
 from app.mvc.views.documents import router as documents_router
 from app.mvc.views.compliance import router as compliance_router
 from app.mvc.views.rephrase import router as rephrase_router
+from app.mvc.views.translate import router as translate_router
+from app.mvc.views.chatbot import router as chatbot_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,6 +50,10 @@ def create_app() -> FastAPI:
     app.include_router(documents_router, prefix="/documents", tags=["Documents"])
     app.include_router(compliance_router, prefix="/compliance", tags=["Compliance"])
     app.include_router(rephrase_router, prefix="/rephrase", tags=["Rephrase"])
+    app.include_router(translate_router, prefix="/translate", tags=["Translation"])
+    app.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
+
+
 
 
     @app.get("/")
