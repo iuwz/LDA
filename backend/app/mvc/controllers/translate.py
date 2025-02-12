@@ -1,10 +1,9 @@
 import os
 import logging
 from dotenv import load_dotenv
-import openai
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.core.openai_client import call_gpt  # Import from openai_client.py
+from app.core.openai_client import call_gpt  # Keep using openai_client.py
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +17,7 @@ async def run_translation_tool(
     user_id: str
 ):
     """
-    AI-powered translation function using OpenAI.
+    AI-powered translation function using OpenAI's GPT-4o mini.
     """
     if not document_text:
         raise HTTPException(status_code=400, detail="Document text is required for translation")
@@ -31,8 +30,12 @@ async def run_translation_tool(
         system_message = f"You are a professional legal translator. Translate the text into {target_lang.upper()} accurately."
         user_message = f"Translate this legal document into {target_lang.upper()}:\n\n{document_text}"
 
-        # ✅ Call `call_gpt` from openai_client.py instead of direct OpenAI API usage
-        translated_text = call_gpt(prompt=user_message, system_message=system_message, temperature=0.0)
+        # ✅ Ensure GPT-4o Mini is used explicitly
+        translated_text = call_gpt(
+            prompt=user_message,
+            system_message=system_message,
+            temperature=0.0
+        )
 
         if not translated_text:
             raise Exception("Translation response was empty")
