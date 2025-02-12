@@ -1,50 +1,68 @@
+# main.py
+
+import uvicorn
+import logging
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
-from app.views.auth import router as auth_router
-from app.views.documents import router as documents_router
-from app.views.analysis import router as analysis_router
-from fastapi.middleware.cors import CORSMiddleware
-#
-# Initialize FastAPI app
-app = FastAPI()
+from starlette.middleware.cors import CORSMiddleware
 
-# MongoDB connection (MongoDB Atlas)
-MONGO_URI = "mongodb+srv://aziz12121257:u87y24y6mQN6Wf7w@lda.f7pzx.mongodb.net/?retryWrites=true&w=majority&appName=LDA"
-client = AsyncIOMotorClient(MONGO_URI)
-db = client["LDA"]  # Replace with your database name
+# Example: Your DB init function (optional)
+from app.core.database import init_db
 
-# Add MongoDB instance to app state for global access
-@app.on_event("startup")
-async def startup_db_client():
-    app.state.db = db
+# Your custom JWT middleware
+from app.middleware.jwt_middleware import JWTMiddleware
 
+# Routers
+from app.mvc.views.auth import router as auth_router
+from app.mvc.views.documents import router as documents_router
+from app.mvc.views.compliance import router as compliance_router
+from app.mvc.views.rephrase import router as rephrase_router
+from app.mvc.views.translate import router as translate_router
+from app.mvc.views.chatbot import router as chatbot_router
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-
-
-# Middleware for CORS (Cross-Origin Resource Sharing)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins, or specify domains: ["http://localhost:3000"]
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods: GET, POST, PUT, DELETE
-    allow_headers=["*"],  # Allow all headers
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s"
 )
 
-# Include the routers for different modules
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(documents_router, prefix="/documents", tags=["Documents"])
-app.include_router(analysis_router, prefix="/analysis", tags=["Analysis"])
+def create_app() -> FastAPI:
+    app = FastAPI(title="LDA with Bearer Auth in Older FastAPI")
+
+    @app.on_event("startup")
+    async def on_startup():
+        # Initialize MongoDB or any other DB
+        await init_db(app)
+
+    # Add your custom JWT middleware 
+    # (which sets request.state.user_id if token is valid)
+    app.add_middleware(JWTMiddleware)
+
+    # Add CORS if needed
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Include your routers
+    app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+    app.include_router(documents_router, prefix="/documents", tags=["Documents"])
+    app.include_router(compliance_router, prefix="/compliance", tags=["Compliance"])
+    app.include_router(rephrase_router, prefix="/rephrase", tags=["Rephrase"])
+    app.include_router(translate_router, prefix="/translate", tags=["Translation"])
+    app.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
 
 
-# Root endpoint (basic health check)
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Legal Document Analyzer API!"}
 
+
+    @app.get("/")
+    async def root():
+        return {"message": "Welcome to the LDA API"}
+
+    return app
+
+app = create_app()
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
