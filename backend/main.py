@@ -6,11 +6,8 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Your DB init function (must set app.state.db or similar)
-from app.core.database import init_db
-
-# Your custom JWT middleware (sets request.state.user_id if token is valid)
-from app.middleware.jwt_middleware import JWTMiddleware
+from app.core.database import init_db  # Initializes MongoDB (sets app.state.db)
+from app.middleware.jwt_middleware import JWTMiddleware  # Custom middleware for JWT auth
 
 # Existing Routers
 from app.mvc.views.auth import router as auth_router
@@ -20,7 +17,7 @@ from app.mvc.views.rephrase import router as rephrase_router
 from app.mvc.views.translate import router as translate_router
 from app.mvc.views.chatbot import router as chatbot_router
 
-# GPT-based risk analysis controllers
+# Controllers for risk analysis endpoints
 from app.mvc.controllers.analysis import analyze_risk, get_risk_report
 
 logging.basicConfig(
@@ -34,28 +31,36 @@ logging.basicConfig(
 class RiskAnalysisInput(BaseModel):
     document_text: str
 
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="LDA with Bearer Auth in Older FastAPI")
+    """
+    Creates and configures a FastAPI application with:
+      - JWT authentication middleware
+      - CORS (for local testing; adjust in production)
+      - Routers for auth, documents, compliance, rephrase, translation, chatbot
+      - Risk analysis endpoints
+    """
+    app = FastAPI(title="Legal Document Analyzer (LDA)")
 
     @app.on_event("startup")
     async def on_startup():
-        # Initialize MongoDB or other DB
+        # Initialize MongoDB or other databases.
         await init_db(app)
         logging.info("Database initialized.")
 
-    # Add JWT Middleware for auth
+    # JWT Middleware: injects request.state.user_id if token is valid
     app.add_middleware(JWTMiddleware)
 
-    # Optional: add CORS
+    # CORS (adjust allow_origins in production)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # For testing, allow all
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # Include existing routers
+    # Include your existing routers
     app.include_router(auth_router, prefix="/auth", tags=["Auth"])
     app.include_router(documents_router, prefix="/documents", tags=["Documents"])
     app.include_router(compliance_router, prefix="/compliance", tags=["Compliance"])
@@ -70,20 +75,27 @@ def create_app() -> FastAPI:
     async def analyze_document(input_data: RiskAnalysisInput, request: Request):
         """
         Analyzes the provided legal document text for potential risks.
-        The user_id is taken from the JWT token, not from the body.
+        The user_id is inferred from the JWT token (request.state.user_id).
 
-        Body JSON should look like:
+        Example request body:
         {
             "document_text": "Some contract text..."
+        }
+
+        Returns:
+        {
+            "analysis_result": {
+                "id": <MongoDB ObjectId as string>,
+                "risks": [...]
+            }
         }
         """
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
             raise HTTPException(status_code=401, detail="Unauthorized or invalid token.")
 
-        document_text = input_data.document_text
         db = request.app.state.db
-        result = await analyze_risk(document_text, user_id, db)
+        result = await analyze_risk(input_data.document_text, user_id, db)
         return {"analysis_result": result}
 
     @app.get("/risk/{report_id}", tags=["Risk"])
@@ -91,6 +103,8 @@ def create_app() -> FastAPI:
         """
         Retrieves a risk report by its MongoDB ObjectId.
         Only the user who created that report may access it.
+
+        Path param: report_id (stringified ObjectId)
         """
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
@@ -99,7 +113,6 @@ def create_app() -> FastAPI:
         db = request.app.state.db
         report = await get_risk_report(report_id, db)
 
-        # Check ownership
         if report.get("user_id") != user_id:
             raise HTTPException(status_code=403, detail="Forbidden: This report is not yours.")
 
@@ -107,9 +120,13 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     async def root():
+        """
+        A simple health-check or welcome endpoint.
+        """
         return {"message": "Welcome to the LDA API"}
 
     return app
+
 
 app = create_app()
 
