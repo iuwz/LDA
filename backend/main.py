@@ -2,14 +2,14 @@
 
 import uvicorn
 import logging
-from fastapi import FastAPI, Body, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Your DB init function (must set app.state.db or similar)
 from app.core.database import init_db
 
-# Your custom JWT middleware (sets request.state.user_id if the token is valid)
+# Your custom JWT middleware (sets request.state.user_id if token is valid)
 from app.middleware.jwt_middleware import JWTMiddleware
 
 # Existing Routers
@@ -71,7 +71,7 @@ def create_app() -> FastAPI:
         """
         Analyzes the provided legal document text for potential risks.
         The user_id is taken from the JWT token, not from the body.
-        
+
         Body JSON should look like:
         {
             "document_text": "Some contract text..."
@@ -82,7 +82,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=401, detail="Unauthorized or invalid token.")
 
         document_text = input_data.document_text
-        db = request.app.state.db  # or however init_db sets your database
+        db = request.app.state.db
         result = await analyze_risk(document_text, user_id, db)
         return {"analysis_result": result}
 
