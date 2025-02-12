@@ -1,10 +1,18 @@
+import Navbar from "./navbar";
+import ServicesSection from "./ServicesSection";
+import  './index.css';
+import WelcomSection from "./welcomSection";
+import Footer from "./footer"
+import UploadSection from "./UploadSection";
 function App() {
+
   return (
-    <div className="text-center">
-      <h1 className="text-3xl font-bold text-blue-500">
-        TailwindCSS is working!
-      </h1>
-    </div>
+    <>
+      <Navbar />
+      <UploadSection />
+      <ServicesSection />
+      <Footer/>
+    </>
   );
 }
 

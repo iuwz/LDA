@@ -10,3 +10,5 @@
 frontend/package-lock.json
 /backend/app/models/__pycache__
 /backend/app/services/__pycache__
+*.pyc
+pycache/
