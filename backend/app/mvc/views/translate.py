@@ -22,19 +22,30 @@ async def translate_document(
     creds: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ):
     """
-    POST /translate/
-    Translate the given document text into the specified target language.
+    API Endpoint: POST /translate/
+    - Translates a given legal document into the specified target language.
+    - Requires user authentication.
     """
     user_id = request.state.user_id
     if not user_id:
-        raise HTTPException(status_code=401, detail="User not authenticated")
+        raise HTTPException(
+            status_code=401,
+            detail="User not authenticated"
+        )
 
     db: AsyncIOMotorDatabase = request.app.state.db
 
-    result = await run_translation_tool(
-        db,
-        document_text=request_body.document_text,
-        target_lang=request_body.target_lang,
-        user_id=user_id
-    )
-    return result
+    try:
+        result = await run_translation_tool(
+            db,
+            document_text=request_body.document_text,
+            target_lang=request_body.target_lang,
+            user_id=user_id
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Translation failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Translation failed due to an internal error"
+        )

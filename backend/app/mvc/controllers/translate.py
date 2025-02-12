@@ -1,6 +1,13 @@
+import os
 import logging
+from dotenv import load_dotenv
+import openai
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.core.openai_client import call_gpt  # Import from openai_client.py
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +18,7 @@ async def run_translation_tool(
     user_id: str
 ):
     """
-    Mock translation logic:
-    - In real usage, you'd call a translation API or ML model (like Google Cloud Translate, DeepL, etc.)
-    - We'll just append "[translated to XYZ]" for demonstration.
-    - Optionally store the translation record in MongoDB for reference.
+    AI-powered translation function using OpenAI.
     """
     if not document_text:
         raise HTTPException(status_code=400, detail="Document text is required for translation")
@@ -23,16 +27,28 @@ async def run_translation_tool(
 
     logger.info(f"Translating text for user_id={user_id} into {target_lang}")
 
-    # Mock translation:
-    translated_text = f"{document_text} [TRANSLATED to {target_lang.upper()}]"
+    try:
+        system_message = f"You are a professional legal translator. Translate the text into {target_lang.upper()} accurately."
+        user_message = f"Translate this legal document into {target_lang.upper()}:\n\n{document_text}"
 
-    # Optionally store in DB
+        # ✅ Call `call_gpt` from openai_client.py instead of direct OpenAI API usage
+        translated_text = call_gpt(prompt=user_message, system_message=system_message, temperature=0.0)
+
+        if not translated_text:
+            raise Exception("Translation response was empty")
+
+    except Exception as e:
+        logger.error(f"Error during translation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Translation failed due to an internal error")
+
+    # Store translation in MongoDB
     translation_record = {
         "user_id": user_id,
         "original_text": document_text,
         "target_lang": target_lang,
-        "translated_text": translated_text
+        "translated_text": translated_text,
     }
+
     result = await db.translation_reports.insert_one(translation_record)
     logger.info(f"Stored translation record with _id={result.inserted_id}")
 
