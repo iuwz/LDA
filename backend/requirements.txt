@@ -7,4 +7,4 @@ motor
 python-dotenv
 passlib[bcrypt]
 pyjwt
-openai==0.27.0
+openai
