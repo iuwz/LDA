@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaBalanceScale, FaGlobe, FaHome, FaChevronDown, FaBars, FaTimes } from 'react-icons/fa';
+import { Button } from "./button";
+
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

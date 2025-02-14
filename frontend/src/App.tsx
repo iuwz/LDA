@@ -4,13 +4,13 @@ import  './index.css';
 import WelcomSection from "./welcomSection";
 import Footer from "./footer"
 import UploadSection from "./UploadSection";
+import Signup from "./signUp";
 function App() {
 
   return (
     <>
       <Navbar />
-      <UploadSection />
-      <ServicesSection />
+      <Signup />
       <Footer/>
     </>
   );
