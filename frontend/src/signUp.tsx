@@ -5,166 +5,139 @@ import { Button } from "./button";
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const pageVariants = {
-    initial: (direction: number) => ({
-      x: direction > 0 ? "100%" : "-100%",
-      opacity: 0
-    }),
-    animate: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? "100%" : "-100%",
-      opacity: 0
-    })
-  };
-
-  const contentVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+      {/* Outer container */}
       <motion.div
-        className="relative w-full max-w-2xl bg-white shadow-lg rounded-lg overflow-hidden"
-        initial={{ opacity: 0, y: 50 }}
+        className="relative w-full max-w-4xl bg-white shadow-2xl rounded-3xl overflow-hidden flex min-h-[450px]"
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
       >
-        {/* Wrapping container for form transitions */}
-        <div className="relative w-full h-[400px] overflow-hidden">
-          <AnimatePresence initial={false} custom={isSignUp ? 1 : -1}>
-            <motion.div
-              key={isSignUp ? "signup" : "signin"}
-              custom={isSignUp ? 1 : -1}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 20
-              }}
-              className="absolute w-full h-full"
-            >
-              {!isSignUp ? (
-                // Sign In Form
+        {/* LEFT SIDE: Form container */}
+        <motion.div
+          className="w-1/2 p-8 flex items-center justify-center relative"
+          animate={{ x: isSignUp ? "100%" : "0%" }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+        >
+          <div className="relative w-full max-w-sm min-h-[300px] flex items-center">
+            <AnimatePresence mode="wait">
+              {/* SIGN UP FORM */}
+              {isSignUp && (
                 <motion.div
-                  className="w-full p-8"
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
+                  key="signup"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="absolute inset-0 flex flex-col justify-center"
                 >
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Sign In</h2>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+                    Sign Up
+                  </h2>
                   <form>
                     <div className="mb-4">
-                      <label className="block text-gray-600 text-sm">Username</label>
+                      <label className="block text-gray-600 text-sm mb-2">
+                        Username
+                      </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-gray-600 text-sm">Password</label>
-                      <input
-                        type="password"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
-                      />
-                    </div>
-                    
-                    <Button className="w-full bg-yellow-600 text-white py-2 rounded-lg mt-4 hover:bg-yellow-700">
-                      Sign In
-                    </Button>
-                  </form>
-                </motion.div>
-              ) : (
-                // Sign Up Form
-                <motion.div
-                  className="w-full p-8"
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Sign Up</h2>
-                  <form>
-                    <div className="mb-4">
-                      <label className="block text-gray-600 text-sm">Username</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-gray-600 text-sm">Email</label>
+                      <label className="block text-gray-600 text-sm mb-2">
+                        Email
+                      </label>
                       <input
                         type="email"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-gray-600 text-sm">Password</label>
+                      <label className="block text-gray-600 text-sm mb-2">
+                        Password
+                      </label>
                       <input
                         type="password"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
                       />
                     </div>
-                    <Button className="w-full bg-yellow-600 text-white py-2 rounded-lg mt-4 hover:bg-yellow-700">
+                    <Button className="w-full bg-[#C78A00] text-white py-2 rounded-lg mt-2 hover:bg-[#B07800] transition">
                       Sign Up
                     </Button>
                   </form>
                 </motion.div>
               )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
 
-        {/* Switch Panel */}
-        <motion.div 
-          className="w-full flex flex-col justify-center items-center bg-white p-8 border-t-2 border-yellow-600"
-          initial="hidden"
-          animate="visible"
-          variants={contentVariants}
+              {/* SIGN IN FORM */}
+              {!isSignUp && (
+                <motion.div
+                  key="signin"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="absolute inset-0 flex flex-col justify-center"
+                >
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+                    Sign In
+                  </h2>
+                  <form>
+                    <div className="mb-4">
+                      <label className="block text-gray-600 text-sm mb-2">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-gray-600 text-sm mb-2">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
+                      />
+                    </div>
+                    <Button className="w-full bg-[#C78A00] text-white py-2 rounded-lg mt-2 hover:bg-[#B07800] transition">
+                      Sign In
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* RIGHT SIDE: Sliding Welcome & Toggle */}
+        <motion.div
+          className="w-1/2 flex flex-col justify-center items-center text-white p-8 rounded-tr-3xl rounded-br-3xl"
+          initial={{ x: 0 }}
+          animate={{ x: isSignUp ? "-100%" : "0%" }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          style={{
+            backgroundColor: "#C78A00", // Matching golden brown color
+            position: "absolute",
+            right: 0,
+            top: 0,
+            height: "100%",
+          }}
         >
-          <motion.h2 
-            className="text-2xl font-semibold text-yellow-600 mb-2"
-            key={isSignUp ? "welcome-back" : "welcome"}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <h2 className="text-2xl font-semibold mb-2">
             {isSignUp ? "Welcome Back!" : "Welcome to Login"}
-          </motion.h2>
-          <motion.p 
-            className="text-sm mb-4 text-gray-600"
-            key={isSignUp ? "signin-text" : "signup-text"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
+          </h2>
+          <p className="text-sm mb-4">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}
-          </motion.p>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          </p>
+          <Button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-[#C78A00] transition duration-300 px-4 py-2 rounded-full"
           >
-            <Button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="border-2 border-yellow-600 text-yellow-600 bg-white hover:bg-yellow-600 hover:text-white transition duration-300 px-4 py-2 rounded-lg"
-            >
-              {isSignUp ? "Sign In" : "Sign Up"}
-            </Button>
-          </motion.div>
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </Button>
         </motion.div>
       </motion.div>
     </div>
