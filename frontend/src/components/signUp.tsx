@@ -134,7 +134,7 @@ export default function AuthForm() {
           </p>
           <Button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-[#C78A00] transition duration-300 px-4 py-2 rounded-full"
+            className="border-2 border-white text-white bg-transparent hover:bg-white  transition duration-300 px-4 py-2 rounded-full"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
           </Button>
