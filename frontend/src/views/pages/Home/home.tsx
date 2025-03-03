@@ -136,6 +136,90 @@ function ServicesSection() {
 }
 
 /* ---------------------------
+   BUBBLE GENERATOR COMPONENT
+----------------------------*/
+
+const BubbleGenerator = () => {
+  // Generate random bubbles with varied properties
+  const bubbles = Array.from({ length: 40 }).map((_, i) => {
+    // Create different sizes for bubbles
+    const size = Math.random() * 120 + 30; // 30px to 150px
+
+    // Random positions
+    const top = Math.random() * 100;
+    const left = Math.random() * 100;
+
+    // Random opacity
+    const opacity = Math.random() * 0.25 + 0.05; // 0.05 to 0.3
+
+    // Random animation durations (some faster, some slower)
+    const animDuration = Math.random() * 8 + 4; // 4 to 12 seconds
+
+    // Random animation delay
+    const delay = Math.random() * 2;
+
+    // Alternate between the two colors
+    const color =
+      i % 2 === 0
+        ? "from-[#C17829]/30 to-[#C17829]/5"
+        : "from-[#2C2C4A]/30 to-[#2C2C4A]/5";
+
+    // Random movement range (some move more, some less)
+    const moveRange = Math.random() * 50 + 30; // 30px to 80px
+
+    return {
+      id: i,
+      size,
+      top,
+      left,
+      opacity,
+      animDuration,
+      delay,
+      color,
+      moveRange,
+    };
+  });
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {bubbles.map((bubble) => (
+        <motion.div
+          key={bubble.id}
+          className={`absolute rounded-full bg-gradient-to-r ${bubble.color}`}
+          style={{
+            width: `${bubble.size}px`,
+            height: `${bubble.size}px`,
+            top: `${bubble.top}%`,
+            left: `${bubble.left}%`,
+            opacity: bubble.opacity,
+            zIndex: 0,
+          }}
+          animate={{
+            x: [
+              0,
+              Math.random() < 0.5 ? -bubble.moveRange : bubble.moveRange,
+              0,
+            ],
+            y: [
+              0,
+              Math.random() < 0.5 ? -bubble.moveRange : bubble.moveRange,
+              0,
+            ],
+            scale: [1, Math.random() * 0.4 + 0.8, 1],
+          }}
+          transition={{
+            duration: bubble.animDuration,
+            delay: bubble.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+/* ---------------------------
    2) WHY CHOOSE US COMPONENT
 ----------------------------*/
 
@@ -270,19 +354,45 @@ function WhyChooseUs() {
           {whyFeatures.map((feat, i) => (
             <motion.div
               key={i}
-              className="p-6 bg-white rounded-md shadow transition-transform duration-300 hover:scale-105"
+              className="p-6 bg-white rounded-md shadow-md transition-all duration-300 hover:shadow-xl group relative overflow-hidden"
               variants={{
                 hidden: { opacity: 0, y: 30 },
                 visible: { opacity: 1, y: 0 },
               }}
+              whileHover={{
+                y: -8,
+                transition: { duration: 0.3 },
+              }}
             >
-              <div className="flex items-center justify-center mb-2">
-                <feat.icon className="text-2xl text-[#C17829] mr-2" />
+              {/* Animated background gradient on hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/5 to-[#2C2C4A]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Icon with animation */}
+              <div className="flex items-center justify-center mb-4 relative">
+                <motion.div
+                  className="p-3 rounded-full bg-[#C17829]/10 flex items-center justify-center"
+                  whileHover={{ rotate: 10, scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                >
+                  <feat.icon className="text-2xl text-[#C17829]" />
+                </motion.div>
+
+                {/* Decorative ring that appears on hover */}
+                <div className="absolute w-12 h-12 border-2 border-[#C17829]/20 rounded-full scale-0 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100" />
               </div>
-              <h3 className="font-serif text-lg font-semibold text-[#C17829] text-center mb-1">
+
+              {/* Title with animation */}
+              <h3 className="font-serif text-lg font-semibold text-[#2C2C4A] text-center mb-2 group-hover:text-[#C17829] transition-colors duration-300">
                 {feat.title}
               </h3>
-              <p className="text-sm text-gray-800 text-center">{feat.text}</p>
+
+              {/* Text that slides up on hover */}
+              <p className="text-sm text-gray-700 text-center transform group-hover:translate-y-1 transition-transform duration-300">
+                {feat.text}
+              </p>
+
+              {/* Hidden line that appears on hover */}
+              <div className="w-0 h-0.5 bg-[#C17829] mx-auto mt-3 group-hover:w-16 transition-all duration-300 opacity-0 group-hover:opacity-100" />
             </motion.div>
           ))}
         </motion.div>
@@ -362,17 +472,21 @@ function WhyChooseUs() {
 export default function Home() {
   return (
     <main className="bg-white min-h-screen flex flex-col">
-      {/* HERO SECTION (Using previous version that works) */}
+      {/* HERO SECTION with Many Bubbles */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
+        {/* Background bubbles */}
+        <BubbleGenerator />
+
+        {/* Keep the original larger animated shapes for consistent effect */}
         <motion.div
-          className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
-          animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute w-[300px] h-[300px] bg-[#C17829] rounded-full opacity-20 top-[-100px] left-[-100px] z-0"
+          animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0"
-          animate={{ x: [0, -10, 0], y: [0, -10, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute w-[400px] h-[400px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-150px] right-[-150px] z-0"
+          animate={{ x: [0, -40, 0], y: [0, -40, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         />
 
         <motion.div

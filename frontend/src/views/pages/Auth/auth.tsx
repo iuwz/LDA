@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
+import { useLocation } from "react-router-dom";
 
 // SignIn Component
 function SignInForm() {
@@ -234,6 +235,31 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const location = useLocation();
+
+  // Use effect to check for URL parameters when component mounts
+  useEffect(() => {
+    // Check for URL params or state
+    const queryParams = new URLSearchParams(location.search);
+    const form = queryParams.get("form");
+
+    // If form=login is in the URL, ensure we show login form
+    if (form === "login") {
+      setIsSignUp(false);
+    }
+    // If form=register is in the URL, show register form
+    else if (form === "register") {
+      setIsSignUp(true);
+    }
+    // Also check for state from React Router navigation
+    else if (location.state && typeof location.state === "object") {
+      // @ts-ignore - we know state might have isSignUp property
+      const routerState = location.state as { isSignUp?: boolean };
+      if (routerState.isSignUp !== undefined) {
+        setIsSignUp(routerState.isSignUp);
+      }
+    }
+  }, [location]);
 
   // Basic email validation
   function isValidEmail(value: string) {
