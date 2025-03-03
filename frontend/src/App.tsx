@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./views/pages/Home/home";
 import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
-import AuthForm from "./views/pages/Auth/authForm";
+import Auth from "./views/pages/Auth/auth";
 import Dashboard from "./views/pages/Dashboard/dashBoard";
 
 // Import layout components
@@ -21,7 +21,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/auth" element={<AuthForm />} />
+        <Route path="/auth" element={<Auth />} />
+
         <Route path="/dashboard" element={<Dashboard />} />
         {/* Add more routes if needed */}
       </Routes>

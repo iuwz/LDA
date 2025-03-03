@@ -1,5 +1,3 @@
-// src/views/components/layout/navbar.tsx
-
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -23,19 +21,19 @@ const Navbar: React.FC = () => {
 
   const scrollToServices = (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     // If we're not on the home page, navigate to home page first
-    if (location.pathname !== '/') {
-      window.location.href = '/#services';
+    if (location.pathname !== "/") {
+      window.location.href = "/#services";
       return;
     }
-    
+
     // If we're already on the home page, just scroll to services
-    const servicesSection = document.getElementById('services');
+    const servicesSection = document.getElementById("services");
     if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: 'smooth' });
+      servicesSection.scrollIntoView({ behavior: "smooth" });
     }
-    
+
     // Close mobile menu if open
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
@@ -106,21 +104,17 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Right Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          {/* Register as solid button */}
-          <Button 
-            variant="primary" 
-            className="rounded"
-          >
+          {/* Register button with updated styling */}
+          <Button className="bg-[#C17829] text-white text-sm font-semibold rounded-full px-3 py-1.5 shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]">
             Register
           </Button>
-          {/* Login as outlined button */}
-          <Button
-            variant="secondary"
-            className="rounded flex items-center gap-2"
-          >
+
+          {/* Login button with updated styling */}
+          <Button className="bg-transparent border border-[#C17829] text-[#C17829] text-sm font-semibold rounded-full px-3 py-1.5 shadow-md hover:bg-[#C17829]/10 hover:shadow-lg transition-all active:bg-[#C17829]/20 hover:scale-[1.01] flex items-center gap-1">
             Login
-            <LogIn size={18} />
+            <LogIn size={16} />
           </Button>
+
           {/* Language Selector */}
           <div className="flex items-center cursor-pointer">
             <FaGlobe className="text-[#2C2C4A] text-xl hover:text-[#C17829]" />
@@ -220,17 +214,12 @@ const Navbar: React.FC = () => {
 
         {/* Footer area in mobile panel */}
         <div className="mt-auto px-4 py-6 border-t space-y-4">
-          <Button
-            className="w-full bg-[#C17829] border-[#C17829] hover:bg-[#ad6823] px-4 py-2"
-          >
+          <Button className="w-full bg-[#C17829] text-white text-sm rounded-full font-semibold py-1.5 shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]">
             Register
           </Button>
-          <Button
-            
-            className="w-full bg-[#C17829] border-[#C17829] hover:bg-[#ad6823] px-4 py-2 flex items-center justify-center gap-2"
-          >
+          <Button className="w-full bg-transparent border border-[#C17829] text-[#C17829] text-sm rounded-full font-semibold py-1.5 shadow-md hover:bg-[#C17829]/10 hover:shadow-lg transition-all active:bg-[#C17829]/20 hover:scale-[1.01] flex items-center justify-center gap-1">
             Login
-            <LogIn size={18} />
+            <LogIn size={16} />
           </Button>
           <div className="flex items-center justify-center">
             <FaGlobe className="text-[#2C2C4A] text-xl cursor-pointer hover:text-[#C17829]" />

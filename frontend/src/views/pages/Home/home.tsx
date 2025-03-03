@@ -1,5 +1,3 @@
-// src/views/pages/Home/home.tsx
-
 import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -38,7 +36,7 @@ const SERVICES = [
       "Instant rephrasing suggestions",
       "In-depth risk scoring",
     ],
-    link: "/services/analysis",
+    link: "/dashboard",
   },
   {
     icon: FaRobot,
@@ -50,7 +48,7 @@ const SERVICES = [
       "Context-aware Q&A",
       "Seamless platform integration",
     ],
-    link: "/services/chatbot",
+    link: "/dashboard",
   },
   {
     icon: FaClipboardCheck,
@@ -62,7 +60,7 @@ const SERVICES = [
       "Industry-specific checks",
       "Detailed compliance reports",
     ],
-    link: "/services/compliance",
+    link: "/dashboard",
   },
   {
     icon: FaPenFancy,
@@ -74,7 +72,7 @@ const SERVICES = [
       "Customizable risk thresholds",
       "Change-tracking for collaboration",
     ],
-    link: "/services/rephrasing",
+    link: "/dashboard",
   },
 ];
 
@@ -290,7 +288,6 @@ function WhyChooseUs() {
         </motion.div>
 
         {/* Call-to-Action Button */}
-        
       </div>
 
       {/* Testimonials Section */}
@@ -306,14 +303,14 @@ function WhyChooseUs() {
       <div className="relative z-10 max-w-7xl mx-auto">
         <button
           onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full hover:bg-[#ad6823] transition-colors hidden sm:block"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
           aria-label="Scroll Left"
         >
           <FaChevronLeft />
         </button>
         <button
           onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full hover:bg-[#ad6823] transition-colors hidden sm:block"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
           aria-label="Scroll Right"
         >
           <FaChevronRight />
@@ -348,7 +345,7 @@ function WhyChooseUs() {
                 </div>
               </div>
               <p className="flex-1 text-sm text-gray-800 italic leading-relaxed">
-                “{t.quote}”
+                "{t.quote}"
               </p>
             </motion.div>
           ))}
@@ -405,7 +402,7 @@ export default function Home() {
           </motion.p>
           <motion.a
             href="#services"
-            className="inline-block px-6 py-3 bg-[#C17829] text-white rounded-full font-semibold hover:bg-[#ad6823] active:bg-[#A66F24] transition-colors"
+            className="inline-block px-6 py-3 bg-[#C17829] text-white rounded-full font-semibold text-lg shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}

@@ -1,5 +1,3 @@
-// src/views/pages/Contact/contact.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
 
@@ -41,15 +39,16 @@ export default function Contact() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            We’re here to help! Whether you have questions, feedback, or need
+            We're here to help! Whether you have questions, feedback, or need
             support, drop us a message.
           </motion.p>
           <motion.a
             href="#contact-form"
             className="
               inline-block bg-[#C17829] text-white px-5 py-2
-              rounded-full font-medium hover:bg-[#ad6823]
-              transition-all
+              rounded-full font-semibold text-lg shadow-md 
+              hover:bg-[#ad6823] hover:shadow-lg transition-all
+              active:bg-[#A66F24] hover:scale-[1.01]
             "
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -147,10 +146,10 @@ export default function Contact() {
                   type="submit"
                   className="
                     bg-[#C17829] text-white px-6 py-3 rounded-full
-                    font-semibold text-lg
+                    font-semibold text-lg shadow-md
                     inline-flex items-center gap-2
-                    hover:bg-[#ad6823] transition-all
-                    hover:shadow-lg
+                    hover:bg-[#ad6823] hover:shadow-lg transition-all
+                    active:bg-[#A66F24] hover:scale-[1.01]
                   "
                 >
                   Send Message

@@ -1,5 +1,3 @@
-// src/views/pages/About/about.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
 import { FaUserTie, FaLightbulb, FaHandshake, FaGlobe } from "react-icons/fa";
@@ -80,7 +78,7 @@ export default function About() {
               </motion.p>
               <motion.a
                 href="#our-story"
-                className="inline-block px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-[#C17829] to-[#ad6823] transition-transform hover:scale-105"
+                className="inline-block px-6 py-3 bg-[#C17829] text-white rounded-full font-semibold text-lg shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -264,7 +262,7 @@ export default function About() {
                     {member.role}
                   </p>
                   <p className="text-sm text-gray-800 italic text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    “{member.bio}”
+                    "{member.bio}"
                   </p>
                 </motion.div>
               </a>
@@ -274,7 +272,7 @@ export default function About() {
           <div className="mt-12">
             <a
               href="/contact"
-              className="inline-block bg-gradient-to-r from-[#C17829] to-[#ad6823] text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg hover:shadow-[#C17829]/40 hover:from-[#ad6823] hover:to-[#C17829] transition-all"
+              className="inline-block bg-[#C17829] text-white px-8 py-3 rounded-full font-semibold text-lg shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
             >
               Contact Us
             </a>
