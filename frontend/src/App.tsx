@@ -7,6 +7,7 @@ import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
 import Auth from "./views/pages/Auth/auth";
 import Dashboard from "./views/pages/Dashboard/dashBoard";
+import ChatbotWidget from "./views/components/common/ChatbotWidget";
 
 // Import layout components
 import Navbar from "./views/components/layout/navbar";
@@ -28,6 +29,7 @@ function App() {
       </Routes>
 
       <Footer />
+      <ChatbotWidget />
     </Router>
   );
 }
