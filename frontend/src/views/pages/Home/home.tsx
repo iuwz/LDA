@@ -16,12 +16,12 @@ import {
 } from "react-icons/fa";
 
 // Import PNG assets for team/testimonial photos (adjust paths/file names as needed)
-import team1 from "../../../assets/images/1.jpg";
-import team2 from "../../../assets/images/1.jpg";
-import team3 from "../../../assets/images/1.jpg";
-import team4 from "../../../assets/images/1.jpg";
-import team5 from "../../../assets/images/1.jpg";
-import team6 from "../../../assets/images/1.jpg";
+import team1 from "../../../assets/images/icon.jpg";
+import team2 from "../../../assets/images/icon.jpg";
+import team3 from "../../../assets/images/icon.jpg";
+import team4 from "../../../assets/images/icon.jpg";
+import team5 from "../../../assets/images/icon.jpg";
+import team6 from "../../../assets/images/icon.jpg";
 
 /* ---------------------------
    1) SERVICES DATA & COMPONENT
@@ -82,10 +82,10 @@ function ServicesSection() {
   return (
     <section id="services" className="py-12 px-4 bg-white">
       <div className="max-w-7xl mx-auto text-center mb-8">
-        <h2 className="text-3xl sm:text-4xl font-bold text-[#C17829] mb-6">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#C17829] mb-6">
           Our Services
         </h2>
-        <p className="text-gray-700 text-lg max-w-2xl mx-auto mb-8">
+        <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
           Discover the features that set us apart in delivering modern,
           AI-driven solutions for your legal workflow.
         </p>
@@ -109,7 +109,7 @@ function ServicesSection() {
               href={service.link}
               whileHover={{ scale: 1.1, y: -10 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="block bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+              className="block bg-white rounded-xl p-6 shadow-sm border border-gray-200 transition-all hover:shadow-xl hover:border-[#C17829]"
               variants={{
                 hidden: { opacity: 0, y: 30 },
                 visible: { opacity: 1, y: 0 },
@@ -118,15 +118,15 @@ function ServicesSection() {
               <div className="flex justify-center mb-3">
                 <Icon className="text-4xl text-[#C17829]" />
               </div>
-              <h3 className="text-xl font-bold text-[#2C2C4A] mb-2 text-center">
+              <h3 className="font-serif text-xl font-bold text-[#2C2C4A] mb-2 text-center">
                 {service.title}
               </h3>
-              <p className="text-gray-700 text-sm text-center mb-3 leading-relaxed">
+              <p className="text-gray-800 text-sm text-center mb-3 leading-relaxed">
                 {service.description}
               </p>
               <ul className="list-disc list-inside text-left text-gray-600 text-sm space-y-1">
                 {service.bullets.map((bullet, idx) => (
-                  <li key={idx}>{bullet}</li>
+                  <li key={idx} dangerouslySetInnerHTML={{ __html: bullet }} />
                 ))}
               </ul>
             </motion.a>
@@ -141,31 +141,29 @@ function ServicesSection() {
    2) WHY CHOOSE US COMPONENT
 ----------------------------*/
 
-// Feature bullets for "Why Choose LDA?"
 const whyFeatures = [
   {
     icon: FaBrain,
     title: "AI-Powered",
-    text: "Our advanced NLP algorithms bring speed and precision to legal document analysis.",
+    text: "Advanced NLP algorithms deliver rapid, precise legal analysis.",
   },
   {
     icon: FaShieldAlt,
     title: "Secure & Reliable",
-    text: "Industry-standard encryption ensures your confidential data remains fully protected.",
+    text: "Industry-standard encryption keeps your data safe.",
   },
   {
     icon: FaUsers,
     title: "User-Centric",
-    text: "Intuitive design simplifies legal workflows for everyone, from seasoned pros to newcomers.",
+    text: "Intuitive design that streamlines legal workflows for all.",
   },
   {
     icon: FaExpand,
     title: "Scalable & Flexible",
-    text: "Easily integrate with existing systems as your needs grow.",
+    text: "Easily integrates with your existing systems.",
   },
 ];
 
-// Testimonial data for "What Our Clients Say"
 const testimonialCards = [
   {
     name: "Adam Wilson",
@@ -214,7 +212,6 @@ const testimonialCards = [
 function WhyChooseUs() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Manual arrow scrolling
   function scrollLeft() {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: -300, behavior: "smooth" });
@@ -226,7 +223,6 @@ function WhyChooseUs() {
     }
   }
 
-  // Auto-scroll every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (scrollContainerRef.current) {
@@ -238,13 +234,20 @@ function WhyChooseUs() {
 
   return (
     <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
-      {/* Floating shapes (same style as Hero) */}
-      <div className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0" />
-      <div className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0" />
+      {/* Floating shapes for Why Choose Us using your provided animation */}
+      <motion.div
+        className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
+        animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0"
+        animate={{ x: [0, -10, 0], y: [0, -10, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto">
-        {/* Feature grid */}
-        <h2 className="text-3xl sm:text-4xl font-bold text-[#C17829] mb-6 text-center">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#C17829] mb-6 text-center">
           Why Choose LDA?
         </h2>
         <p className="text-gray-800 text-base sm:text-lg md:text-xl max-w-2xl mx-auto text-center mb-8 leading-relaxed">
@@ -257,7 +260,7 @@ function WhyChooseUs() {
         </p>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-12"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
@@ -275,31 +278,31 @@ function WhyChooseUs() {
                 visible: { opacity: 1, y: 0 },
               }}
             >
-              <div className="flex items-center mb-2">
+              <div className="flex items-center justify-center mb-2">
                 <feat.icon className="text-2xl text-[#C17829] mr-2" />
-                <h3 className="text-lg font-semibold text-[#C17829]">
-                  {feat.title}
-                </h3>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {feat.text}
-              </p>
+              <h3 className="font-serif text-lg font-semibold text-[#C17829] text-center mb-1">
+                {feat.title}
+              </h3>
+              <p className="text-sm text-gray-800 text-center">{feat.text}</p>
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Call-to-Action Button */}
+        
       </div>
 
-      {/* "What Our Clients Say" Title */}
-      <div className="relative z-10 max-w-7xl mx-auto text-center mb-4">
+      {/* Testimonials Section */}
+      <div className="relative z-10 max-w-7xl mx-auto text-center mb-4 mt-12">
         <h3 className="text-2xl sm:text-3xl font-semibold text-[#2C2C4A]">
           What Our Clients Say
         </h3>
-        <p className="text-gray-700 max-w-md mx-auto leading-relaxed">
+        <p className="text-gray-800 max-w-md mx-auto leading-relaxed">
           Trusted by legal professionals worldwide
         </p>
       </div>
 
-      {/* Testimonial Carousel */}
       <div className="relative z-10 max-w-7xl mx-auto">
         <button
           onClick={scrollLeft}
@@ -344,7 +347,7 @@ function WhyChooseUs() {
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
               </div>
-              <p className="flex-1 text-sm text-gray-700 italic leading-relaxed">
+              <p className="flex-1 text-sm text-gray-800 italic leading-relaxed">
                 “{t.quote}”
               </p>
             </motion.div>
@@ -362,20 +365,17 @@ function WhyChooseUs() {
 export default function Home() {
   return (
     <main className="bg-white min-h-screen flex flex-col">
-      {/* HERO SECTION WITHOUT PHOTO WITH MOTION TRANSITIONS */}
+      {/* HERO SECTION (Using previous version that works) */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
-        {/* Floating shapes with fade-in */}
         <motion.div
           className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ duration: 0.8 }}
+          animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
           className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          animate={{ x: [0, -10, 0], y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
 
         <motion.div
