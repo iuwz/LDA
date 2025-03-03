@@ -1,5 +1,4 @@
-// SignUpForm.tsx
-import { Button } from "./button";
+import { Button } from "../../components/common/button";
 
 interface SignUpFormProps {
   email: string;
@@ -27,32 +26,32 @@ export default function SignUpForm({
   isAllValid,
 }: SignUpFormProps) {
   return (
-    <div className="absolute inset-0 flex flex-col justify-center">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-        Sign Up
-      </h2>
+    <>
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Sign Up</h2>
       <form>
         {/* Username */}
         <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">
-            Username
-          </label>
+          <label className="block text-gray-600 text-sm mb-1">Username</label>
           <input
             type="text"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
+            className="
+              w-full px-4 py-2 border rounded-lg
+              focus:outline-none focus:ring-2 focus:ring-[#C78A00]
+            "
           />
         </div>
 
         {/* Email */}
         <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">
-            Email
-          </label>
+          <label className="block text-gray-600 text-sm mb-1">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
+            className="
+              w-full px-4 py-2 border rounded-lg
+              focus:outline-none focus:ring-2 focus:ring-[#C78A00]
+            "
             placeholder="example@example.com"
           />
           {/* Email validation feedback */}
@@ -66,14 +65,15 @@ export default function SignUpForm({
 
         {/* Password */}
         <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">
-            Password
-          </label>
+          <label className="block text-gray-600 text-sm mb-1">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C78A00]"
+            className="
+              w-full px-4 py-2 border rounded-lg
+              focus:outline-none focus:ring-2 focus:ring-[#C78A00]
+            "
           />
           {/* Password Rule Checks */}
           <div className="mt-2 text-sm space-y-1">
@@ -95,15 +95,18 @@ export default function SignUpForm({
         {/* Sign Up Button */}
         <Button
           disabled={!isValidEmail(email) || !isAllValid}
-          className={`w-full py-2 rounded-lg mt-2 transition ${
-            isValidEmail(email) && isAllValid
-              ? "bg-[#C78A00] hover:bg-[#B07800] text-white"
-              : "bg-gray-400 text-gray-200 cursor-not-allowed"
-          }`}
+          className={`
+            w-full py-2 rounded-lg mt-2 transition
+            ${
+              isValidEmail(email) && isAllValid
+                ? "bg-[#C78A00] hover:bg-[#B07800] text-white"
+                : "bg-gray-400 text-gray-200 cursor-not-allowed"
+            }
+          `}
         >
           Sign Up
         </Button>
       </form>
-    </div>
+    </>
   );
 }

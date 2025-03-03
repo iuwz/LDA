@@ -2,4 +2,7 @@ npm install react-icons or npm install react-icons@latest
 
  npm install framer-motion
 
- $ npm install @shadcn/ui
+ npm install @shadcn/ui
+
+ npm install react-router-dom
+

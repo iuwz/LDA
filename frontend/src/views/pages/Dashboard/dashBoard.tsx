@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
-import ToolList from "./toolList";
-import UploadedFiles from "./uploadedFiles";
-import FileUpload from "./FileUpload";
+import ToolList from "../../components/common/toolList";
+import UploadedFiles from "../../components/common/uploadedFiles";
+import FileUpload from "../../components/common/FileUpload";
+import React from "react";
 
 export default function Dashboard() {
   const [files, setFiles] = useState<File[]>([]);
