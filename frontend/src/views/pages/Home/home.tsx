@@ -426,6 +426,7 @@ function WhyChooseUs() {
           <FaChevronRight />
         </button>
 
+        {/* UPDATED TESTIMONIAL CARDS WITH ENHANCED HOVER EFFECTS */}
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto no-scrollbar flex gap-6 snap-x snap-mandatory scroll-smooth px-4 pb-4 pt-2"
@@ -433,30 +434,58 @@ function WhyChooseUs() {
           {testimonialCards.map((t, idx) => (
             <motion.div
               key={idx}
-              className="snap-center min-w-[300px] max-w-xs bg-gradient-to-r from-white to-[#f7f1e9] shadow-lg hover:shadow-2xl transition-shadow duration-300 rounded-xl p-6 flex flex-col"
+              className="snap-center min-w-[300px] max-w-xs bg-white shadow-md transition-all duration-300 hover:shadow-xl rounded-xl p-6 flex flex-col group relative overflow-hidden"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
+              whileHover={{
+                y: -8,
+                transition: { duration: 0.3 },
+              }}
             >
-              <div className="flex items-center mb-3">
-                <motion.img
-                  src={t.avatarUrl}
-                  alt={`${t.name} avatar`}
-                  className="w-12 h-12 rounded-full mr-3 object-cover border border-[#C17829]/50"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-[#2C2C4A]">
-                    {t.name}
-                  </p>
-                  <p className="text-xs text-gray-500">{t.role}</p>
+              {/* Animated background gradient on hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/5 to-[#2C2C4A]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              <div className="relative z-10">
+                <div className="flex items-center mb-3">
+                  {/* Avatar with animation */}
+                  <div className="relative mr-3">
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 15,
+                      }}
+                    >
+                      <img
+                        src={t.avatarUrl}
+                        alt={`${t.name} avatar`}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-[#C17829]/50"
+                      />
+                    </motion.div>
+
+                    {/* Decorative ring that appears on hover */}
+                    <div className="absolute w-14 h-14 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-[#C17829]/20 rounded-full scale-0 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-[#2C2C4A] group-hover:text-[#C17829] transition-colors duration-300">
+                      {t.name}
+                    </p>
+                    <p className="text-xs text-gray-500">{t.role}</p>
+                  </div>
                 </div>
+
+                {/* Quote text that slides up on hover */}
+                <p className="flex-1 text-sm text-gray-800 italic leading-relaxed transform group-hover:translate-y-1 transition-transform duration-300">
+                  "{t.quote}"
+                </p>
+
+                {/* Hidden line that appears on hover */}
+                <div className="w-0 h-0.5 bg-[#C17829] mx-auto mt-3 group-hover:w-16 transition-all duration-300 opacity-0 group-hover:opacity-100" />
               </div>
-              <p className="flex-1 text-sm text-gray-800 italic leading-relaxed">
-                "{t.quote}"
-              </p>
             </motion.div>
           ))}
         </div>
