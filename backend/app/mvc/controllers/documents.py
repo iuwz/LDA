@@ -43,6 +43,18 @@ async def list_user_documents(db: AsyncIOMotorDatabase, user_id: str):
         docs.append(doc)
     return docs
 
+async def list_all_documents(db: AsyncIOMotorDatabase):
+    """
+    Return all document records, for Admin usage.
+    """
+    docs_cursor = db.documents.find({})
+    docs = []
+    async for doc in docs_cursor:
+        doc["_id"] = str(doc["_id"])
+        doc["file_id"] = str(doc["file_id"])
+        docs.append(doc)
+    return docs
+
 async def get_document_record(db: AsyncIOMotorDatabase, doc_id: str):
     """
     Retrieve a single document record by _id from the documents collection.
