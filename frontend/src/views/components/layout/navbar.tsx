@@ -18,7 +18,6 @@ const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState("EN");
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -94,12 +93,6 @@ const Navbar: React.FC = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
     if (isSearchOpen) setIsSearchOpen(false);
-  };
-
-  const toggleTheme = () => {
-    setIsDarkTheme((prev) => !prev);
-    // Add your theme switching logic here:
-    // document.documentElement.classList.toggle("dark");
   };
 
   const toggleLanguageDropdown = () => {
@@ -283,19 +276,6 @@ const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-gray-600 hover:text-[#C17829] hover:bg-gray-200 transition-colors"
-            aria-label="Toggle dark theme"
-          >
-            {isDarkTheme ? (
-              <FaSun className="text-[#C17829] text-sm sm:text-base" />
-            ) : (
-              <FaMoon className="text-[#2C2C4A] text-sm sm:text-base" />
-            )}
-          </button>
-
           {/* Login Button */}
           <Button
             onClick={handleLoginClick}
@@ -337,19 +317,6 @@ const Navbar: React.FC = () => {
               size={getIconSize() - 4}
             />
           </div>
-
-          {/* Mobile Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1 flex items-center justify-center text-gray-600 hover:text-[#C17829]"
-            aria-label="Toggle dark theme"
-          >
-            {isDarkTheme ? (
-              <FaSun className="text-[#C17829]" size={getIconSize() - 4} />
-            ) : (
-              <FaMoon className="text-[#2C2C4A]" size={getIconSize() - 4} />
-            )}
-          </button>
 
           {/* Hamburger Menu Toggle */}
           <button
