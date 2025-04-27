@@ -326,14 +326,14 @@ const DashboardChatbot = () => {
                           {message.text}
                         </p>
                         <p
-                          className={`text-xs mt-1 ${
-                            message.sender === "user"
-                              ? "text-purple-200"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {formatTime(message.timestamp)}
-                        </p>
+  className={`text-xs mt-1 ${
+    message.sender === "user"
+      ? "text-white"
+      : "text-gray-500"
+  }`}
+>
+  {formatTime(message.timestamp)}
+</p>
                       </div>
                     </div>
                   ))
@@ -410,17 +410,17 @@ const DashboardChatbot = () => {
                     className="flex-1 py-2 px-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-[#C18241] focus:border-[#C18241]"
                   />
                   <button
-                    onClick={sendMessage}
-                    disabled={!inputValue.trim() || isTyping}
-                    className={`p-2 ${
-                      inputValue.trim() && !isTyping
-                        ? "bg-[#C18241] hover:bg-[#A96C34]"
-                        : "bg-gray-300 cursor-not-allowed"
-                    } text-white rounded-r-lg transition-colors`}
-                    aria-label="Send message"
-                  >
-                    <FaPaperPlane />
-                  </button>
+  onClick={sendMessage}
+  disabled={!inputValue.trim() || isTyping}
+  className={`h-11 w-11 flex items-center justify-center ${
+    inputValue.trim() && !isTyping
+      ? "bg-[#C18241] hover:bg-[#A96C34]"
+      : "bg-gray-300 cursor-not-allowed"
+  } text-white rounded-r-lg transition-colors`}
+  aria-label="Send message"
+>
+  <FaPaperPlane size={18} />
+</button>
                 </div>
               </div>
             </motion.div>
