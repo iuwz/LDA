@@ -1,37 +1,51 @@
+# backend/app/mvc/views/auth.py
+
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from app.mvc.models.user import User
 from app.mvc.controllers.auth import register_user, login_user
 
 router = APIRouter()
 
-# Login request schema
 class LoginRequest(BaseModel):
     email: str
     password: str
 
-
 @router.post("/register")
 async def register(user: User, request: Request):
-    """Endpoint to register a new user."""
-    db = request.app.state.db  # Access the database from the app state
+    db = request.app.state.db
     try:
         saved_user = await register_user(user, db)
         return {"message": "User registered successfully", "user": saved_user.dict()}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 @router.post("/login")
 async def login(request: LoginRequest, req: Request):
-    """Endpoint to authenticate a user and return a JWT token."""
-    db = req.app.state.db  # Access the database from the app state
+    db = req.app.state.db
     try:
         result = await login_user(request.email, request.password, db)
-        return result
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+        access_token = result["access_token"]
+
+        # wrap JSON + set a secure, HTTP-only cookie
+        response = JSONResponse(content={
+            "access_token": access_token,
+            "token_type": "bearer"
+        })
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,       # ← in production set True and serve over HTTPS
+            samesite="lax",
+            max_age=15 * 60     # 15 minutes, match your token expiry
+        )
+        return response
+
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")

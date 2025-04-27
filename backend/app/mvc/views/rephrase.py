@@ -1,99 +1,50 @@
-# app/mvc/views/rephrase.py
-
 import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from app.mvc.controllers.rephrase import run_rephrase_tool, get_rephrase_report
+from app.utils.security import get_current_user
+from app.mvc.models.user import UserInDB
 
-router = APIRouter()
+router = APIRouter(tags=["Rephrase"])
 logger = logging.getLogger(__name__)
 
-# Declare an HTTPBearer for Swagger "Authorize" button
-bearer_scheme = HTTPBearer()
-
 class RephraseRequest(BaseModel):
-    """
-    Defines the structure of the request body for the rephrase endpoint.
-    """
     document_text: str
-
 
 @router.post("/")
 async def rephrase_document(
     request_body: RephraseRequest,
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    Rephrase the given document text for clarity while preserving meaning.
-    Requires a Bearer JWT token for authentication.
-
-    Body JSON example:
-    {
-        "document_text": "Some ambiguous legal text..."
-    }
-
-    Returns a JSON object of the form:
-    {
-        "rephrase_result": {
-            "report_id": <str>,
-            "rephrased_text": <str>
-        }
-    }
+    Rephrase text for clarity. Returns {"report_id", "rephrased_text"}.
     """
-    user_id = request.state.user_id
-    if not user_id:
-        logger.warning("No user_id found in request.state. Unauthorized.")
-        raise HTTPException(status_code=401, detail="User not authenticated")
+    user_id = current_user.email
+    db = request.app.state.db
 
-    db: AsyncIOMotorDatabase = request.app.state.db
-    logger.info(f"Received rephrase request from user_id={user_id}")
-
-    # Call the controller to perform GPT-based (or fallback) rephrasing
-    result = await run_rephrase_tool(db, request_body.document_text, user_id)
-
-    # Return in a consistent structure
-    return {
-        "rephrase_result": result
-    }
-
+    try:
+        return await run_rephrase_tool(db, request_body.document_text, user_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Rephrase error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{report_id}")
-async def fetch_rephrased_document(
+async def fetch_rephrase_report(
     report_id: str,
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    Retrieves a specific rephrase record by ID. 
-    Requires a Bearer JWT token for authentication.
-
-    Path parameter: <report_id> (MongoDB ObjectId as a string).
-
-    Sample request:
-        GET /rephrase/63f8bad21e754503f0f4abc1
-
-    Returns:
-    {
-        "rephrase_report": {
-            "_id": <str>,
-            "user_id": <str>,
-            "original_text": <str>,
-            "rephrased_text": <str>
-        }
-    }
-    or raises 403 if this record belongs to another user.
+    Retrieve a rephrase record by ID.
     """
-    user_id = request.state.user_id
-    if not user_id:
-        logger.warning("No user_id found in request.state. Unauthorized.")
-        raise HTTPException(status_code=401, detail="User not authenticated")
+    user_id = current_user.email
+    db = request.app.state.db
 
-    db: AsyncIOMotorDatabase = request.app.state.db
-    logger.info(f"Fetching rephrase report {report_id} for user_id={user_id}")
-
-    doc = await get_rephrase_report(db, report_id, user_id)
-    return {"rephrase_report": doc}
+    try:
+        report = await get_rephrase_report(db, report_id, user_id)
+        return report
+    except HTTPException:
+        raise

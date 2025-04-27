@@ -1,15 +1,12 @@
 import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from app.mvc.controllers.translate import run_translation_tool
+from app.utils.security import get_current_user
+from app.mvc.models.user import UserInDB
 
-router = APIRouter()
+router = APIRouter(tags=["Translation"])
 logger = logging.getLogger(__name__)
-
-bearer_scheme = HTTPBearer()
 
 class TranslationRequest(BaseModel):
     document_text: str
@@ -19,33 +16,23 @@ class TranslationRequest(BaseModel):
 async def translate_document(
     request_body: TranslationRequest,
     request: Request,
-    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    API Endpoint: POST /translate/
-    - Translates a given legal document into the specified target language.
-    - Requires user authentication.
+    Translate text into the specified language.
     """
-    user_id = request.state.user_id
-    if not user_id:
-        raise HTTPException(
-            status_code=401,
-            detail="User not authenticated"
-        )
-
-    db: AsyncIOMotorDatabase = request.app.state.db
+    user_id = current_user.email
+    db = request.app.state.db
 
     try:
-        result = await run_translation_tool(
-            db,
+        return await run_translation_tool(
+            db=db,
             document_text=request_body.document_text,
             target_lang=request_body.target_lang,
             user_id=user_id
         )
-        return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Translation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Translation failed due to an internal error"
-        )
+        raise HTTPException(status_code=500, detail="Internal server error")

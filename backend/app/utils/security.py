@@ -1,26 +1,20 @@
 # backend/app/utils/security.py
 
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Security, HTTPException, status
+from fastapi import Request, HTTPException, status
+from app.mvc.models.user import UserInDB
 
-bearer_scheme = HTTPBearer()
+async def get_current_user(request: Request) -> UserInDB:
+    """
+    Dependency to retrieve the logged-in user based on JWT in header or cookie.
+    """
+    email = getattr(request.state, "user_id", None)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Not authenticated")
 
-async def get_token_credentials(
-    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)
-):
-    """
-    This dependency declares a Bearer auth scheme for the OpenAPI docs.
-    Any route that includes this dependency will show a lock icon in Swagger,
-    and the "Authorize" button will appear so you can enter a Bearer token.
-    
-    Typically, you'd decode/verify the token here. However, since you use a
-    custom JWT middleware, you can just return credentials or do minimal checks.
-    """
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
-    # credentials.scheme == "Bearer"
-    # credentials.credentials == actual token string
-    return credentials.credentials
+    user_data = await request.app.state.db["users"].find_one({"email": email})
+    if not user_data:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="User not found")
+
+    return UserInDB.from_mongo(user_data)
