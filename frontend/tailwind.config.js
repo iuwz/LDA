@@ -6,26 +6,23 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Example: Custom font families
       fontFamily: {
-        // Provide a fallback if the custom font fails to load
-        serif: ["Merriweather", "serif"],
-        sans: ["Inter", "sans-serif"],
+        serif: ['Merriweather', 'serif'],
+        sans:  ['Inter', 'sans-serif'],
       },
-      // Example: Custom line heights
       lineHeight: {
-        loose: "1.8", // Slightly looser than default
-        relaxed: "1.75",
+        loose:   '1.8',
+        relaxed: '1.75',
       },
-      // Example: Custom colors (if you want more brand colors)
+      /* ─── expose the :root tokens ─── */
       colors: {
-        brandGold: "#C17829",
-        brandDark: "#2C2C4A",
+        'brand-dark':  'var(--brand-dark)',
+        'accent-dark': 'var(--accent-dark)',
+        'accent-light':'var(--accent-light)',
       },
-      // Example: Additional spacing values
       spacing: {
-        18: "4.5rem",
-        22: "5.5rem",
+        18: '4.5rem',
+        22: '5.5rem',
       },
     },
   },

@@ -1,185 +1,156 @@
 import React, { useState } from "react";
 import {
-  FaFileUpload,
   FaShieldAlt,
-  FaExclamationTriangle,
-  FaInfoCircle,
   FaCloudUploadAlt,
   FaFileAlt,
   FaTrash,
   FaSearch,
+  FaInfoCircle,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-// Risk level components with different colors
+/* ──────────────────────────────────────────────────────────────
+   BRAND TOKENS
+   ────────────────────────────────────────────────────────────── */
+const BRAND = { dark: "var(--brand-dark)" } as const;
+const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
+const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
+
+/* ──────────────────────────────────────────────────────────────
+   Helper components
+   ────────────────────────────────────────────────────────────── */
 const RiskLevel = ({ level }: { level: "high" | "medium" | "low" }) => {
-  const colors = {
+  const palette = {
     high: "bg-red-100 text-red-800 border-red-200",
     medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
     low: "bg-green-100 text-green-700 border-green-200",
-  };
-
+  } as const;
   return (
     <span
-      className={`px-2 py-1 text-xs font-medium rounded border ${colors[level]}`}
+      className={`rounded border px-2 py-1 text-xs font-medium ${palette[level]}`}
     >
-      {level.charAt(0).toUpperCase() + level.slice(1)} Risk
+      {level[0].toUpperCase() + level.slice(1)} Risk
     </span>
   );
 };
 
-const RiskAssessmentTool = () => {
+/* ──────────────────────────────────────────────────────────────
+   Component
+   ────────────────────────────────────────────────────────────── */
+const RiskAssessmentTool: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
   const [activeSection, setActiveSection] = useState("all");
+  const [results, setResults] = useState<ReturnType<
+    typeof mockAnalysis
+  > | null>(null);
 
-  // Mock analysis results
-  const mockResults = {
-    overallRisk: "medium" as "high" | "medium" | "low",
-    score: 65,
-    riskItems: [
-      {
-        id: 1,
-        section: "Liability",
-        clause: "Section 8.2",
-        issue:
-          "Unlimited liability clause may be unenforceable in some jurisdictions.",
-        risk: "high" as "high" | "medium" | "low",
-        recommendation:
-          "Add jurisdiction-specific limitations or consult local counsel.",
-      },
-      {
-        id: 2,
-        section: "Termination",
-        clause: "Section 12.4",
-        issue: "Ambiguous termination notice period.",
-        risk: "medium" as "high" | "medium" | "low",
-        recommendation:
-          "Specify exact notice period in business days or calendar days.",
-      },
-      {
-        id: 3,
-        section: "Privacy",
-        clause: "Section 6.1",
-        issue:
-          "Data retention policy does not specify secure deletion methods.",
-        risk: "medium" as "high" | "medium" | "low",
-        recommendation:
-          "Add specific secure deletion requirements and timeframes.",
-      },
-      {
-        id: 4,
-        section: "Intellectual Property",
-        clause: "Section 4.3",
-        issue: "IP ownership for derivative works is not clearly defined.",
-        risk: "high" as "high" | "medium" | "low",
-        recommendation:
-          "Clearly define ownership for modifications and derivative works.",
-      },
-      {
-        id: 5,
-        section: "Payments",
-        clause: "Section 3.5",
-        issue: "Payment terms allow for rate changes with minimal notice.",
-        risk: "low" as "high" | "medium" | "low",
-        recommendation: "Consider extending notice period for rate changes.",
-      },
-      {
-        id: 6,
-        section: "General",
-        clause: "Section 14.7",
-        issue: "Governing law provision lacks venue specification.",
-        risk: "low" as "high" | "medium" | "low",
-        recommendation: "Add specific venue for dispute resolution.",
-      },
-    ],
-  };
+  /* ——— fake API ——— */
+  function mockAnalysis() {
+    return {
+      overallRisk: "medium" as const,
+      score: 65,
+      riskItems: [
+        {
+          id: 1,
+          section: "Liability",
+          clause: "§8.2",
+          issue: "Unlimited liability may be unenforceable.",
+          risk: "high" as const,
+          recommendation: "Add jurisdiction‑specific limitations.",
+        },
+        {
+          id: 2,
+          section: "Termination",
+          clause: "§12.4",
+          issue: "Ambiguous termination notice.",
+          risk: "medium" as const,
+          recommendation: "Specify exact notice period.",
+        },
+        {
+          id: 3,
+          section: "Privacy",
+          clause: "§6.1",
+          issue: "No secure deletion policy.",
+          risk: "medium" as const,
+          recommendation: "Add secure deletion requirements.",
+        },
+        {
+          id: 4,
+          section: "IP",
+          clause: "§4.3",
+          issue: "Derivative‑work ownership unclear.",
+          risk: "high" as const,
+          recommendation: "Define ownership of modifications.",
+        },
+        {
+          id: 5,
+          section: "Payments",
+          clause: "§3.5",
+          issue: "Rate change with minimal notice.",
+          risk: "low" as const,
+          recommendation: "Extend notice period.",
+        },
+        {
+          id: 6,
+          section: "General",
+          clause: "§14.7",
+          issue: "Governing law lacks venue.",
+          risk: "low" as const,
+          recommendation: "Add specific venue.",
+        },
+      ],
+    };
+  }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setResults(null); // Clear previous results
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-      setResults(null); // Clear previous results
-    }
-  };
-
-  const handleAnalyze = () => {
+  const analyze = () => {
     if (!file) return;
-
     setIsAnalyzing(true);
-
-    // Simulate API call delay
     setTimeout(() => {
-      setResults(mockResults);
+      setResults(mockAnalysis());
       setIsAnalyzing(false);
-    }, 2000);
+    }, 1800);
   };
 
-  const handleReset = () => {
+  const reset = () => {
     setFile(null);
     setResults(null);
+    setActiveSection("all");
   };
 
-  // Get filtered risk items based on active section
-  const getFilteredRiskItems = () => {
-    if (!results) return [];
+  /* ——— utils ——— */
+  const filteredItems =
+    results?.riskItems.filter(
+      (i) =>
+        activeSection === "all" ||
+        i.section.toLowerCase() === activeSection.toLowerCase()
+    ) ?? [];
+  const sections = results
+    ? ["all", ...Array.from(new Set(results.riskItems.map((i) => i.section)))]
+    : [];
+  const counts = results?.riskItems.reduce(
+    (acc: Record<string, number>, i) => {
+      acc[i.risk] = (acc[i.risk] || 0) + 1;
+      return acc;
+    },
+    { high: 0, medium: 0, low: 0 }
+  ) ?? { high: 0, medium: 0, low: 0 };
 
-    if (activeSection === "all") {
-      return results.riskItems;
-    } else {
-      return results.riskItems.filter(
-        (item: any) =>
-          item.section.toLowerCase() === activeSection.toLowerCase()
-      );
-    }
-  };
-
-  // Get all unique sections for the filter
-  const getSections = (): string[] => {
-    if (!results) return [];
-
-    const sections = results.riskItems.map(
-      (item: any) => item.section as string
-    );
-    const uniqueSections = Array.from(new Set(sections));
-    return ["all", ...uniqueSections];
-  };
-
-  // Get count of risks by level
-  const getRiskCounts = () => {
-    if (!results) return { high: 0, medium: 0, low: 0 };
-
-    return results.riskItems.reduce(
-      (acc: any, item: any) => {
-        acc[item.risk] = (acc[item.risk] || 0) + 1;
-        return acc;
-      },
-      { high: 0, medium: 0, low: 0 }
-    );
-  };
+  /* ——— animations ——— */
+  const tap = { whileHover: { scale: 1.05 }, whileTap: { scale: 0.95 } };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-full bg-amber-100 text-amber-600">
-            <FaShieldAlt size={24} />
-          </div>
+    <div className="space-y-8">
+      {/* header */}
+      <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
+        <div className="flex items-center gap-4 p-6">
+          <span className="rounded-full bg-[color:var(--accent-light)] p-3 text-[color:var(--accent-dark)]">
+            <FaShieldAlt size={22} />
+          </span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
               Risk Assessment Tool
             </h1>
             <p className="text-gray-600">
@@ -187,247 +158,190 @@ const RiskAssessmentTool = () => {
             </p>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* content card */}
+      <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <div className="p-8">
-            {/* File Upload Section */}
+            {/* uploader */}
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center
-                        hover:border-amber-500 transition-colors cursor-pointer"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById("file-upload")?.click()}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-10 text-center hover:border-[color:var(--accent-dark)]"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const f = e.dataTransfer.files?.[0];
+                if (f) {
+                  setFile(f);
+                  setResults(null);
+                }
+              }}
+              onClick={() => document.getElementById("file-input")?.click()}
             >
               <input
-                id="file-upload"
+                id="file-input"
                 type="file"
                 className="hidden"
-                onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.txt"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    setFile(f);
+                    setResults(null);
+                  }
+                }}
               />
 
               {file ? (
-                <div className="text-center">
-                  <FaFileAlt className="mx-auto text-4xl text-amber-500 mb-3" />
-                  <p className="text-gray-700 font-medium mb-1">{file.name}</p>
-                  <p className="text-gray-500 text-sm mb-4">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                <div>
+                  <FaFileAlt className="mx-auto text-4xl text-[color:var(--accent-dark)]" />
+                  <p className="mt-3 font-medium text-gray-700">{file.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
 
-                  <div className="flex space-x-3">
+                  <div className="mt-4 flex justify-center gap-3">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReset();
-                      }}
-                      className="px-3 py-1 bg-gray-200 rounded-md text-gray-700 text-sm hover:bg-gray-300 transition-colors flex items-center"
+                      onClick={reset}
+                      className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300"
                     >
-                      <FaTrash className="mr-1 text-xs" /> Remove
+                      Remove
                     </button>
-
                     <motion.button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAnalyze();
+                        analyze();
                       }}
-                      className="px-4 py-1 bg-amber-500 rounded-md text-white text-sm hover:bg-amber-600 transition-colors flex items-center"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-1 text-sm text-white hover:bg-[color:var(--accent-dark)]/90"
+                      {...tap}
                     >
-                      <FaSearch className="mr-1 text-xs" /> Analyze
+                      <FaSearch /> Analyze
                     </motion.button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <FaCloudUploadAlt className="text-5xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">
-                    Upload document for analysis
-                  </h3>
-                  <p className="text-gray-500 text-center mb-6 max-w-md">
-                    Drag and drop your file here, or click to browse
+                  <FaCloudUploadAlt className="text-5xl text-gray-400" />
+                  <p className="mt-4 text-gray-700">
+                    Drag & drop or click to upload
                   </p>
                   <p className="text-xs text-gray-400">
-                    Supported formats: PDF, DOC, DOCX, TXT (Max 10MB)
+                    PDF, DOC(X), TXT • ≤10 MB
                   </p>
                 </>
               )}
             </div>
 
             {isAnalyzing && (
-              <div className="mt-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-3"></div>
-                <p className="text-gray-700">
-                  Analyzing your document for potential risks...
-                </p>
+              <div className="mt-8 text-center text-gray-700">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
+                <p className="mt-3">Analyzing your document…</p>
               </div>
             )}
           </div>
         ) : (
-          <div>
-            {/* Results Header with Summary */}
-            <div className="bg-gray-50 p-6 border-b border-gray-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                  <FaFileAlt className="text-2xl text-gray-500" />
-                  <div>
-                    <h3 className="font-medium text-gray-800">{file?.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {file?.size ? (file.size / 1024 / 1024).toFixed(2) : "0"}{" "}
-                      MB • Analyzed {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
+          <>
+            {/* summary */}
+            <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <FaFileAlt className="text-2xl text-gray-500" />
+                <div>
+                  <h3 className="font-medium text-gray-800">{file?.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    {file ? (file.size / 1024 / 1024).toFixed(2) : "0"} MB •{" "}
+                    {new Date().toLocaleDateString()}
+                  </p>
                 </div>
+              </div>
 
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Overall Risk:</p>
-                    <RiskLevel
-                      level={results.overallRisk as "high" | "medium" | "low"}
-                    />
-                  </div>
-
-                  <div className="h-10 border-l border-gray-300"></div>
-
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Risk Score:</p>
-                    <div className="text-lg font-bold text-gray-800">
-                      {results.score}/100
-                    </div>
-                  </div>
-
-                  <motion.button
-                    onClick={handleReset}
-                    className="px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:bg-gray-200 transition-colors text-sm"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Analyze Another
-                  </motion.button>
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-sm text-gray-500">Overall Risk</p>
+                  <RiskLevel level={results.overallRisk} />
                 </div>
+                <div>
+                  <p className="text-sm text-gray-500">Score</p>
+                  <span className="text-lg font-bold text-gray-800">
+                    {results.score}/100
+                  </span>
+                </div>
+                <motion.button
+                  onClick={reset}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                  {...tap}
+                >
+                  Analyze Another
+                </motion.button>
               </div>
             </div>
 
-            {/* Risk Items */}
-            <div className="p-6">
-              {/* Risk Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {Object.entries(getRiskCounts()).map(([level, count]) => (
-                  <div
-                    key={level}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+            {/* counters */}
+            <div className="grid gap-4 p-6 md:grid-cols-3">
+              {Object.entries(counts).map(([lvl, count]) => (
+                <div
+                  key={lvl}
+                  className="rounded-lg border bg-gray-50 p-4 text-center"
+                >
+                  <p className="text-sm text-gray-500 mb-1">
+                    {lvl[0].toUpperCase() + lvl.slice(1)} Risk Items
+                  </p>
+                  <p className="text-2xl font-bold text-gray-800">{count}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* filter tabs */}
+            <div className="overflow-x-auto px-6">
+              <div className="flex gap-2 border-b pb-2">
+                {sections.map((sec) => (
+                  <button
+                    key={sec}
+                    onClick={() => setActiveSection(sec)}
+                    className={`whitespace-nowrap rounded-md px-3 py-1 text-sm transition-colors ${
+                      activeSection === sec
+                        ? "bg-[color:var(--accent-dark)] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                   >
-                    <p className="text-sm text-gray-500 mb-1">
-                      {level.charAt(0).toUpperCase() + level.slice(1)} Risk
-                      Items:
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {count as number}
-                    </p>
-                  </div>
+                    {sec === "all" ? "All Sections" : sec}
+                  </button>
                 ))}
               </div>
+            </div>
 
-              {/* Filter Tabs */}
-              <div className="mb-6 overflow-x-auto">
-                <div className="flex space-x-2 border-b border-gray-200 pb-2">
-                  {getSections().map((section: string) => (
-                    <button
-                      key={section}
-                      onClick={() => setActiveSection(section)}
-                      className={`px-3 py-1 text-sm rounded-md whitespace-nowrap ${
-                        activeSection === section
-                          ? "bg-amber-500 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {section === "all" ? "All Sections" : section}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Risk Items List */}
-              <div className="space-y-4">
-                {getFilteredRiskItems().map((item: any) => (
+            {/* list */}
+            <div className="space-y-4 p-6">
+              {filteredItems.length ? (
+                filteredItems.map((item) => (
                   <div
                     key={item.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="rounded-lg border p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+                    <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="font-medium text-gray-800">
                           {item.section}: {item.clause}
                         </p>
                         <p className="text-sm text-gray-600">{item.issue}</p>
                       </div>
-                      <RiskLevel
-                        level={item.risk as "high" | "medium" | "low"}
-                      />
+                      <RiskLevel level={item.risk} />
                     </div>
-                    <div className="bg-amber-50 p-3 rounded-md border border-amber-100 flex items-start space-x-2">
-                      <FaInfoCircle className="text-amber-500 mt-1 flex-shrink-0" />
-                      <p className="text-sm text-amber-700">
-                        {item.recommendation}
-                      </p>
+                    <div className="flex gap-2 rounded-md border border-[color:var(--accent-light)] bg-[color:var(--accent-light)]/50 p-3 text-sm text-[color:var(--accent-dark)]">
+                      <FaInfoCircle className="mt-0.5 flex-shrink-0" />
+                      <span>{item.recommendation}</span>
                     </div>
                   </div>
-                ))}
-
-                {getFilteredRiskItems().length === 0 && (
-                  <div className="text-center py-8">
-                    <FaExclamationTriangle className="mx-auto text-3xl text-gray-300 mb-2" />
-                    <p className="text-gray-500">
-                      No risk items found for this filter.
-                    </p>
-                  </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  <FaExclamationTriangle className="mx-auto mb-2 text-3xl text-gray-300" />
+                  No items for this filter.
+                </div>
+              )}
             </div>
-          </div>
+          </>
         )}
-      </div>
-
-      {/* Tips Section */}
-      {!results && (
-        <div className="bg-amber-50 rounded-lg p-6 border border-amber-100">
-          <h3 className="text-lg font-semibold text-amber-800 mb-3">
-            Risk Assessment Tips
-          </h3>
-          <ul className="space-y-2 text-amber-700">
-            <li className="flex items-start space-x-2">
-              <span className="text-amber-500 mt-1">•</span>
-              <span>
-                Upload complete documents for the most accurate risk assessment.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-amber-500 mt-1">•</span>
-              <span>
-                Review highlighted high-risk items first, as they may have the
-                most significant legal impact.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-amber-500 mt-1">•</span>
-              <span>
-                Follow the specific recommendations to mitigate identified
-                risks.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-amber-500 mt-1">•</span>
-              <span>
-                Consider consulting with legal counsel for high-risk documents
-                before finalizing.
-              </span>
-            </li>
-          </ul>
-        </div>
-      )}
+      </section>
     </div>
   );
 };

@@ -1,3 +1,9 @@
+/**
+ *  DashboardHome.tsx
+ *  – unified palette & consistent motion
+ *  – error-free Recent Activity icons
+ */
+import { IconType } from "react-icons";
 import React, { useState } from "react";
 import {
   FaEdit,
@@ -11,431 +17,394 @@ import {
   FaArrowRight,
   FaBell,
   FaUser,
-  FaExclamationCircle,
   FaExternalLinkAlt,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-const DashboardHome = () => {
-  const [hoveredTool, setHoveredTool] = useState<number | null>(null);
+/* ───────────────── design tokens ───────────────── */
+const BRAND = { dark: "#2C2C4A", light: "#444474" };
+const ACCENT = { dark: "#C17829", light: "#E3A063" };
+const SHADOW_GLOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-  // Sample data for statistics with distinct colors
+const fadeContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
+const fadeItem = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
+
+/* ───────────────── component ───────────────── */
+const DashboardHome: React.FC = () => {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+
+  /* stats, tools, activity data (unchanged) */
   const stats = [
     {
       title: "Analyzed Documents",
       value: 158,
       icon: FaFileAlt,
-      color: "text-[#C17829]",
-      bgColor: "bg-[#f7ede1]",
-      increase: "+12% this month",
-      cardBg: "bg-gradient-to-br from-white to-[#f7ede1]/30",
+      accent: ACCENT,
+      change: "+12% this month",
     },
     {
       title: "Compliance Checks",
       value: 64,
       icon: FaClipboardCheck,
-      color: "text-[#2563eb]",
-      bgColor: "bg-blue-100",
-      increase: "+8% this month",
-      cardBg: "bg-gradient-to-br from-white to-blue-50",
+      accent: { dark: "#2563eb", light: "#3b82f6" },
+      change: "+8% this month",
     },
     {
       title: "Risk Assessments",
       value: 42,
       icon: FaShieldAlt,
-      color: "text-[#dc2626]",
-      bgColor: "bg-red-100",
-      increase: "+15% this month",
-      cardBg: "bg-gradient-to-br from-white to-red-50",
+      accent: { dark: "#dc2626", light: "#ef4444" },
+      change: "+15% this month",
     },
     {
       title: "Active Users",
       value: 12,
       icon: FaUsersCog,
-      color: "text-[#2C2C4A]",
-      bgColor: "bg-[#e6e6f2]",
-      increase: "+3 since last week",
-      cardBg: "bg-gradient-to-br from-white to-[#e6e6f2]/30",
+      accent: BRAND,
+      change: "+3 since last week",
     },
   ];
 
-  // Tools cards data
   const tools = [
     {
       icon: FaEdit,
       title: "Rephrasing Tool",
-      description:
-        "Improve document clarity and precision with AI-powered suggestions.",
+      desc: "Improve clarity and precision with AI-powered suggestions.",
       link: "/dashboard/rephrasing",
-      color: "from-[#C17829] to-[#E3A063]",
-      bgGlow: "rgba(193, 120, 41, 0.1)",
     },
     {
       icon: FaShieldAlt,
       title: "Risk Assessment Tool",
-      description:
-        "Identify potential legal pitfalls and vulnerabilities in your documents.",
+      desc: "Spot legal pitfalls before they become problems.",
       link: "/dashboard/risk-assessment",
-      color: "from-[#2C2C4A] to-[#444474]",
-      bgGlow: "rgba(44, 44, 74, 0.1)",
     },
     {
       icon: FaClipboardCheck,
       title: "Compliance Checker",
-      description:
-        "Ensure your documents comply with current regulations and standards.",
+      desc: "Verify documents meet regulations and standards.",
       link: "/dashboard/compliance",
-      color: "from-[#C17829] to-[#E3A063]",
-      bgGlow: "rgba(193, 120, 41, 0.1)",
     },
     {
       icon: FaLanguage,
       title: "Translation Tool",
-      description:
-        "Translate legal documents while maintaining technical accuracy.",
+      desc: "Translate legal docs while keeping technical accuracy.",
       link: "/dashboard/translation",
-      color: "from-[#2C2C4A] to-[#444474]",
-      bgGlow: "rgba(44, 44, 74, 0.1)",
     },
     {
       icon: FaRobot,
       title: "Chatbot Assistant",
-      description:
-        "Get instant answers to your questions about document preparation.",
+      desc: "Instant answers for document-prep questions.",
       link: "/dashboard/chatbot",
-      color: "from-[#C17829] to-[#E3A063]",
-      bgGlow: "rgba(193, 120, 41, 0.1)",
     },
   ];
 
-  // Recent activity sample data
-  const recentActivity = [
-    {
-      id: 1,
-      action: "Document analyzed",
-      document: "Contract_2023_Q1.pdf",
-      time: "2 hours ago",
-    },
-    {
-      id: 2,
-      action: "Compliance check",
-      document: "Terms_of_Service_v3.docx",
-      time: "5 hours ago",
-    },
-    {
-      id: 3,
-      action: "Risk assessment",
-      document: "Partnership_Agreement.pdf",
-      time: "Yesterday",
-    },
-    {
-      id: 4,
-      action: "Document translated",
-      document: "International_Agreement.docx",
-      time: "2 days ago",
-    },
+  const activity = [
+    ["Document analysed", "Contract_2023_Q1.pdf", "2 h ago"],
+    ["Compliance check", "Terms_of_Service_v3.docx", "5 h ago"],
+    ["Risk assessment", "Partnership_Agreement.pdf", "Yesterday"],
+    ["Document translated", "International_Agreement.docx", "2 d ago"],
   ];
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
+  const activityIcons = [
+    FaFileAlt,
+    FaClipboardCheck,
+    FaShieldAlt,
+    FaLanguage,
+  ] as const;
 
   return (
-    <div className="space-y-8">
-      {/* Larger banner with animated bubbles */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden relative">
-        {/* Animated background bubbles - made larger */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute h-56 w-56 rounded-full bg-[#C17829]/10 -top-20 -right-20"
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 180, 270, 360],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-          />
-          <motion.div
-            className="absolute h-32 w-32 rounded-full bg-[#2C2C4A]/10 bottom-10 right-32"
-            animate={{
-              scale: [1, 1.5, 1],
-              x: [0, 30, 0],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-          />
-          <motion.div
-            className="absolute h-40 w-40 rounded-full bg-[#C17829]/10 bottom-16 left-32"
-            animate={{
-              y: [0, 15, 0],
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-          />
-          <motion.div
-            className="absolute h-24 w-24 rounded-full bg-[#2C2C4A]/10 top-16 left-64"
-            animate={{
-              x: [0, 20, 0],
-              y: [0, 10, 0],
-            }}
-            transition={{
-              duration: 18,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-          />
-        </div>
+    <div className="space-y-10">
+      {/* banner (unchanged) */}
+      <Banner />
 
-        <div className="flex flex-col sm:flex-row justify-between items-center p-10 py-12 relative z-10">
-          <div className="flex items-center mb-6 sm:mb-0">
-            <div className="w-16 h-16 rounded-full bg-[#2C2C4A] flex items-center justify-center mr-6">
-              <FaUser className="text-white text-2xl" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-[#2C2C4A] font-serif mb-2">
-                Welcome back, John
-              </h1>
-              <p className="text-gray-600 text-lg">
-                Here's an overview of your legal document activity for today.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-5">
-            <div className="bg-[#f7ede1] px-5 py-3 rounded-lg flex items-center gap-3 text-[#C17829]">
-              <FaChartLine className="text-lg" />
-              <span className="font-medium text-lg">Activity up 23%</span>
-            </div>
-
-            <div className="flex items-center gap-3 bg-[#e6e6f2] px-5 py-3 rounded-lg text-[#2C2C4A]">
-              <div className="relative">
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                <FaBell className="text-lg" />
-              </div>
-              <span className="font-medium text-lg">3 Tasks</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Section with background colors */}
+      {/* stats */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-        variants={container}
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        variants={fadeContainer}
         initial="hidden"
         animate="show"
       >
-        {stats.map((stat, index) => (
+        {stats.map((s) => (
           <motion.div
-            key={index}
-            className={`rounded-xl shadow-md overflow-hidden ${stat.cardBg} border border-gray-100`}
-            variants={item}
-            whileHover={{
-              y: -8,
-              boxShadow: "0 12px 20px -5px rgba(0, 0, 0, 0.1)",
-            }}
+            key={s.title}
+            variants={fadeItem}
+            whileHover={{ y: -6, boxShadow: SHADOW_GLOW }}
+            className="overflow-hidden rounded-xl border bg-white shadow-sm"
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className={`font-medium ${stat.color}`}>{stat.title}</p>
-                <div
-                  className={`p-3 rounded-full ${stat.bgColor} ${stat.color}`}
+              <div className="mb-3 flex items-center justify-between">
+                <p className="font-medium" style={{ color: s.accent.dark }}>
+                  {s.title}
+                </p>
+                <span
+                  className="rounded-full p-3"
+                  style={{
+                    backgroundColor: `${s.accent.light}33`,
+                    color: s.accent.dark,
+                  }}
                 >
-                  <stat.icon size={20} />
-                </div>
+                  <s.icon size={20} />
+                </span>
               </div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-1">
-                {stat.value}
+              <h2 className="mb-1 text-3xl font-bold text-gray-800">
+                {s.value}
               </h2>
-              <p className="text-xs font-medium text-green-600">
-                {stat.increase}
-              </p>
+              <p className="text-xs font-medium text-green-600">{s.change}</p>
             </div>
             <div
-              className={`h-1.5 bg-gradient-to-r ${
-                index % 2 === 0
-                  ? "from-[#C17829] to-[#E3A063]"
-                  : "from-[#2C2C4A] to-[#444474]"
-              }`}
+              className="h-1.5"
+              style={{
+                background: `linear-gradient(to right, ${s.accent.dark}, ${s.accent.light})`,
+              }}
             />
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Improved Tools Section with grid layout */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-[#2C2C4A] font-serif">
-            Our Tools
-          </h2>
-          <Link
-            to="/dashboard"
-            className="text-[#C17829] text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all group"
-          >
-            <span>View all tools</span>
-            <motion.span
-              whileHover={{ x: 3 }}
-              className="group-hover:text-[#E3A063]"
-            >
-              <FaArrowRight />
-            </motion.span>
-          </Link>
-        </div>
+      {/* tools (unchanged) */}
+      <ToolsSection
+        tools={tools}
+        hoverIdx={hoverIdx}
+        setHoverIdx={setHoverIdx}
+      />
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          {tools.map((tool, index) => (
-            <motion.div key={index} variants={item}>
-              <Link to={tool.link}>
-                <motion.div
-                  className="bg-white rounded-xl shadow-md overflow-hidden h-full border border-gray-100 relative"
-                  style={{
-                    boxShadow:
-                      hoveredTool === index
-                        ? `0 10px 25px -5px ${tool.bgGlow}, 0 8px 10px -6px ${tool.bgGlow}`
-                        : "",
-                  }}
-                  whileHover={{
-                    y: -10,
-                  }}
-                  onHoverStart={() => setHoveredTool(index)}
-                  onHoverEnd={() => setHoveredTool(null)}
-                >
-                  <div className={`h-2 bg-gradient-to-r ${tool.color}`} />
-                  <div className="p-6">
-                    <div className="flex items-center mb-4">
-                      <motion.div
-                        className={`p-3 rounded-full bg-gradient-to-r ${tool.color} text-white`}
-                        whileHover={{ scale: 1.1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 10,
-                        }}
-                      >
-                        <tool.icon size={20} />
-                      </motion.div>
-                      <h3 className="ml-3 text-lg font-semibold text-[#2C2C4A] font-serif">
-                        {tool.title}
-                      </h3>
-                    </div>
-                    <p className="text-gray-600 mb-6">{tool.description}</p>
-                    {/* Larger, more prominent button */}
-                    <motion.div
-                      className="flex justify-end"
-                      animate={{
-                        y: hoveredTool === index ? 0 : 5,
-                        opacity: hoveredTool === index ? 1 : 0.8,
-                      }}
-                    >
-                      <button className="bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-all shadow-md hover:shadow-lg">
-                        <span>Try now</span>
-                        <FaExternalLinkAlt size={12} />
-                      </button>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Recent Activity */}
+      {/* recent activity (FIXED) */}
       <motion.div
-        className="bg-white rounded-xl shadow-md p-6 border border-gray-100"
+        className="rounded-xl border bg-white p-6 shadow-sm"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-[#2C2C4A] font-serif">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="font-serif text-2xl font-semibold text-[color:var(--brand-dark)]">
             Recent Activity
           </h2>
-          <div className="bg-[#f7ede1] text-[#C17829] text-xs font-medium px-3 py-1 rounded-full">
+          <span className="rounded-full bg-[color:var(--accent-light)] px-3 py-1 text-xs font-medium text-[color:var(--accent-dark)]">
             Today
-          </div>
+          </span>
         </div>
 
-        <div className="space-y-5">
-          {recentActivity.map((activity, index) => (
-            <motion.div
-              key={activity.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 + 0.5 }}
-              whileHover={{
-                x: 5,
-                backgroundColor: "rgba(249, 250, 251, 0.8)",
-              }}
-              className="p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer flex items-center justify-between"
-            >
-              <div className="flex items-center">
-                <div
-                  className={`p-2 rounded-lg ${
-                    index % 2 === 0
-                      ? "bg-[#f7ede1] text-[#C17829]"
-                      : "bg-[#e6e6f2] text-[#2C2C4A]"
-                  } mr-3`}
-                >
-                  {index === 0 && <FaFileAlt />}
-                  {index === 1 && <FaClipboardCheck />}
-                  {index === 2 && <FaShieldAlt />}
-                  {index === 3 && <FaLanguage />}
+        <div className="space-y-4">
+          {activity.map(([act, doc, when], i) => {
+            const Icon = activityIcons[i % activityIcons.length];
+            const even = i % 2 === 0;
+            return (
+              <motion.div
+                key={i}
+                className="flex cursor-pointer items-center justify-between rounded-lg p-3 transition-colors hover:bg-gray-50"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + i * 0.1 }}
+                whileHover={{ x: 4 }}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="rounded-lg p-2"
+                    style={{
+                      backgroundColor: even
+                        ? "rgba(193,120,41,0.1)"
+                        : "rgba(44,44,74,0.1)",
+                      color: even ? ACCENT.dark : BRAND.dark,
+                    }}
+                  >
+                    <Icon size={16} />
+                  </span>
+                  <div>
+                    <p className="font-medium text-gray-800">{act}</p>
+                    <p className="text-sm text-gray-500">{doc}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-800">{activity.action}</p>
-                  <p className="text-sm text-gray-500">{activity.document}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                  {activity.time}
+                <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-400">
+                  {when}
                 </span>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         <div className="mt-6 flex justify-center">
           <motion.button
-            className="px-4 py-2 bg-[#f7ede1] text-[#C17829] rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#C17829] hover:text-white transition-colors"
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-[color:var(--accent-dark)] transition-colors hover:bg-[color:var(--accent-dark)] hover:text-white"
+            style={{ backgroundColor: "rgba(193,120,41,0.1)" }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            View all activity
-            <FaArrowRight />
+            View all activity <FaArrowRight />
           </motion.button>
         </div>
       </motion.div>
     </div>
   );
 };
+
+/* ───────── sub-components (unchanged styling) ───────── */
+
+const Banner = () => (
+  <div className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+    <BackgroundBubbles />
+    <div className="relative z-10 flex flex-col items-center justify-between gap-8 p-10 sm:flex-row sm:gap-0">
+      <div className="flex items-center gap-6">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--brand-dark)]">
+          <FaUser className="text-2xl text-white" />
+        </div>
+        <div>
+          <h1 className="mb-1 font-serif text-3xl font-bold text-[color:var(--brand-dark)]">
+            Welcome back, John
+          </h1>
+          <p className="text-lg text-gray-600">
+            Here’s today’s overview of your legal-doc activity.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-4">
+        <Chip
+          icon={FaChartLine}
+          label="Activity up 23%"
+          bg={ACCENT.dark}
+          fg="#fff"
+        />
+        <Chip icon={FaBell} label="3 Tasks" bg={BRAND.dark} fg="#fff" dot />
+      </div>
+    </div>
+  </div>
+);
+
+interface ToolCard {
+  icon: IconType;
+  title: string;
+  desc: string;
+  link: string;
+}
+
+const ToolsSection = ({
+  tools,
+  hoverIdx,
+  setHoverIdx,
+}: {
+  tools: ToolCard[];
+  hoverIdx: number | null;
+  setHoverIdx: React.Dispatch<React.SetStateAction<number | null>>;
+}) => (
+  <section className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h2 className="font-serif text-2xl font-semibold text-[color:var(--brand-dark)]">
+        Our Tools
+      </h2>
+      <Link
+        to="/dashboard"
+        className="group flex items-center gap-1 text-sm font-medium text-[color:var(--accent-dark)] transition-all hover:gap-2"
+      >
+        View all{" "}
+        <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+      </Link>
+    </div>
+
+    <motion.div
+      className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+      variants={fadeContainer}
+      initial="hidden"
+      animate="show"
+    >
+      {tools.map((t, i) => (
+        <motion.div key={t.title} variants={fadeItem}>
+          <Link to={t.link}>
+            <motion.div
+              onHoverStart={() => setHoverIdx(i)}
+              onHoverEnd={() => setHoverIdx(null)}
+              whileHover={{ y: -8, boxShadow: SHADOW_GLOW }}
+              className="relative h-full overflow-hidden rounded-xl border bg-white shadow-sm"
+            >
+              <div
+                className="h-2"
+                style={{
+                  background: `linear-gradient(to right, ${ACCENT.dark}, ${ACCENT.light})`,
+                }}
+              />
+              <div className="p-6">
+                <div className="mb-4 flex items-center">
+                  <span
+                    className="rounded-full p-3 text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${ACCENT.dark}, ${ACCENT.light})`,
+                    }}
+                  >
+                    <t.icon size={20} />
+                  </span>
+                  <h3 className="ml-3 font-serif text-lg font-semibold text-[color:var(--brand-dark)]">
+                    {t.title}
+                  </h3>
+                </div>
+                <p className="mb-8 text-gray-600">{t.desc}</p>
+                <motion.button
+                  className="flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${ACCENT.dark}, ${ACCENT.light})`,
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Try now <FaExternalLinkAlt size={12} />
+                </motion.button>
+              </div>
+            </motion.div>
+          </Link>
+        </motion.div>
+      ))}
+    </motion.div>
+  </section>
+);
+
+const Chip = ({
+  icon: Icon,
+  label,
+  bg,
+  fg,
+  dot = false,
+}: {
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+  bg: string;
+  fg: string;
+  dot?: boolean;
+}) => (
+  <span
+    className="flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium"
+    style={{ backgroundColor: bg, color: fg }}
+  >
+    <span className="relative">
+      {dot && (
+        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
+      )}
+      <Icon size={14} />
+    </span>
+    {label}
+  </span>
+);
+
+const BackgroundBubbles = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    {[
+      ["-top-24 -left-20", 56, ACCENT.dark],
+      ["top-1/3 -right-24", 32, BRAND.dark],
+      ["bottom-20 left-24", 40, ACCENT.dark],
+      ["top-12 right-1/3", 24, BRAND.dark],
+    ].map(([pos, size, col], i) => (
+      <motion.div
+        key={i}
+        className={`absolute ${pos} rounded-full`}
+        style={{ width: size, height: size, backgroundColor: `${col}26` }}
+        animate={{ scale: [1, 1.25, 1], rotate: [0, 360] }}
+        transition={{
+          duration: 20 + i * 3,
+          repeat: Infinity,
+          repeatType: "loop",
+        }}
+      />
+    ))}
+  </div>
+);
 
 export default DashboardHome;

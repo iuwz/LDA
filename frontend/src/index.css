@@ -2,7 +2,11 @@
 .font-serif {
   font-family: 'Merriweather', serif;
 }
-
+:root {
+  --brand-dark:  #2C2C4A;   /* navy-charcoal */
+  --accent-dark: #C17829;   /* burnt-amber  */
+  --accent-light:#f7ede1;   /* soft-peach   */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

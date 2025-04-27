@@ -1,53 +1,96 @@
-import React, { useState } from "react";
+// RephrasingTool.tsx
+import React, { useState, useRef } from "react";
+import {
+  FaEdit,
+  FaExchangeAlt,
+  FaCopy,
+  FaCheck,
+  FaCloudUploadAlt,
+  FaFileAlt,
+  FaDownload,
+} from "react-icons/fa";
 import { motion } from "framer-motion";
-import { FaEdit, FaExchangeAlt, FaCheck, FaCopy } from "react-icons/fa";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import mammoth from "mammoth";
 
-const RephrasingTool = () => {
+/* ------------ helper: extract text from file ------------ */
+const extractText = async (file: File): Promise<string> => {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (!ext) return "";
+
+  if (ext === "txt") {
+    return new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onerror = () => rej(reader.error);
+      reader.onload = () => res(reader.result as string);
+      reader.readAsText(file);
+    });
+  }
+
+  if (ext === "pdf") {
+    const data = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data }).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const txt = await page.getTextContent();
+      fullText += txt.items.map((t: any) => t.str).join(" ") + "\n";
+    }
+    return fullText;
+  }
+
+  if (ext === "docx" || ext === "doc") {
+    const arrayBuffer = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer });
+    return value;
+  }
+
+  return "";
+};
+
+/* ------------ main component ------------ */
+const RephrasingTool: React.FC = () => {
   const [originalText, setOriginalText] = useState("");
   const [rephrasedText, setRephrasedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("formal");
+  const [activeTab, setActiveTab] = useState<
+    "formal" | "clear" | "persuasive" | "concise"
+  >("formal");
   const [copied, setCopied] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Mock function to simulate rephrasing with different styles
-  const rephrase = (text: string, style: string) => {
-    setIsLoading(true);
-
-    // Simulate API call delay
-    setTimeout(() => {
-      let result = "";
-
-      switch (style) {
-        case "formal":
-          result = `We hereby acknowledge receipt of your communication dated the 15th of March. 
-          It is our understanding that you seek clarification regarding the aforementioned clause. 
-          Please be advised that our legal team will provide a comprehensive response within the next business week.`;
-          break;
-        case "clear":
-          result = `We received your email from March 15. 
-          You asked about the meaning of clause 3.2. 
-          Our legal team will respond with a detailed explanation within 5 business days.`;
-          break;
-        case "persuasive":
-          result = `Thank you for bringing this important matter to our attention on March 15. 
-          Your question about clause 3.2 raises a crucial point that deserves careful consideration. 
-          Our specialized legal team is already reviewing this and will provide you with expert guidance within the week.`;
-          break;
-        case "concise":
-          result = `Got your March 15 email. Our legal team will explain clause 3.2 by Friday.`;
-          break;
-        default:
-          result = text;
-      }
-
-      setRephrasedText(result);
-      setIsLoading(false);
-    }, 1500);
+  /* ----- mock rephrase (unchanged) ----- */
+  const rephraseMap: Record<typeof activeTab, string> = {
+    formal: `We hereby acknowledge receipt of your communication dated…`,
+    clear: `We received your email from March 15…`,
+    persuasive: `Thank you for bringing this matter to our attention…`,
+    concise: `Got your March 15 email. Our legal team will reply by Friday.`,
   };
 
   const handleRephrase = () => {
-    if (originalText.trim()) {
-      rephrase(originalText, activeTab);
+    if (!originalText.trim()) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      setRephrasedText(rephraseMap[activeTab]);
+      setIsLoading(false);
+    }, 1200);
+  };
+
+  /* ----- upload drag/drop ----- */
+  const onFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const f = files[0];
+    try {
+      const txt = await extractText(f);
+      if (!txt.trim()) throw new Error("Unsupported or empty file");
+      setOriginalText(txt);
+      setUploadError("");
+    } catch (err) {
+      console.error(err);
+      setUploadError(
+        "Could not read that file type. Please use PDF, DOCX, or TXT."
+      );
     }
   };
 
@@ -57,158 +100,151 @@ const RephrasingTool = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const tabOptions = [
-    { id: "formal", label: "Formal" },
-    { id: "clear", label: "Clear" },
-    { id: "persuasive", label: "Persuasive" },
-    { id: "concise", label: "Concise" },
-  ];
+  const handleDownload = () => {
+    const blob = new Blob([rephrasedText], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "rephrased.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const tabs = ["formal", "clear", "persuasive", "concise"] as const;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-full bg-blue-100 text-blue-500">
-            <FaEdit size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Rephrasing Tool
-            </h1>
-            <p className="text-gray-600">
-              Enhance clarity and precision in your legal documents
-            </p>
-          </div>
+    <div className="space-y-8">
+      {/* header */}
+      <div className="rounded-lg bg-white shadow p-6 flex items-center gap-3">
+        <div className="p-3 rounded-full bg-[color:var(--accent-light)] text-[color:var(--accent-dark)]">
+          <FaEdit size={22} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-[color:var(--brand-dark)]">
+            Rephrasing Tool
+          </h1>
+          <p className="text-gray-600">
+            Enhance clarity and tone in your legal documents
+          </p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-          {/* Original Text Section */}
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Original Text
-            </h2>
-            <textarea
-              className="w-full h-60 p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Enter your legal text here for rephrasing..."
-              value={originalText}
-              onChange={(e) => setOriginalText(e.target.value)}
-            ></textarea>
-          </div>
+      {/* uploader */}
+      <div
+        className="border-2 border-dashed border-[color:var(--accent-dark)]/40 rounded-lg p-8 text-center cursor-pointer hover:bg-[color:var(--accent-light)]/30 transition"
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          onFiles(e.dataTransfer.files);
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.txt"
+          className="hidden"
+          onChange={(e) => onFiles(e.target.files)}
+        />
+        <FaCloudUploadAlt className="mx-auto text-4xl text-[color:var(--accent-dark)] mb-3" />
+        <p className="font-medium text-[color:var(--accent-dark)]">
+          Upload PDF / DOCX / TXT
+        </p>
+        {uploadError && (
+          <p className="text-sm text-red-600 mt-2">{uploadError}</p>
+        )}
+      </div>
 
-          {/* Rephrased Text Section */}
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Rephrased Text
-              </h2>
-              {rephrasedText && (
+      {/* editor panes */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* original */}
+        <div>
+          <h2 className="font-semibold text-[color:var(--brand-dark)] mb-2">
+            Original Text
+          </h2>
+          <textarea
+            className="w-full h-56 border rounded-md p-4 focus:ring-2 focus:ring-[color:var(--accent-dark)] focus:outline-none"
+            placeholder="Type or upload legal text…"
+            value={originalText}
+            onChange={(e) => setOriginalText(e.target.value)}
+          />
+        </div>
+
+        {/* rephrased */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-semibold text-[color:var(--brand-dark)]">
+              Rephrased Text
+            </h2>
+            {rephrasedText && (
+              <div className="flex gap-3 text-sm">
                 <button
                   onClick={handleCopy}
-                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-[color:var(--accent-dark)] hover:underline"
                 >
-                  {copied ? <FaCheck /> : <FaCopy />}
-                  <span>{copied ? "Copied!" : "Copy"}</span>
+                  {copied ? <FaCheck /> : <FaCopy />}{" "}
+                  {copied ? "Copied" : "Copy"}
                 </button>
-              )}
-            </div>
-            <div className="h-60 p-4 border border-gray-300 rounded-md bg-gray-50 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                rephrasedText || (
-                  <p className="text-gray-400 italic">
-                    Rephrased text will appear here...
-                  </p>
-                )
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Style Selection and Action Button */}
-        <div className="bg-gray-50 p-4 border-t border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
-            <div>
-              <p className="text-sm text-gray-600 mb-2">
-                Select rephrasing style:
-              </p>
-              <div className="flex space-x-2">
-                {tabOptions.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                      activeTab === tab.id
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-1 text-[color:var(--accent-dark)] hover:underline"
+                >
+                  <FaDownload /> Download
+                </button>
               </div>
-            </div>
-            <motion.button
-              onClick={handleRephrase}
-              disabled={!originalText.trim() || isLoading}
-              className={`flex items-center justify-center space-x-2 px-6 py-2 rounded-md text-white transition-colors ${
-                !originalText.trim() || isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              }`}
-              whileHover={{
-                scale: originalText.trim() && !isLoading ? 1.05 : 1,
-              }}
-              whileTap={{ scale: originalText.trim() && !isLoading ? 0.95 : 1 }}
-            >
-              <FaExchangeAlt />
-              <span>Rephrase</span>
-            </motion.button>
+            )}
+          </div>
+          <div className="h-56 border rounded-md p-4 bg-gray-50 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--accent-dark)]" />
+              </div>
+            ) : (
+              rephrasedText || (
+                <p className="text-gray-400 italic">
+                  Rephrased text will appear here…
+                </p>
+              )
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tips Section */}
-      <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
-        <h3 className="text-lg font-semibold text-blue-800 mb-3">
-          Rephrasing Tips
-        </h3>
-        <ul className="space-y-2 text-blue-700">
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-500 mt-1">•</span>
-            <span>
-              Use the <strong>Formal</strong> style for official communications
-              and contracts.
-            </span>
-          </li>
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-500 mt-1">•</span>
-            <span>
-              Use the <strong>Clear</strong> style when explaining complex legal
-              concepts to clients.
-            </span>
-          </li>
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-500 mt-1">•</span>
-            <span>
-              Use the <strong>Persuasive</strong> style for demand letters and
-              negotiation documents.
-            </span>
-          </li>
-          <li className="flex items-start space-x-2">
-            <span className="text-blue-500 mt-1">•</span>
-            <span>
-              Use the <strong>Concise</strong> style for email communications
-              and brief notes.
-            </span>
-          </li>
-        </ul>
+      {/* tabs + action */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex gap-2">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`px-3 py-1 rounded-md text-sm ${
+                activeTab === t
+                  ? "bg-[color:var(--accent-dark)] text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <motion.button
+          onClick={handleRephrase}
+          disabled={!originalText.trim() || isLoading}
+          className={`flex items-center gap-2 px-6 py-2 rounded-md text-white ${
+            !originalText.trim() || isLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+          }`}
+          whileHover={{ scale: originalText.trim() && !isLoading ? 1.05 : 1 }}
+          whileTap={{ scale: originalText.trim() && !isLoading ? 0.95 : 1 }}
+        >
+          <FaExchangeAlt /> Rephrase
+        </motion.button>
       </div>
     </div>
   );
