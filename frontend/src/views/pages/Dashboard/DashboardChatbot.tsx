@@ -248,35 +248,36 @@ const DashboardChatbot = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#F8F9FA] rounded-lg shadow-md overflow-hidden font-sans">
       {/* Header */}
-      <div className="bg-purple-600 text-white p-4 flex items-center justify-between">
+      <div className="bg-[#C18241] text-white p-4 flex items-center justify-between font-sans">
+
         <div className="flex items-center">
           <FaRobot className="text-2xl mr-2" />
           <h1 className="text-xl font-semibold">Legal Assistant</h1>
         </div>
         <div className="flex space-x-1">
-          <button
-            onClick={() => setActiveTab("chat")}
-            className={`px-3 py-1 rounded-md text-sm ${
-              activeTab === "chat"
-                ? "bg-white text-purple-600"
-                : "bg-purple-700 text-white hover:bg-purple-800"
-            }`}
-          >
-            Chat
-          </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`px-3 py-1 rounded-md text-sm ${
-              activeTab === "history"
-                ? "bg-white text-purple-600"
-                : "bg-purple-700 text-white hover:bg-purple-800"
-            }`}
-          >
-            History
-          </button>
-        </div>
+  <button
+    onClick={() => setActiveTab("chat")}
+    className={`px-3 py-1 rounded-md text-sm font-medium ${
+      activeTab === "chat"
+        ? "bg-white text-[#C18241] border border-[#C18241]"
+        : "bg-[#C18241] text-white hover:bg-[#A96C34]"
+    }`}
+  >
+    Chat
+  </button>
+  <button
+    onClick={() => setActiveTab("history")}
+    className={`px-3 py-1 rounded-md text-sm font-medium ${
+      activeTab === "history"
+        ? "bg-white text-[#C18241] border border-[#C18241]"
+        : "bg-[#C18241] text-white hover:bg-[#A96C34]"
+    }`}
+  >
+    History
+  </button>
+</div>
       </div>
 
       {/* Main Content */}
@@ -317,8 +318,8 @@ const DashboardChatbot = () => {
                       <div
                         className={`max-w-[80%] rounded-lg p-3 ${
                           message.sender === "user"
-                            ? "bg-purple-600 text-white"
-                            : "bg-white border border-gray-200 text-gray-800"
+                            ? "bg-[#C18241] text-white"
+                            : "bg-white border border-[#DDD0C8] text-[#3E2723]"
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">
@@ -406,14 +407,14 @@ const DashboardChatbot = () => {
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your message..."
-                    className="flex-1 py-2 px-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    className="flex-1 py-2 px-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-[#C18241] focus:border-[#C18241]"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!inputValue.trim() || isTyping}
                     className={`p-2 ${
                       inputValue.trim() && !isTyping
-                        ? "bg-purple-600 hover:bg-purple-700"
+                        ? "bg-[#C18241] hover:bg-[#A96C34]"
                         : "bg-gray-300 cursor-not-allowed"
                     } text-white rounded-r-lg transition-colors`}
                     aria-label="Send message"
@@ -439,12 +440,13 @@ const DashboardChatbot = () => {
                     Your Conversations
                   </h2>
                   <button
-                    onClick={startNewChat}
-                    className="flex items-center space-x-1 text-sm bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700 transition-colors"
-                  >
-                    <FaPlus size={12} />
-                    <span>New Chat</span>
-                  </button>
+  onClick={startNewChat}
+  className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md transition-colors
+    bg-[#C18241] text-white hover:bg-[#A96C34] active:bg-white active:text-[#C18241] active:border active:border-[#C18241]"
+>
+  <FaPlus size={12} />
+  <span>New Chat</span>
+</button>
                 </div>
 
                 {conversations.length === 0 ? (
@@ -466,7 +468,7 @@ const DashboardChatbot = () => {
                         onClick={() => selectChat(chat)}
                         className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
                           activeChat.id === chat.id
-                            ? "border-2 border-purple-600"
+                            ? "border-2 border-[#C18241]"
                             : "border border-gray-200"
                         }`}
                       >
