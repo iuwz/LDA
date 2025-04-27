@@ -19,49 +19,60 @@ import {
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "ar", label: "Arabic" },
+  { value: "fr", label: "French" },
+];
+
+const TFA_METHODS = [
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone" },
+];
+
+const navItems = [
+  {
+    icon: FaTachometerAlt,
+    title: "Dashboard",
+    path: "/dashboard",
+    end: true,
+  },
+  { icon: FaEdit, title: "Rephrasing Tool", path: "/dashboard/rephrasing" },
+  {
+    icon: FaShieldAlt,
+    title: "Risk Assessment",
+    path: "/dashboard/risk-assessment",
+  },
+  {
+    icon: FaClipboardCheck,
+    title: "Compliance Checker",
+    path: "/dashboard/compliance",
+  },
+  {
+    icon: FaLanguage,
+    title: "Translation Tool",
+    path: "/dashboard/translation",
+  },
+  { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
+  { icon: FaCog, title: "Settings", path: "/dashboard/settings" },
+];
+
+const getCurrentPageTitle = (locationPath: string) => {
+  const current = navItems.find(
+    (i) =>
+      locationPath === i.path ||
+      (i.path !== "/dashboard" && locationPath.startsWith(i.path))
+  );
+  return current ? current.title : "Dashboard";
+};
+
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const location = useLocation();
 
-  const navItems = [
-    {
-      icon: FaTachometerAlt,
-      title: "Dashboard",
-      path: "/dashboard",
-      end: true,
-    },
-    { icon: FaEdit, title: "Rephrasing Tool", path: "/dashboard/rephrasing" },
-    {
-      icon: FaShieldAlt,
-      title: "Risk Assessment",
-      path: "/dashboard/risk-assessment",
-    },
-    {
-      icon: FaClipboardCheck,
-      title: "Compliance Checker",
-      path: "/dashboard/compliance",
-    },
-    {
-      icon: FaLanguage,
-      title: "Translation Tool",
-      path: "/dashboard/translation",
-    },
-    { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
-    { icon: FaCog, title: "Settings", path: "/dashboard/settings" },
-  ];
-
-  const getCurrentPageTitle = () => {
-    const current = navItems.find(
-      (i) =>
-        location.pathname === i.path ||
-        (i.path !== "/dashboard" && location.pathname.startsWith(i.path))
-    );
-    return current ? current.title : "Dashboard";
-  };
-
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-x-hidden">
       {/* Toggle sidebar */}
       {!isSidebarOpen && (
         <button
@@ -74,7 +85,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Sidebar */}
       <motion.aside
-        className="fixed md:relative z-30 h-full bg-white shadow-lg overflow-y-auto"
+        className="fixed md:relative z-30 h-full bg-white shadow-lg overflow-y-auto overflow-x-hidden"
         initial={false}
         animate={{ width: isSidebarOpen ? "16rem" : 0 }}
         transition={{ duration: 0.3 }}
@@ -94,7 +105,7 @@ const DashboardLayout: React.FC = () => {
           </button>
         </div>
 
-        <nav className="mt-4 px-3">
+        <nav className="mt-4 px-3 overflow-x-hidden">
           <ul className="space-y-1">
             {navItems.map(({ icon: Icon, title, path, end }, idx) => (
               <li key={idx}>
@@ -177,7 +188,7 @@ const DashboardLayout: React.FC = () => {
                 <FaBalanceScale className="text-2xl text-[#C17829]" />
               )}
               <h1 className="text-xl font-semibold text-[#2C2C4A]">
-                {getCurrentPageTitle()}
+                {getCurrentPageTitle(location.pathname)}
               </h1>
             </div>
             <NavLink
