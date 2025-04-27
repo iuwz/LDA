@@ -1,39 +1,52 @@
+// ComplianceChecker.tsx
 import React, { useState } from "react";
 import {
   FaClipboardCheck,
-  FaGlobe,
-  FaBuilding,
-  FaUpload,
+  FaCloudUploadAlt,
   FaFileAlt,
   FaTrash,
-  FaCheck,
-  FaTimes,
+  FaSearch,
+  FaFilePdf,
   FaExclamationCircle,
   FaInfoCircle,
-  FaFilePdf,
-  FaDownload,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-// Compliance status components with different colors
-const ComplianceStatus = ({
-  status,
-}: {
-  status: "compliant" | "non-compliant" | "warning";
-}) => {
-  const colors = {
+/** ─── Data Types ───────────────────────────── */
+type Status = "compliant" | "non-compliant" | "warning";
+interface Regulation {
+  id: number;
+  name: string;
+  status: Status;
+  regulationCode: string;
+  description: string;
+  recommendation: string;
+}
+interface AnalysisResult {
+  overallStatus: Status;
+  complianceScore: number;
+  lastUpdated: string;
+  regulations: Regulation[];
+}
+
+/** ─── Brand Tokens ─────────────────────────── */
+const BRAND = { dark: "var(--brand-dark)" } as const;
+const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
+const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
+
+/** ─── Status Badge ────────────────────────── */
+const ComplianceStatus: React.FC<{ status: Status }> = ({ status }) => {
+  const palette: Record<Status, string> = {
     compliant: "bg-green-100 text-green-800 border-green-200",
-    "non-compliant": "bg-red-100 text-red-800 border-red-200",
+    "non-compliant": "bg-red-100   text-red-800   border-red-200",
     warning: "bg-yellow-100 text-yellow-800 border-yellow-200",
   };
-
-  const icons = {
-    compliant: <FaCheck className="mr-1" />,
-    "non-compliant": <FaTimes className="mr-1" />,
-    warning: <FaExclamationCircle className="mr-1" />,
+  const icons: Record<Status, React.ReactNode> = {
+    compliant: <FaClipboardCheck className="mr-1" />,
+    "non-compliant": <FaExclamationCircle className="mr-1" />,
+    warning: <FaInfoCircle className="mr-1" />,
   };
-
-  const labels = {
+  const labels: Record<Status, string> = {
     compliant: "Compliant",
     "non-compliant": "Non-Compliant",
     warning: "Warning",
@@ -41,7 +54,7 @@ const ComplianceStatus = ({
 
   return (
     <span
-      className={`px-2 py-1 text-xs font-medium rounded border flex items-center ${colors[status]}`}
+      className={`flex items-center px-2 py-1 text-xs font-medium rounded border ${palette[status]}`}
     >
       {icons[status]}
       {labels[status]}
@@ -49,25 +62,14 @@ const ComplianceStatus = ({
   );
 };
 
-const ComplianceChecker = () => {
+/** ─── Main Component ─────────────────────── */
+const ComplianceChecker: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [selectedJurisdiction, setSelectedJurisdiction] = useState("US");
-  const [selectedIndustry, setSelectedIndustry] = useState("General");
+  const [isAnalyzing, setAnalyzing] = useState(false);
+  const [results, setResults] = useState<AnalysisResult | null>(null);
 
-  // Mock jurisdictions and industries
-  const jurisdictions = ["US", "EU", "UK", "Canada", "Australia"];
-  const industries = [
-    "General",
-    "Healthcare",
-    "Finance",
-    "Technology",
-    "Retail",
-  ];
-
-  // Mock analysis results
-  const mockResults = {
+  // Fake API data
+  const mockResults = (): AnalysisResult => ({
     overallStatus: "warning",
     complianceScore: 76,
     lastUpdated: new Date().toISOString(),
@@ -80,7 +82,7 @@ const ComplianceChecker = () => {
         description:
           "Privacy policy does not fully address all required disclosures.",
         recommendation:
-          "Add details on data retention periods and the right to data portability.",
+          "Add details on data retention periods and data portability rights.",
       },
       {
         id: 2,
@@ -98,17 +100,15 @@ const ComplianceChecker = () => {
         regulationCode: "CCPA § 1798.100",
         description: "Missing required disclosures about consumer data rights.",
         recommendation:
-          "Add a specific section on consumer rights to access and delete personal information.",
+          "Add a section on consumer data access and deletion rights.",
       },
       {
         id: 4,
         name: "Accessibility",
         status: "warning",
         regulationCode: "ADA Title III",
-        description:
-          "Website terms may not adequately address accessibility requirements.",
-        recommendation:
-          "Include a statement on accessibility commitment and available accommodations.",
+        description: "Website terms may not adequately address accessibility.",
+        recommendation: "Include an accessibility commitment statement.",
       },
       {
         id: 5,
@@ -119,372 +119,216 @@ const ComplianceChecker = () => {
         recommendation: "No action required.",
       },
     ],
-  };
+  });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setResults(null); // Clear previous results
-    }
+  /* ─── Handlers ──────────────────────────── */
+  const selectFile = (f: File | null) => {
+    setFile(f);
+    setResults(null);
   };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    selectFile(e.target.files?.[0] || null);
+  const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    selectFile(e.dataTransfer.files?.[0] || null);
   };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-      setResults(null); // Clear previous results
-    }
-  };
-
-  const handleAnalyze = () => {
+  const analyze = () => {
     if (!file) return;
-
-    setIsAnalyzing(true);
-
-    // Simulate API call delay
+    setAnalyzing(true);
     setTimeout(() => {
-      setResults(mockResults);
-      setIsAnalyzing(false);
+      setResults(mockResults());
+      setAnalyzing(false);
     }, 2000);
   };
-
-  const handleReset = () => {
+  const reset = () => {
     setFile(null);
     setResults(null);
   };
 
-  // Count compliance issues by status
-  const getStatusCounts = () => {
-    if (!results) return { compliant: 0, "non-compliant": 0, warning: 0 };
-
-    return results.regulations.reduce(
-      (acc: any, item: any) => {
-        acc[item.status] = (acc[item.status] || 0) + 1;
-        return acc;
-      },
-      { compliant: 0, "non-compliant": 0, warning: 0 }
-    );
-  };
+  /* ─── Derived Data ───────────────────────── */
+  const counts: Record<Status, number> = results
+    ? results.regulations.reduce(
+        (acc, item) => {
+          acc[item.status]++;
+          return acc;
+        },
+        { compliant: 0, "non-compliant": 0, warning: 0 }
+      )
+    : { compliant: 0, "non-compliant": 0, warning: 0 };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-full bg-green-100 text-green-600">
-            <FaClipboardCheck size={24} />
-          </div>
+      <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
+        <div className="flex items-center gap-4 p-6">
+          <span className="rounded-full bg-[color:var(--accent-light)] p-3 text-[color:var(--accent-dark)]">
+            <FaClipboardCheck size={22} />
+          </span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
               Compliance Checker
             </h1>
-            <p className="text-gray-600">
-              Ensure your documents meet regulatory requirements
-            </p>
+            <p className="text-gray-600">International Law — Saudi Arabia</p>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Content */}
+      <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
-          <div className="p-6">
-            {/* Jurisdiction and Industry Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Jurisdiction
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaGlobe className="text-gray-400" />
-                  </div>
-                  <select
-                    value={selectedJurisdiction}
-                    onChange={(e) => setSelectedJurisdiction(e.target.value)}
-                    className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  >
-                    {jurisdictions.map((jurisdiction) => (
-                      <option key={jurisdiction} value={jurisdiction}>
-                        {jurisdiction}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Select the jurisdiction for compliance checking
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Industry
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaBuilding className="text-gray-400" />
-                  </div>
-                  <select
-                    value={selectedIndustry}
-                    onChange={(e) => setSelectedIndustry(e.target.value)}
-                    className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  >
-                    {industries.map((industry) => (
-                      <option key={industry} value={industry}>
-                        {industry}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Select your industry for specific regulations
-                </p>
-              </div>
-            </div>
-
-            {/* File Upload Section */}
+          <div className="p-8 space-y-6">
+            {/* Upload */}
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center
-                        hover:border-green-500 transition-colors cursor-pointer"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-10 text-center hover:border-[color:var(--accent-dark)] transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop}
               onClick={() =>
-                document.getElementById("file-upload-compliance")?.click()
+                document.getElementById("compliance-upload")?.click()
               }
             >
               <input
-                id="file-upload-compliance"
+                id="compliance-upload"
                 type="file"
-                className="hidden"
-                onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.txt"
+                className="hidden"
+                onChange={onFileChange}
               />
-
               {file ? (
-                <div className="text-center">
-                  <FaFileAlt className="mx-auto text-4xl text-green-500 mb-3" />
-                  <p className="text-gray-700 font-medium mb-1">{file.name}</p>
-                  <p className="text-gray-500 text-sm mb-4">
+                <>
+                  <FaFileAlt className="text-5xl text-[color:var(--accent-dark)]" />
+                  <p className="mt-2 font-medium text-gray-700">{file.name}</p>
+                  <p className="text-sm text-gray-500">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
-
-                  <div className="flex space-x-3">
+                  <div className="mt-4 flex gap-3">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReset();
-                      }}
-                      className="px-3 py-1 bg-gray-200 rounded-md text-gray-700 text-sm hover:bg-gray-300 transition-colors flex items-center"
+                      onClick={reset}
+                      className="rounded-md bg-gray-200 px-4 py-1 text-gray-700 hover:bg-gray-300"
                     >
-                      <FaTrash className="mr-1 text-xs" /> Remove
+                      <FaTrash /> Remove
                     </button>
-
                     <motion.button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAnalyze();
+                        analyze();
                       }}
-                      className="px-4 py-1 bg-green-500 rounded-md text-white text-sm hover:bg-green-600 transition-colors flex items-center"
+                      className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-5 py-1 text-white"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <FaClipboardCheck className="mr-1 text-xs" /> Check
-                      Compliance
+                      <FaSearch /> Analyze
                     </motion.button>
                   </div>
-                </div>
+                </>
               ) : (
                 <>
-                  <FaUpload className="text-5xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">
-                    Upload document for compliance check
-                  </h3>
-                  <p className="text-gray-500 text-center mb-6 max-w-md">
-                    Drag and drop your file here, or click to browse
+                  <FaCloudUploadAlt className="text-5xl text-gray-400" />
+                  <p className="mt-2 text-gray-700">
+                    Drag & drop or click to upload
                   </p>
                   <p className="text-xs text-gray-400">
-                    Supported formats: PDF, DOC, DOCX, TXT (Max 10MB)
+                    PDF, DOC(X) or TXT (max 10 MB)
                   </p>
                 </>
               )}
             </div>
 
             {isAnalyzing && (
-              <div className="mt-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-3"></div>
-                <p className="text-gray-700">
-                  Checking document for compliance issues...
-                </p>
+              <div className="mt-6 text-center text-gray-700">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
+                <p className="mt-2">Analyzing document…</p>
               </div>
             )}
           </div>
         ) : (
-          <div>
-            {/* Results Header with Summary */}
-            <div className="bg-gray-50 p-6 border-b border-gray-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                  <FaFileAlt className="text-2xl text-gray-500" />
-                  <div>
-                    <h3 className="font-medium text-gray-800">{file?.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {selectedJurisdiction} • {selectedIndustry} • Checked{" "}
-                      {new Date(results.lastUpdated).toLocaleDateString()}
-                    </p>
-                  </div>
+          <>
+            {/* Summary */}
+            <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <FaFilePdf className="text-2xl text-gray-500" />
+                <div>
+                  <h3 className="font-medium text-gray-800">{file?.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    Checked {new Date(results.lastUpdated).toLocaleDateString()}
+                  </p>
                 </div>
-
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Status:</p>
-                    <ComplianceStatus status={results.overallStatus} />
-                  </div>
-
-                  <div className="h-10 border-l border-gray-300"></div>
-
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">
-                      Compliance Score:
-                    </p>
-                    <div className="text-lg font-bold text-gray-800">
-                      {results.complianceScore}/100
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <motion.button
-                      className="px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:bg-gray-200 transition-colors text-sm flex items-center"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FaFilePdf className="mr-1" /> Report
-                    </motion.button>
-
-                    <motion.button
-                      onClick={handleReset}
-                      className="px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:bg-gray-200 transition-colors text-sm"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Check Another
-                    </motion.button>
-                  </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Status</p>
+                  <ComplianceStatus status={results.overallStatus} />
                 </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Score</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {results.complianceScore}/100
+                  </p>
+                </div>
+                <motion.button
+                  onClick={reset}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Analyze Another
+                </motion.button>
               </div>
             </div>
 
-            {/* Compliance Summary */}
-            <div className="p-6">
-              {/* Status Counts */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {Object.entries(getStatusCounts()).map(([status, count]) => {
-                  const colors: Record<string, string> = {
-                    compliant: "text-green-600",
-                    "non-compliant": "text-red-600",
-                    warning: "text-yellow-600",
-                  };
-
-                  return (
-                    <div
-                      key={status}
-                      className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    >
-                      <p className="text-sm text-gray-500 mb-1">
-                        {status === "compliant"
-                          ? "Compliant"
-                          : status === "non-compliant"
-                          ? "Non-Compliant"
-                          : "Warning"}
-                        :
-                      </p>
-                      <p className={`text-2xl font-bold ${colors[status]}`}>
-                        {count as number}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Compliance Items List */}
-              <div className="space-y-4">
-                {results.regulations.map((item: any) => (
+            {/* Counts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+              {(Object.entries(counts) as [Status, number][]).map(
+                ([lvl, num]) => (
                   <div
-                    key={item.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    key={lvl}
+                    className="rounded-lg border bg-gray-50 p-4 text-center"
+                    style={{ boxShadow: SHADOW }}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-                      <div>
-                        <div className="flex items-center">
-                          <p className="font-medium text-gray-800 mr-2">
-                            {item.name}
-                          </p>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                            {item.regulationCode}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.description}
-                        </p>
-                      </div>
-                      <ComplianceStatus status={item.status} />
-                    </div>
-
-                    {item.status !== "compliant" && (
-                      <div className="bg-green-50 p-3 rounded-md border border-green-100 flex items-start space-x-2">
-                        <FaInfoCircle className="text-green-500 mt-1 flex-shrink-0" />
-                        <p className="text-sm text-green-700">
-                          {item.recommendation}
-                        </p>
-                      </div>
-                    )}
+                    <p className="text-sm text-gray-500 mb-1">
+                      {lvl[0].toUpperCase() + lvl.slice(1)} Items
+                    </p>
+                    <p className="text-2xl font-bold text-gray-800">{num}</p>
                   </div>
-                ))}
-              </div>
+                )
+              )}
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Tips Section */}
-      {!results && (
-        <div className="bg-green-50 rounded-lg p-6 border border-green-100">
-          <h3 className="text-lg font-semibold text-green-800 mb-3">
-            Compliance Tips
-          </h3>
-          <ul className="space-y-2 text-green-700">
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-1">•</span>
-              <span>
-                Select the correct jurisdiction for your target market.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-1">•</span>
-              <span>
-                Regular compliance checks help prevent legal issues before they
-                arise.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-1">•</span>
-              <span>
-                Update your documents whenever relevant regulations change.
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-1">•</span>
-              <span>
-                Non-compliant items should be addressed immediately with legal
-                counsel.
-              </span>
-            </li>
-          </ul>
-        </div>
-      )}
+            {/* Details */}
+            <div className="space-y-4 p-6">
+              {results.regulations.map((it) => (
+                <div
+                  key={it.id}
+                  className="rounded-lg border p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {it.name} —{" "}
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                          {it.regulationCode}
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {it.description}
+                      </p>
+                    </div>
+                    <ComplianceStatus status={it.status} />
+                  </div>
+                  {it.status !== "compliant" && (
+                    <div className="flex items-start gap-2 rounded-md bg-[color:var(--accent-light)]/50 p-3">
+                      <FaInfoCircle className="text-[color:var(--accent-dark)] mt-1" />
+                      <p className="text-[color:var(--accent-dark)] text-sm">
+                        {it.recommendation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 };

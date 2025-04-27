@@ -1,96 +1,92 @@
 // RephrasingTool.tsx
-import React, { useState, useRef } from "react";
+
+import React, { useState, ChangeEvent } from "react";
 import {
   FaEdit,
   FaExchangeAlt,
   FaCopy,
   FaCheck,
-  FaCloudUploadAlt,
+  FaUpload,
   FaFileAlt,
   FaDownload,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import mammoth from "mammoth";
 
-/* ------------ helper: extract text from file ------------ */
-const extractText = async (file: File): Promise<string> => {
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  if (!ext) return "";
+/* ──────────────────────────────────────────────────────────────
+   1  BRAND TOKENS  (must match your CSS :root values)
+   ────────────────────────────────────────────────────────────── */
+const BRAND = { dark: "var(--brand-dark)" } as const;
+const ACCENT = {
+  dark:  "var(--accent-dark)",
+  light: "var(--accent-light)",
+} as const;
+const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-  if (ext === "txt") {
-    return new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onerror = () => rej(reader.error);
-      reader.onload = () => res(reader.result as string);
-      reader.readAsText(file);
-    });
-  }
+/* ──────────────────────────────────────────────────────────────
+   2  STYLE OPTIONS
+   ────────────────────────────────────────────────────────────── */
+const STYLE_OPTIONS = [
+  { id: "formal",      label: "Formal" },
+  { id: "clear",       label: "Clear" },
+  { id: "persuasive",  label: "Persuasive" },
+  { id: "concise",     label: "Concise" },
+] as const;
+type StyleId = (typeof STYLE_OPTIONS)[number]["id"];
 
-  if (ext === "pdf") {
-    const data = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data }).promise;
-    let fullText = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const txt = await page.getTextContent();
-      fullText += txt.items.map((t: any) => t.str).join(" ") + "\n";
-    }
-    return fullText;
-  }
-
-  if (ext === "docx" || ext === "doc") {
-    const arrayBuffer = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
-  }
-
-  return "";
-};
-
-/* ------------ main component ------------ */
+/* ──────────────────────────────────────────────────────────────
+   3  COMPONENT
+   ────────────────────────────────────────────────────────────── */
 const RephrasingTool: React.FC = () => {
-  const [originalText, setOriginalText] = useState("");
+  // Text mode state
+  const [originalText,  setOriginalText]  = useState("");
   const [rephrasedText, setRephrasedText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "formal" | "clear" | "persuasive" | "concise"
-  >("formal");
-  const [copied, setCopied] = useState(false);
-  const [uploadError, setUploadError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isLoading,     setIsLoading]     = useState(false);
+  const [activeStyle,   setActiveStyle]   = useState<StyleId>("formal");
+  const [copied,        setCopied]        = useState(false);
 
-  /* ----- mock rephrase (unchanged) ----- */
-  const rephraseMap: Record<typeof activeTab, string> = {
-    formal: `We hereby acknowledge receipt of your communication dated…`,
-    clear: `We received your email from March 15…`,
-    persuasive: `Thank you for bringing this matter to our attention…`,
-    concise: `Got your March 15 email. Our legal team will reply by Friday.`,
-  };
+  // Document mode state
+  const [file,          setFile]          = useState<File | null>(null);
+  const [docProcessing, setDocProcessing] = useState(false);
+  const [docUrl,        setDocUrl]        = useState<string | null>(null);
 
-  const handleRephrase = () => {
-    if (!originalText.trim()) return;
+  /* ───── fake API for text ───── */
+  const rephraseText = (txt: string, style: StyleId) => {
     setIsLoading(true);
     setTimeout(() => {
-      setRephrasedText(rephraseMap[activeTab]);
+      const samples: Record<StyleId,string> = {
+        formal:
+          "We hereby acknowledge receipt of your communication dated the 15th of March. It is our understanding that you seek clarification regarding the aforementioned clause. Please be advised that our legal team will provide a comprehensive response within the next business week.",
+        clear:
+          "We received your email from March 15. You asked about clause 3.2. Our legal team will send a detailed answer within five business days.",
+        persuasive:
+          "Thank you for raising this important point on March 15. Your question about clause 3.2 highlights a key consideration. Our expert legal team is already reviewing it and will advise you within the week.",
+        concise:
+          "Got your 15 March email. Legal team will clarify clause 3.2 by Friday.",
+      };
+      setRephrasedText(samples[style]);
       setIsLoading(false);
-    }, 1200);
+    }, 1400);
   };
 
-  /* ----- upload drag/drop ----- */
-  const onFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    const f = files[0];
-    try {
-      const txt = await extractText(f);
-      if (!txt.trim()) throw new Error("Unsupported or empty file");
-      setOriginalText(txt);
-      setUploadError("");
-    } catch (err) {
-      console.error(err);
-      setUploadError(
-        "Could not read that file type. Please use PDF, DOCX, or TXT."
-      );
+  /* ───── fake API for document ───── */
+  const rephraseDocument = (style: StyleId) => {
+    setDocProcessing(true);
+    setTimeout(() => {
+      const result = `DOCUMENT REPHRASED (${style.toUpperCase()}):\n\n` +
+        (originalText || "Sample extracted text...");
+      const blob = new Blob([result], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      setDocUrl(url);
+      setDocProcessing(false);
+    }, 1800);
+  };
+
+  /* ───── handlers ───── */
+  const handleRephrase = () => {
+    if (file) {
+      rephraseDocument(activeStyle);
+    } else if (originalText.trim()) {
+      rephraseText(originalText, activeStyle);
     }
   };
 
@@ -100,152 +96,174 @@ const RephrasingTool: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([rephrasedText], {
-      type: "text/plain;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "rephrased.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    setDocUrl(null);
+    setDocProcessing(false);
+    setRephrasedText("");
+    if (f) {
+      // For demo, read as text; in real-world, extract via PDF/mammoth
+      const reader = new FileReader();
+      reader.onload = (ev) => setOriginalText(ev.target?.result as string);
+      reader.readAsText(f);
+    }
   };
 
-  const tabs = ["formal", "clear", "persuasive", "concise"] as const;
+  /* ───── animation helpers ───── */
+  const tapScale = { whileHover: { scale: 1.05 }, whileTap: { scale: 0.95 } };
 
   return (
     <div className="space-y-8">
-      {/* header */}
-      <div className="rounded-lg bg-white shadow p-6 flex items-center gap-3">
-        <div className="p-3 rounded-full bg-[color:var(--accent-light)] text-[color:var(--accent-dark)]">
-          <FaEdit size={22} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-[color:var(--brand-dark)]">
-            Rephrasing Tool
-          </h1>
-          <p className="text-gray-600">
-            Enhance clarity and tone in your legal documents
-          </p>
-        </div>
-      </div>
-
-      {/* uploader */}
-      <div
-        className="border-2 border-dashed border-[color:var(--accent-dark)]/40 rounded-lg p-8 text-center cursor-pointer hover:bg-[color:var(--accent-light)]/30 transition"
-        onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          onFiles(e.dataTransfer.files);
-        }}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,.txt"
-          className="hidden"
-          onChange={(e) => onFiles(e.target.files)}
-        />
-        <FaCloudUploadAlt className="mx-auto text-4xl text-[color:var(--accent-dark)] mb-3" />
-        <p className="font-medium text-[color:var(--accent-dark)]">
-          Upload PDF / DOCX / TXT
-        </p>
-        {uploadError && (
-          <p className="text-sm text-red-600 mt-2">{uploadError}</p>
-        )}
-      </div>
-
-      {/* editor panes */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* original */}
-        <div>
-          <h2 className="font-semibold text-[color:var(--brand-dark)] mb-2">
-            Original Text
-          </h2>
-          <textarea
-            className="w-full h-56 border rounded-md p-4 focus:ring-2 focus:ring-[color:var(--accent-dark)] focus:outline-none"
-            placeholder="Type or upload legal text…"
-            value={originalText}
-            onChange={(e) => setOriginalText(e.target.value)}
-          />
-        </div>
-
-        {/* rephrased */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold text-[color:var(--brand-dark)]">
-              Rephrased Text
-            </h2>
-            {rephrasedText && (
-              <div className="flex gap-3 text-sm">
-                <button
-                  onClick={handleCopy}
-                  className="flex items-center gap-1 text-[color:var(--accent-dark)] hover:underline"
-                >
-                  {copied ? <FaCheck /> : <FaCopy />}{" "}
-                  {copied ? "Copied" : "Copy"}
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center gap-1 text-[color:var(--accent-dark)] hover:underline"
-                >
-                  <FaDownload /> Download
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="h-56 border rounded-md p-4 bg-gray-50 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--accent-dark)]" />
-              </div>
-            ) : (
-              rephrasedText || (
-                <p className="text-gray-400 italic">
-                  Rephrased text will appear here…
-                </p>
-              )
-            )}
+      {/* Header */}
+      <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
+        <div className="flex items-center gap-4 p-6">
+          <span className="rounded-full bg-[color:var(--accent-light)] p-3 text-[color:var(--accent-dark)]">
+            <FaEdit size={22} />
+          </span>
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
+              Rephrasing Tool
+            </h1>
+            <p className="text-gray-600">
+              {file ? "Document Mode" : "Text Mode"} — Select a style below
+            </p>
           </div>
         </div>
+      </header>
+
+      {/* Style selector */}
+      <div className="flex gap-2 flex-wrap">
+        {STYLE_OPTIONS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveStyle(id)}
+            className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
+              activeStyle === id
+                ? "bg-[color:var(--accent-dark)] text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* tabs + action */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex gap-2">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`px-3 py-1 rounded-md text-sm ${
-                activeTab === t
-                  ? "bg-[color:var(--accent-dark)] text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <motion.button
-          onClick={handleRephrase}
-          disabled={!originalText.trim() || isLoading}
-          className={`flex items-center gap-2 px-6 py-2 rounded-md text-white ${
-            !originalText.trim() || isLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-          }`}
-          whileHover={{ scale: originalText.trim() && !isLoading ? 1.05 : 1 }}
-          whileTap={{ scale: originalText.trim() && !isLoading ? 0.95 : 1 }}
+      {/* Upload */}
+      <div>
+        <label
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[color:var(--accent-dark)] p-6 text-sm text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]/50 transition-colors"
         >
-          <FaExchangeAlt /> Rephrase
-        </motion.button>
+          <FaUpload /> {file ? file.name : "Upload Document for Rephrasing"}
+          <input
+            type="file"
+            accept=".txt,.md,.csv,.json"
+            className="hidden"
+            onChange={handleFile}
+          />
+        </label>
       </div>
+
+      {/* Content area */}
+      <section className="grid gap-6 md:grid-cols-2">
+        {!file ? (
+          <>
+            {/* Original Text */}
+            <div className="flex flex-col gap-2">
+              <label className="font-medium text-[color:var(--brand-dark)]">
+                Original Text
+              </label>
+              <textarea
+                className="h-64 resize-none rounded-lg border border-gray-300 p-4 focus:border-[color:var(--accent-dark)] focus:ring-2 focus:ring-[color:var(--accent-dark)] focus:outline-none"
+                placeholder="Type your text here…"
+                value={originalText}
+                onChange={(e) => setOriginalText(e.target.value)}
+              />
+            </div>
+
+            {/* Rephrased Text */}
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <label className="font-medium text-[color:var(--brand-dark)]">
+                  Rephrased Text
+                </label>
+                {rephrasedText && (
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
+                  >
+                    {copied ? <FaCheck /> : <FaCopy />}
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                )}
+              </div>
+              <div className="h-64 overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 p-4">
+                {isLoading ? (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]"></div>
+                  </div>
+                ) : rephrasedText ? (
+                  <p className="whitespace-pre-line text-gray-800">
+                    {rephrasedText}
+                  </p>
+                ) : (
+                  <p className="italic text-gray-400">
+                    Your rephrased text will appear here…
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Document Mode */
+          <div className="col-span-2 flex flex-col items-center gap-4 p-6">
+            {!docUrl ? (
+              docProcessing ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
+                  <p className="text-gray-700">Rephrasing document…</p>
+                </div>
+              ) : (
+                <motion.button
+                  onClick={handleRephrase}
+                  className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-6 py-2 text-white shadow-sm hover:bg-[color:var(--accent-light)] transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaExchangeAlt /> Rephrase Document
+                </motion.button>
+              )
+            ) : (
+              <a
+                href={docUrl}
+                download={`rephrased_${activeStyle}.txt`}
+                className="inline-flex items-center gap-2 rounded-md bg-[color:var(--accent-light)] px-6 py-2 text-[color:var(--accent-dark)] shadow-sm hover:bg-[color:var(--accent-dark)] hover:text-white transition-colors"
+              >
+                <FaDownload /> Download Rephrased Document
+              </a>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Footer: Rephrase button in document mode */}
+      {!file && (
+        <section className="flex justify-end">
+          <motion.button
+            onClick={handleRephrase}
+            disabled={!originalText.trim() || isLoading}
+            className={`flex items-center gap-2 rounded-lg bg-[color:var(--accent-dark)] px-6 py-2 text-white transition-colors ${
+              !originalText.trim() || isLoading
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-[color:var(--accent-light)]"
+            }`}
+            {...tapScale}
+          >
+            <FaExchangeAlt /> Rephrase
+          </motion.button>
+        </section>
+      )}
     </div>
   );
 };
