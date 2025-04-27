@@ -1,6 +1,6 @@
 # backend/app/utils/security.py
 
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, Depends
 from app.mvc.models.user import UserInDB
 
 async def get_current_user(request: Request) -> UserInDB:
@@ -18,3 +18,15 @@ async def get_current_user(request: Request) -> UserInDB:
                             detail="User not found")
 
     return UserInDB.from_mongo(user_data)
+
+
+async def require_admin(current_user: UserInDB = Depends(get_current_user)) -> UserInDB:
+    """
+    Dependency to ensure the current_user has the 'admin' role.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return current_user

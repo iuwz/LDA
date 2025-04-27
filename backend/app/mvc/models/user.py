@@ -1,18 +1,11 @@
-from pydantic import BaseModel, EmailStr, root_validator
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class User(BaseModel):
     username: str
     email: EmailStr
     hashed_password: str
-    role: str = "user"  # Default role is set to "user"
-
-    # Enforce that the role remains "user" during registration, ignoring any client input.
-    @root_validator(pre=True)
-    def ensure_regular_user(cls, values):
-        # Override or ignore the role if provided in input
-        values["role"] = "user"
-        return values
+    role: str = "user"  # Default role for new registrations
 
     class Config:
         json_schema_extra = {
@@ -32,6 +25,5 @@ class UserInDB(User):
         if "_id" in data:
             data["id"] = str(data["_id"])
             del data["_id"]
-        # When reading from the database, we expect the 'role' to be set based on your DB settings.
-        # For instance, if you manually insert an admin, that data will be preserved.
+        # Preserve stored role (e.g. "admin")
         return cls(**data)
