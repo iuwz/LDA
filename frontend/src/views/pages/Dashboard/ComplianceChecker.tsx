@@ -1,5 +1,6 @@
 // ComplianceChecker.tsx
-import React, { useState } from "react";
+
+import React, { useState, ChangeEvent } from "react";
 import {
   FaClipboardCheck,
   FaCloudUploadAlt,
@@ -12,7 +13,9 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-/** ─── Data Types ───────────────────────────── */
+/** ──────────────────────────────────────────────────────────────
+ *  Data Types
+ *  ────────────────────────────────────────────────────────────── */
 type Status = "compliant" | "non-compliant" | "warning";
 interface Regulation {
   id: number;
@@ -29,12 +32,16 @@ interface AnalysisResult {
   regulations: Regulation[];
 }
 
-/** ─── Brand Tokens ─────────────────────────── */
+/** ──────────────────────────────────────────────────────────────
+ *  Brand Tokens
+ *  ────────────────────────────────────────────────────────────── */
 const BRAND = { dark: "var(--brand-dark)" } as const;
 const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
 const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-/** ─── Status Badge ────────────────────────── */
+/** ──────────────────────────────────────────────────────────────
+ *  Status Badge
+ *  ────────────────────────────────────────────────────────────── */
 const ComplianceStatus: React.FC<{ status: Status }> = ({ status }) => {
   const palette: Record<Status, string> = {
     compliant: "bg-green-100 text-green-800 border-green-200",
@@ -62,13 +69,15 @@ const ComplianceStatus: React.FC<{ status: Status }> = ({ status }) => {
   );
 };
 
-/** ─── Main Component ─────────────────────── */
+/** ──────────────────────────────────────────────────────────────
+ *  Main Component
+ *  ────────────────────────────────────────────────────────────── */
 const ComplianceChecker: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [isAnalyzing, setAnalyzing] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
 
-  // Fake API data
+  // Fake API
   const mockResults = (): AnalysisResult => ({
     overallStatus: "warning",
     complianceScore: 76,
@@ -80,9 +89,9 @@ const ComplianceChecker: React.FC = () => {
         status: "warning",
         regulationCode: "GDPR Art. 13",
         description:
-          "Privacy policy does not fully address all required disclosures.",
+          "Privacy policy does not fully address required disclosures.",
         recommendation:
-          "Add details on data retention periods and data portability rights.",
+          "Add details on data retention periods and portability rights.",
       },
       {
         id: 2,
@@ -98,16 +107,15 @@ const ComplianceChecker: React.FC = () => {
         name: "Consumer Rights",
         status: "non-compliant",
         regulationCode: "CCPA § 1798.100",
-        description: "Missing required disclosures about consumer data rights.",
-        recommendation:
-          "Add a section on consumer data access and deletion rights.",
+        description: "Missing disclosures about consumer data rights.",
+        recommendation: "Add section on data access and deletion rights.",
       },
       {
         id: 4,
         name: "Accessibility",
         status: "warning",
         regulationCode: "ADA Title III",
-        description: "Website terms may not adequately address accessibility.",
+        description: "Terms may not address accessibility requirements.",
         recommendation: "Include an accessibility commitment statement.",
       },
       {
@@ -121,16 +129,12 @@ const ComplianceChecker: React.FC = () => {
     ],
   });
 
-  /* ─── Handlers ──────────────────────────── */
-  const selectFile = (f: File | null) => {
-    setFile(f);
-    setResults(null);
-  };
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    selectFile(e.target.files?.[0] || null);
+  /* Handlers */
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setFile(e.target.files?.[0] ?? null);
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    selectFile(e.dataTransfer.files?.[0] || null);
+    setFile(e.dataTransfer.files?.[0] ?? null);
   };
   const analyze = () => {
     if (!file) return;
@@ -145,11 +149,11 @@ const ComplianceChecker: React.FC = () => {
     setResults(null);
   };
 
-  /* ─── Derived Data ───────────────────────── */
+  /* Derived counts */
   const counts: Record<Status, number> = results
     ? results.regulations.reduce(
-        (acc, item) => {
-          acc[item.status]++;
+        (acc, { status }) => {
+          acc[status]++;
           return acc;
         },
         { compliant: 0, "non-compliant": 0, warning: 0 }
@@ -178,19 +182,23 @@ const ComplianceChecker: React.FC = () => {
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <div className="p-8 space-y-6">
-            {/* Upload */}
+            {/* Upload area */}
             <div
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-10 text-center hover:border-[color:var(--accent-dark)] transition-colors"
+              className="
+                flex cursor-pointer flex-col items-center justify-center gap-2
+                rounded-lg border-2 border-dashed border-gray-300
+                p-10 text-center
+                transition-colors
+                hover:border-[color:var(--accent-dark)]
+              "
               onDragOver={(e) => e.preventDefault()}
               onDrop={onDrop}
-              onClick={() =>
-                document.getElementById("compliance-upload")?.click()
-              }
+              onClick={() => document.getElementById("upload")?.click()}
             >
               <input
-                id="compliance-upload"
+                id="upload"
                 type="file"
-                accept=".pdf,.doc,.docx,.txt"
+                accept=".pdf,.docx"
                 className="hidden"
                 onChange={onFileChange}
               />
@@ -228,13 +236,13 @@ const ComplianceChecker: React.FC = () => {
                     Drag & drop or click to upload
                   </p>
                   <p className="text-xs text-gray-400">
-                    PDF, DOC(X) or TXT (max 10 MB)
+                    PDF or DOCX only (max 10 MB)
                   </p>
                 </>
               )}
             </div>
 
-            {isAnalyzing && (
+            {analyzing && (
               <div className="mt-6 text-center text-gray-700">
                 <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
                 <p className="mt-2">Analyzing document…</p>
@@ -296,30 +304,30 @@ const ComplianceChecker: React.FC = () => {
 
             {/* Details */}
             <div className="space-y-4 p-6">
-              {results.regulations.map((it) => (
+              {results.regulations.map((item) => (
                 <div
-                  key={it.id}
+                  key={item.id}
                   className="rounded-lg border p-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-medium text-gray-800">
-                        {it.name} —{" "}
+                        {item.name} —{" "}
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {it.regulationCode}
+                          {item.regulationCode}
                         </span>
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
-                        {it.description}
+                        {item.description}
                       </p>
                     </div>
-                    <ComplianceStatus status={it.status} />
+                    <ComplianceStatus status={item.status} />
                   </div>
-                  {it.status !== "compliant" && (
+                  {item.status !== "compliant" && (
                     <div className="flex items-start gap-2 rounded-md bg-[color:var(--accent-light)]/50 p-3">
                       <FaInfoCircle className="text-[color:var(--accent-dark)] mt-1" />
                       <p className="text-[color:var(--accent-dark)] text-sm">
-                        {it.recommendation}
+                        {item.recommendation}
                       </p>
                     </div>
                   )}

@@ -1,3 +1,5 @@
+// RiskAssessmentTool.tsx
+
 import React, { useState } from "react";
 import {
   FaShieldAlt,
@@ -58,7 +60,7 @@ const RiskAssessmentTool: React.FC = () => {
           clause: "§8.2",
           issue: "Unlimited liability may be unenforceable.",
           risk: "high" as const,
-          recommendation: "Add jurisdiction‑specific limitations.",
+          recommendation: "Add jurisdiction-specific limitations.",
         },
         {
           id: 2,
@@ -80,7 +82,7 @@ const RiskAssessmentTool: React.FC = () => {
           id: 4,
           section: "IP",
           clause: "§4.3",
-          issue: "Derivative‑work ownership unclear.",
+          issue: "Derivative-work ownership unclear.",
           risk: "high" as const,
           recommendation: "Define ownership of modifications.",
         },
@@ -104,6 +106,7 @@ const RiskAssessmentTool: React.FC = () => {
     };
   }
 
+  /* ——— actions ——— */
   const analyze = () => {
     if (!file) return;
     setIsAnalyzing(true);
@@ -126,9 +129,11 @@ const RiskAssessmentTool: React.FC = () => {
         activeSection === "all" ||
         i.section.toLowerCase() === activeSection.toLowerCase()
     ) ?? [];
+
   const sections = results
     ? ["all", ...Array.from(new Set(results.riskItems.map((i) => i.section)))]
     : [];
+
   const counts = results?.riskItems.reduce(
     (acc: Record<string, number>, i) => {
       acc[i.risk] = (acc[i.risk] || 0) + 1;
@@ -137,7 +142,6 @@ const RiskAssessmentTool: React.FC = () => {
     { high: 0, medium: 0, low: 0 }
   ) ?? { high: 0, medium: 0, low: 0 };
 
-  /* ——— animations ——— */
   const tap = { whileHover: { scale: 1.05 }, whileTap: { scale: 0.95 } };
 
   return (
@@ -166,7 +170,13 @@ const RiskAssessmentTool: React.FC = () => {
           <div className="p-8">
             {/* uploader */}
             <div
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-10 text-center hover:border-[color:var(--accent-dark)]"
+              className="
+                flex cursor-pointer flex-col items-center justify-center gap-2
+                rounded-lg border-2 border-dashed border-gray-300
+                p-10 text-center
+                transition-colors
+                hover:border-[color:var(--accent-dark)]
+              "
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -182,7 +192,7 @@ const RiskAssessmentTool: React.FC = () => {
                 id="file-input"
                 type="file"
                 className="hidden"
-                accept=".pdf,.doc,.docx,.txt"
+                accept=".pdf,.docx"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) {
@@ -197,15 +207,14 @@ const RiskAssessmentTool: React.FC = () => {
                   <FaFileAlt className="mx-auto text-4xl text-[color:var(--accent-dark)]" />
                   <p className="mt-3 font-medium text-gray-700">{file.name}</p>
                   <p className="text-sm text-gray-500">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
-
                   <div className="mt-4 flex justify-center gap-3">
                     <button
                       onClick={reset}
                       className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300"
                     >
-                      Remove
+                      <FaTrash /> Remove
                     </button>
                     <motion.button
                       onClick={(e) => {
@@ -226,7 +235,7 @@ const RiskAssessmentTool: React.FC = () => {
                     Drag & drop or click to upload
                   </p>
                   <p className="text-xs text-gray-400">
-                    PDF, DOC(X), TXT • ≤10 MB
+                    PDF, DOCX only (≤10 MB)
                   </p>
                 </>
               )}
@@ -248,12 +257,11 @@ const RiskAssessmentTool: React.FC = () => {
                 <div>
                   <h3 className="font-medium text-gray-800">{file?.name}</h3>
                   <p className="text-sm text-gray-500">
-                    {file ? (file.size / 1024 / 1024).toFixed(2) : "0"} MB •{" "}
+                    {(file?.size ?? 0 / 1024 / 1024).toFixed(2)} MB •{" "}
                     {new Date().toLocaleDateString()}
                   </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-6">
                 <div>
                   <p className="text-sm text-gray-500">Overall Risk</p>
@@ -281,6 +289,7 @@ const RiskAssessmentTool: React.FC = () => {
                 <div
                   key={lvl}
                   className="rounded-lg border bg-gray-50 p-4 text-center"
+                  style={{ boxShadow: SHADOW }}
                 >
                   <p className="text-sm text-gray-500 mb-1">
                     {lvl[0].toUpperCase() + lvl.slice(1)} Risk Items

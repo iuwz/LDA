@@ -89,7 +89,7 @@ const DashboardLayout = () => {
         {/* Logo / collapse control */}
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <FaBalanceScale className="text-2xl text-[#C17829]" />
+            <FaBalanceScale className="text-2xl " />
             <span className="text-xl font-bold text-[#C17829] font-serif">
               LDA
             </span>
