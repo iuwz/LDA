@@ -17,24 +17,19 @@ import {
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const DashboardLayout = () => {
+const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Sidebar navigation items
   const navItems = [
     {
       icon: FaTachometerAlt,
       title: "Dashboard",
       path: "/dashboard",
-      end: true, // ensure exact match so only root path is active
+      end: true,
     },
-    {
-      icon: FaEdit,
-      title: "Rephrasing Tool",
-      path: "/dashboard/rephrasing",
-    },
+    { icon: FaEdit, title: "Rephrasing Tool", path: "/dashboard/rephrasing" },
     {
       icon: FaShieldAlt,
       title: "Risk Assessment Tool",
@@ -50,14 +45,9 @@ const DashboardLayout = () => {
       title: "Translation Tool",
       path: "/dashboard/translation",
     },
-    {
-      icon: FaRobot,
-      title: "Chatbot",
-      path: "/dashboard/chatbot",
-    },
+    { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
   ];
 
-  // Derive current page title
   const getCurrentPageTitle = () => {
     const currentItem = navItems.find(
       (item) =>
@@ -69,7 +59,6 @@ const DashboardLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Expand button (when sidebar collapsed) */}
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
@@ -79,21 +68,21 @@ const DashboardLayout = () => {
         </button>
       )}
 
-      {/* Sidebar */}
       <motion.aside
         className="fixed md:relative z-30 h-full bg-white shadow-lg overflow-y-auto"
         initial={false}
         animate={{ width: isSidebarOpen ? "16rem" : "0" }}
         transition={{ duration: 0.3 }}
       >
-        {/* Logo / collapse control */}
+        {/* Logo + collapse */}
         <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FaBalanceScale className="text-2xl " />
+          {/* Wrapped in NavLink to "/" */}
+          <NavLink to="/" className="flex items-center space-x-2">
+            <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
             <span className="text-xl font-bold text-[#C17829] font-serif">
               LDA
             </span>
-          </div>
+          </NavLink>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="text-gray-500 p-2 rounded-md hover:bg-gray-100"
@@ -102,7 +91,6 @@ const DashboardLayout = () => {
           </button>
         </div>
 
-        {/* Nav links */}
         <nav className="mt-4">
           <ul className="space-y-1 px-3">
             {navItems.map(({ icon: Icon, title, path, end }, idx) => (
@@ -110,14 +98,13 @@ const DashboardLayout = () => {
                 <NavLink
                   to={path}
                   end={end}
-                  className={({ isActive }) => `
-                    flex items-center p-3 rounded-md transition-all hover:bg-gray-100
-                    ${
+                  className={({ isActive }) =>
+                    `flex items-center p-3 rounded-md transition-all hover:bg-gray-100 ${
                       isActive
                         ? "bg-[#f7ede1] text-[#C17829] font-medium border-l-4 border-[#C17829]"
                         : "text-gray-700"
-                    }
-                  `}
+                    }`
+                  }
                 >
                   <Icon className="text-lg mr-3" />
                   <span>{title}</span>
@@ -139,7 +126,6 @@ const DashboardLayout = () => {
                 </div>
               </div>
 
-              {/* Gear icon */}
               <button
                 onClick={() => setIsAccountMenuOpen((prev) => !prev)}
                 className="text-gray-500 p-2 rounded-md hover:bg-gray-100 relative"
@@ -147,13 +133,11 @@ const DashboardLayout = () => {
                 <FaCog />
               </button>
 
-              {/* Dropdown */}
               {isAccountMenuOpen && (
                 <div className="absolute right-4 bottom-16 w-40 bg-white shadow-md rounded-md overflow-hidden border z-40">
                   <button
                     onClick={() => {
                       setIsAccountMenuOpen(false);
-                      /* handle profile route */
                     }}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
@@ -162,7 +146,6 @@ const DashboardLayout = () => {
                   <button
                     onClick={() => {
                       setIsAccountMenuOpen(false);
-                      /* handle settings route */
                     }}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
@@ -171,7 +154,6 @@ const DashboardLayout = () => {
                   <button
                     onClick={() => {
                       setIsAccountMenuOpen(false);
-                      /* handle logout */
                     }}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
                   >
@@ -184,9 +166,7 @@ const DashboardLayout = () => {
         </nav>
       </motion.aside>
 
-      {/* Main area */}
-      <div className={`flex-1 flex flex-col overflow-hidden`}>
-        {/* Top bar */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm z-10">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center space-x-3">
@@ -197,7 +177,6 @@ const DashboardLayout = () => {
                 {getCurrentPageTitle()}
               </h1>
             </div>
-
             <div className="flex items-center space-x-2">
               <a
                 href="/"
@@ -209,7 +188,6 @@ const DashboardLayout = () => {
           </div>
         </header>
 
-        {/* Routed page content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             <Outlet />
