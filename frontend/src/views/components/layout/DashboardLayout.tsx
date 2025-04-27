@@ -1,3 +1,5 @@
+// src/views/components/layout/DashboardLayout.tsx
+
 import React, { useState } from "react";
 import {
   FaEdit,
@@ -32,7 +34,7 @@ const DashboardLayout: React.FC = () => {
     { icon: FaEdit, title: "Rephrasing Tool", path: "/dashboard/rephrasing" },
     {
       icon: FaShieldAlt,
-      title: "Risk Assessment Tool",
+      title: "Risk Assessment",
       path: "/dashboard/risk-assessment",
     },
     {
@@ -49,12 +51,12 @@ const DashboardLayout: React.FC = () => {
   ];
 
   const getCurrentPageTitle = () => {
-    const currentItem = navItems.find(
-      (item) =>
-        location.pathname === item.path ||
-        (item.path !== "/dashboard" && location.pathname.startsWith(item.path))
+    const current = navItems.find(
+      (i) =>
+        location.pathname === i.path ||
+        (i.path !== "/dashboard" && location.pathname.startsWith(i.path))
     );
-    return currentItem ? currentItem.title : "Dashboard";
+    return current ? current.title : "Dashboard";
   };
 
   return (
@@ -74,9 +76,8 @@ const DashboardLayout: React.FC = () => {
         animate={{ width: isSidebarOpen ? "16rem" : "0" }}
         transition={{ duration: 0.3 }}
       >
-        {/* Logo + collapse */}
+        {/* Logo & collapse */}
         <div className="p-4 border-b flex items-center justify-between">
-          {/* Wrapped in NavLink to "/" */}
           <NavLink to="/" className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
             <span className="text-xl font-bold text-[#C17829] font-serif">
@@ -91,6 +92,7 @@ const DashboardLayout: React.FC = () => {
           </button>
         </div>
 
+        {/* Navigation */}
         <nav className="mt-4">
           <ul className="space-y-1 px-3">
             {navItems.map(({ icon: Icon, title, path, end }, idx) => (
@@ -113,7 +115,7 @@ const DashboardLayout: React.FC = () => {
             ))}
           </ul>
 
-          {/* User section */}
+          {/* User menu */}
           <div className="absolute bottom-0 w-full p-4 border-t">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -127,37 +129,38 @@ const DashboardLayout: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                onClick={() => setIsAccountMenuOpen((v) => !v)}
                 className="text-gray-500 p-2 rounded-md hover:bg-gray-100 relative"
               >
                 <FaCog />
               </button>
 
               {isAccountMenuOpen && (
-                <div className="absolute right-4 bottom-16 w-40 bg-white shadow-md rounded-md overflow-hidden border z-40">
-                  <button
-                    onClick={() => {
-                      setIsAccountMenuOpen(false);
-                    }}
+                <div className="absolute right-4 bottom-16 w-40 bg-white shadow-md rounded-md border z-40">
+                  {/* NavLink to dashboard profile */}
+                  <NavLink
+                    to="/dashboard/profile"
+                    onClick={() => setIsAccountMenuOpen(false)}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    <FaUser className="mr-2" /> Edit Profile
-                  </button>
+                    <FaUser className="mr-2" />
+                    Edit Profile
+                  </NavLink>
+
                   <button
-                    onClick={() => {
-                      setIsAccountMenuOpen(false);
-                    }}
+                    onClick={() => setIsAccountMenuOpen(false)}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    <FaWrench className="mr-2" /> Settings
+                    <FaWrench className="mr-2" />
+                    Settings
                   </button>
+
                   <button
-                    onClick={() => {
-                      setIsAccountMenuOpen(false);
-                    }}
+                    onClick={() => setIsAccountMenuOpen(false)}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
                   >
-                    <FaSignOutAlt className="mr-2" /> Logout
+                    <FaSignOutAlt className="mr-2" />
+                    Logout
                   </button>
                 </div>
               )}
@@ -166,6 +169,7 @@ const DashboardLayout: React.FC = () => {
         </nav>
       </motion.aside>
 
+      {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm z-10">
           <div className="flex items-center justify-between px-4 py-3">
@@ -177,7 +181,7 @@ const DashboardLayout: React.FC = () => {
                 {getCurrentPageTitle()}
               </h1>
             </div>
-            <div className="flex items-center space-x-2">
+            <div>
               <a
                 href="/"
                 className="text-sm text-gray-600 hover:text-[#C17829] px-3 py-1"
