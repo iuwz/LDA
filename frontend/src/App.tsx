@@ -19,6 +19,7 @@ import TranslationTool from "./views/pages/Dashboard/TranslationTool";
 import DashboardChatbot from "./views/pages/Dashboard/DashboardChatbot";
 import ChatbotWidget from "./views/components/common/ChatbotWidget";
 import EditProfile from "./views/pages/Dashboard/EditProfile";
+import Settings from "./views/pages/Dashboard/Settings"; // ← new
 
 // Import layout components
 import Navbar from "./views/components/layout/navbar";
@@ -79,7 +80,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="profile" element={<EditProfile />} />
-
+          <Route path="settings" element={<Settings />} /> {/* ← new */}
           <Route path="rephrasing" element={<RephrasingTool />} />
           <Route path="risk-assessment" element={<RiskAssessmentTool />} />
           <Route path="compliance" element={<ComplianceChecker />} />

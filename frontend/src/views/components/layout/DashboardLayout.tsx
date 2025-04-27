@@ -48,6 +48,7 @@ const DashboardLayout: React.FC = () => {
       path: "/dashboard/translation",
     },
     { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
+    { icon: FaCog, title: "Settings", path: "/dashboard/settings" },
   ];
 
   const getCurrentPageTitle = () => {
@@ -61,6 +62,7 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Toggle sidebar */}
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
@@ -70,15 +72,15 @@ const DashboardLayout: React.FC = () => {
         </button>
       )}
 
+      {/* Sidebar */}
       <motion.aside
         className="fixed md:relative z-30 h-full bg-white shadow-lg overflow-y-auto"
         initial={false}
-        animate={{ width: isSidebarOpen ? "16rem" : "0" }}
+        animate={{ width: isSidebarOpen ? "16rem" : 0 }}
         transition={{ duration: 0.3 }}
       >
-        {/* Logo & collapse */}
         <div className="p-4 border-b flex items-center justify-between">
-          <NavLink to="/" className="flex items-center space-x-2">
+          <NavLink to="/dashboard" className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
             <span className="text-xl font-bold text-[#C17829] font-serif">
               LDA
@@ -92,9 +94,8 @@ const DashboardLayout: React.FC = () => {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="mt-4">
-          <ul className="space-y-1 px-3">
+        <nav className="mt-4 px-3">
+          <ul className="space-y-1">
             {navItems.map(({ icon: Icon, title, path, end }, idx) => (
               <li key={idx}>
                 <NavLink
@@ -115,7 +116,7 @@ const DashboardLayout: React.FC = () => {
             ))}
           </ul>
 
-          {/* User menu */}
+          {/* User Menu */}
           <div className="absolute bottom-0 w-full p-4 border-t">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -137,7 +138,6 @@ const DashboardLayout: React.FC = () => {
 
               {isAccountMenuOpen && (
                 <div className="absolute right-4 bottom-16 w-40 bg-white shadow-md rounded-md border z-40">
-                  {/* NavLink to dashboard profile */}
                   <NavLink
                     to="/dashboard/profile"
                     onClick={() => setIsAccountMenuOpen(false)}
@@ -146,15 +146,14 @@ const DashboardLayout: React.FC = () => {
                     <FaUser className="mr-2" />
                     Edit Profile
                   </NavLink>
-
-                  <button
+                  <NavLink
+                    to="/dashboard/settings"
                     onClick={() => setIsAccountMenuOpen(false)}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
                     <FaWrench className="mr-2" />
                     Settings
-                  </button>
-
+                  </NavLink>
                   <button
                     onClick={() => setIsAccountMenuOpen(false)}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
@@ -169,7 +168,7 @@ const DashboardLayout: React.FC = () => {
         </nav>
       </motion.aside>
 
-      {/* Main area */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm z-10">
           <div className="flex items-center justify-between px-4 py-3">
@@ -181,14 +180,12 @@ const DashboardLayout: React.FC = () => {
                 {getCurrentPageTitle()}
               </h1>
             </div>
-            <div>
-              <a
-                href="/"
-                className="text-sm text-gray-600 hover:text-[#C17829] px-3 py-1"
-              >
-                Home
-              </a>
-            </div>
+            <NavLink
+              to="/"
+              className="text-sm text-gray-600 hover:text-[#C17829] px-3 py-1"
+            >
+              Home
+            </NavLink>
           </div>
         </header>
 
