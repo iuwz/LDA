@@ -1,11 +1,6 @@
-# backend/app/mvc/views/documents.py
-
 import logging
 from fastapi import APIRouter, File, UploadFile, Request, HTTPException, Depends
 from fastapi.responses import StreamingResponse
-from fastapi.security import HTTPAuthorizationCredentials
-
-# Import your existing code for GridFS, etc.
 from app.mvc.controllers.documents import (
     upload_file_to_gridfs,
     store_document_record,
@@ -14,42 +9,35 @@ from app.mvc.controllers.documents import (
     get_document_record,
     open_gridfs_file
 )
+from app.utils.security import get_current_user
+from app.mvc.models.user import UserInDB
+from urllib.parse import quote
 
-# Bearer auth dependency (for Swagger docs)
-from app.utils.security import get_token_credentials
-
-router = APIRouter()
+router = APIRouter(tags=["Documents"])
 logger = logging.getLogger(__name__)
 
 @router.post("/upload")
 async def upload_document(
     request: Request,
     file: UploadFile = File(...),
-    token: HTTPAuthorizationCredentials = Depends(get_token_credentials),
+    current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    Upload a file to GridFS and store metadata in the 'documents' collection.
-    Only allows PDF or DOCX files.
+    Upload a file (PDF/DOCX) to GridFS and record metadata.
     """
-    user_id = request.state.user_id
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User not authenticated")
+    user_id = current_user.email
 
-    # --- File type validation ---
-    allowed_extensions = {"pdf", "docx"}
-    filename_lower = file.filename.lower()
-    if not any(filename_lower.endswith(f".{ext}") for ext in allowed_extensions):
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported file type. Only PDF or DOCX are allowed."
-        )
+    # Validate extension
+    allowed_ext = {"pdf", "docx"}
+    if not any(file.filename.lower().endswith(f".{ext}") for ext in allowed_ext):
+        raise HTTPException(status_code=400, detail="Unsupported file type. Only PDF or DOCX allowed.")
 
     db = request.app.state.db
-    file_id = await upload_file_to_gridfs(db, file.file, file.filename)
+    file_id = await upload_file_to_gridfs(db, await file.read(), file.filename)
     doc_id = await store_document_record(db, user_id, file.filename, file_id)
 
     return {
-        "message": f"File '{file.filename}' uploaded successfully",
+        "message": f"File '{file.filename}' uploaded",
         "doc_id": doc_id,
         "gridfs_file_id": str(file_id)
     }
@@ -57,56 +45,44 @@ async def upload_document(
 @router.get("/")
 async def list_documents(
     request: Request,
-    token: HTTPAuthorizationCredentials = Depends(get_token_credentials),
+    current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    List documents based on user role:
-    - Admin: lists all documents
-    - User: lists only their own documents
+    - Admin: all documents
+    - User: own documents
     """
-    user_id = request.state.user_id
-    user_role = getattr(request.state, "user_role", "user")  # Default to "user" if not found
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-
+    user_id = current_user.email
+    role = current_user.role
     db = request.app.state.db
 
-    if user_role == "admin":
+    if role == "admin":
         docs = await list_all_documents(db)
     else:
         docs = await list_user_documents(db, user_id)
     return docs
+
 @router.get("/download/{doc_id}")
 async def download_document(
     doc_id: str,
     request: Request,
-    token: HTTPAuthorizationCredentials = Depends(get_token_credentials),
+    current_user: UserInDB = Depends(get_current_user),
 ):
-    user_id = request.state.user_id
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-
+    """
+    Stream a user’s document from GridFS by doc_id.
+    """
+    user_id = current_user.email
     db = request.app.state.db
-    doc_record = await get_document_record(db, doc_id)
-    if doc_record["owner_id"] != user_id:
+
+    record = await get_document_record(db, doc_id)
+    if record["owner_id"] != user_id:
         raise HTTPException(status_code=403, detail="You do not own this document.")
 
-    grid_out, filename = await open_gridfs_file(db, doc_record["file_id"])
+    grid_out, filename = await open_gridfs_file(db, record["file_id"])
 
-    async def file_iterator():
-        while True:
-            chunk = await grid_out.readchunk()  # No parameter is passed here.
-            if not chunk:
-                break
+    async def iterator():
+        while chunk := await grid_out.readchunk():
             yield chunk
 
-    # Use RFC 6266 header formatting for UTF-8 filenames.
-    from urllib.parse import quote
-    encoded_filename = quote(filename)
-    content_disposition = f"attachment; filename*=UTF-8''{encoded_filename}"
-
-    return StreamingResponse(
-        file_iterator(),
-        media_type="application/octet-stream",
-        headers={"Content-Disposition": content_disposition}
-    )
+    disp_name = quote(filename)
+    headers = {"Content-Disposition": f"attachment; filename*=UTF-8''{disp_name}"}
+    return StreamingResponse(iterator(), media_type="application/octet-stream", headers=headers)
