@@ -3,13 +3,11 @@ import {
   FaRobot,
   FaPaperPlane,
   FaRegLightbulb,
-  FaSearch,
   FaPlus,
-  FaRegQuestionCircle,
   FaHistory,
   FaRegTrashAlt,
-  FaEllipsisH,
 } from "react-icons/fa";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -250,7 +248,7 @@ const DashboardChatbot = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] bg-[#F8F9FA] rounded-lg shadow-md overflow-hidden font-sans">
       {/* Header */}
-      <div className="bg-[#C18241] text-white p-4 flex items-center justify-between font-sans">
+      <div className="bg-[#C18241] text-white p-4 flex items-center justify-between">
 
         <div className="flex items-center">
           <FaRobot className="text-2xl mr-2" />
