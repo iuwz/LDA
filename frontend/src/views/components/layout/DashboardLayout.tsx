@@ -30,6 +30,7 @@ const TFA_METHODS = [
   { value: "phone", label: "Phone" },
 ];
 
+// Removed the "Settings" entry here
 const navItems = [
   {
     icon: FaTachometerAlt,
@@ -54,7 +55,6 @@ const navItems = [
     path: "/dashboard/translation",
   },
   { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
-  { icon: FaCog, title: "Settings", path: "/dashboard/settings" },
 ];
 
 const getCurrentPageTitle = (locationPath: string) => {
@@ -70,6 +70,10 @@ const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const location = useLocation();
+
+  const handleLogout = () => {
+    // TODO: implement your logout logic here
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-x-hidden">
@@ -90,6 +94,7 @@ const DashboardLayout: React.FC = () => {
         animate={{ width: isSidebarOpen ? "16rem" : 0 }}
         transition={{ duration: 0.3 }}
       >
+        {/* Logo & collapse button */}
         <div className="p-4 border-b flex items-center justify-between">
           <NavLink to="/dashboard" className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -106,6 +111,7 @@ const DashboardLayout: React.FC = () => {
         </div>
 
         <nav className="mt-4 px-3 overflow-x-hidden">
+          {/* Main nav items */}
           <ul className="space-y-1">
             {navItems.map(({ icon: Icon, title, path, end }, idx) => (
               <li key={idx}>
@@ -127,7 +133,16 @@ const DashboardLayout: React.FC = () => {
             ))}
           </ul>
 
-          {/* User Menu */}
+          {/* Red Logout button above the profile */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 mt-4 text-red-600 rounded-md hover:bg-gray-100"
+          >
+            <FaSignOutAlt className="text-lg mr-3" />
+            <span>Logout</span>
+          </button>
+
+          {/* Profile & gear menu */}
           <div className="absolute bottom-0 w-full p-4 border-t">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -166,7 +181,10 @@ const DashboardLayout: React.FC = () => {
                     Settings
                   </NavLink>
                   <button
-                    onClick={() => setIsAccountMenuOpen(false)}
+                    onClick={() => {
+                      setIsAccountMenuOpen(false);
+                      handleLogout();
+                    }}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
                   >
                     <FaSignOutAlt className="mr-2" />
