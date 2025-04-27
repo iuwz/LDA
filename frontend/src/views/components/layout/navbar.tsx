@@ -1,16 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  FaBalanceScale,
-  FaGlobe,
-  FaHome,
-  FaBars,
-  FaTimes,
-  FaSearch,
-  FaMoon,
-  FaSun,
+   FaBalanceScale,
+   FaGlobe,
+   FaHome,
+   FaBars,
+   FaTimes,
+   FaSearch,
+   FaChartBar,
+   FaMoon,
+   FaSun,
   FaChevronDown,
-} from "react-icons/fa";
+   FaRegQuestionCircle,   // ← add this
+  } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
@@ -176,6 +178,18 @@ const Navbar: React.FC = () => {
             <FaHome />
             <span>Home</span>
           </NavLink>
+          <NavLink
+  to="/dashboard"
+  className={({ isActive }) =>
+    "flex items-center space-x-1 transition-colors hover:text-[#C17829] " +
+    (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
+  }
+>
+  {/* you can swap in any icon you like here */}
+  <FaChartBar />
+  <span>Dashboard</span>
+</NavLink>
+          
           <a
             href="#services"
             onClick={scrollToServices}
@@ -416,6 +430,18 @@ const Navbar: React.FC = () => {
             <FaHome />
             <span>Home</span>
           </NavLink>
+          <NavLink
+  to="/dashboard"
+  onClick={toggleMobileMenu}
+  className={({ isActive }) =>
+    "flex items-center space-x-2 transition-colors hover:text-[#C17829] text-sm xs:text-base " +
+    (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
+  }
+>
+  <FaRegQuestionCircle />
+  <span>Dashboard</span>
+</NavLink>
+
           <a
             href="#services"
             onClick={(e) => {
@@ -496,82 +522,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Global Styles for Animations and Custom Breakpoints */}
-      <style jsx global>{`
-        @keyframes slideDown {
-          from {
-            transform: translateY(-20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        .animate-slideDown {
-          animation: slideDown 0.3s ease forwards;
-        }
-
-        /* Custom extra small (xs) breakpoint styles */
-        @media (min-width: 350px) {
-          .xs\\:px-3 {
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
-          }
-          .xs\\:px-4 {
-            padding-left: 1rem;
-            padding-right: 1rem;
-          }
-          .xs\\:py-2 {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-          }
-          .xs\\:py-3 {
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
-          }
-          .xs\\:py-6 {
-            padding-top: 1.5rem;
-            padding-bottom: 1.5rem;
-          }
-          .xs\\:space-x-2 {
-            margin-left: 0.5rem;
-          }
-          .xs\\:space-y-6 > * + * {
-            margin-top: 1.5rem;
-          }
-          .xs\\:gap-2 {
-            gap: 0.5rem;
-          }
-          .xs\\:text-base {
-            font-size: 1rem;
-            line-height: 1.5rem;
-          }
-          .xs\\:text-lg {
-            font-size: 1.125rem;
-            line-height: 1.75rem;
-          }
-          .xs\\:text-xl {
-            font-size: 1.25rem;
-            line-height: 1.75rem;
-          }
-          .xs\\:text-sm {
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-          }
-          .xs\\:pl-10 {
-            padding-left: 2.5rem;
-          }
-          .xs\\:pr-10 {
-            padding-right: 2.5rem;
-          }
-          .xs\\:pr-4 {
-            padding-right: 1rem;
-          }
-          .xs\\:space-y-4 > * + * {
-            margin-top: 1rem;
-          }
-        }
-      `}</style>
+      
     </div>
   );
 };
