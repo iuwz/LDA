@@ -1,5 +1,7 @@
-// RiskAssessmentTool.tsx
+// src/global.d.ts
+declare module "jspdf-autotable";
 
+// src/views/pages/Dashboard/RiskAssessmentTool.tsx
 import React, { useState } from "react";
 import {
   FaShieldAlt,
@@ -9,25 +11,23 @@ import {
   FaSearch,
   FaInfoCircle,
   FaExclamationTriangle,
+  FaDownload,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
-/* ──────────────────────────────────────────────────────────────
-   BRAND TOKENS
-   ────────────────────────────────────────────────────────────── */
-const BRAND = { dark: "var(--brand-dark)" } as const;
-const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
 const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-/* ──────────────────────────────────────────────────────────────
-   Helper components
-   ────────────────────────────────────────────────────────────── */
-const RiskLevel = ({ level }: { level: "high" | "medium" | "low" }) => {
+const RiskLevel: React.FC<{ level: "high" | "medium" | "low" }> = ({
+  level,
+}) => {
   const palette = {
     high: "bg-red-100 text-red-800 border-red-200",
     medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
     low: "bg-green-100 text-green-700 border-green-200",
   } as const;
+
   return (
     <span
       className={`rounded border px-2 py-1 text-xs font-medium ${palette[level]}`}
@@ -37,9 +37,6 @@ const RiskLevel = ({ level }: { level: "high" | "medium" | "low" }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────
-   Component
-   ────────────────────────────────────────────────────────────── */
 const RiskAssessmentTool: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -48,7 +45,6 @@ const RiskAssessmentTool: React.FC = () => {
     typeof mockAnalysis
   > | null>(null);
 
-  /* ——— fake API ——— */
   function mockAnalysis() {
     return {
       overallRisk: "medium" as const,
@@ -106,7 +102,6 @@ const RiskAssessmentTool: React.FC = () => {
     };
   }
 
-  /* ——— actions ——— */
   const analyze = () => {
     if (!file) return;
     setIsAnalyzing(true);
@@ -122,39 +117,67 @@ const RiskAssessmentTool: React.FC = () => {
     setActiveSection("all");
   };
 
-  /* ——— utils ——— */
-  const filteredItems =
-    results?.riskItems.filter(
-      (i) =>
-        activeSection === "all" ||
-        i.section.toLowerCase() === activeSection.toLowerCase()
-    ) ?? [];
+  const downloadReport = () => {
+    if (!results) return;
+
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    doc.setFontSize(18);
+    doc.text("Risk Assessment Report", 40, 50);
+
+    // @ts-expect-error: autoTable plugin
+    doc.autoTable({
+      startY: 80,
+      head: [["ID", "Section", "Clause", "Issue", "Risk", "Recommendation"]],
+      body: results.riskItems.map((i) => [
+        i.id.toString(),
+        i.section,
+        i.clause,
+        i.issue,
+        i.risk[0].toUpperCase() + i.risk.slice(1),
+        i.recommendation,
+      ]),
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: { fillColor: [193, 120, 41] },
+    });
+
+    doc.save("risk_report.pdf");
+  };
+
+  const filteredItems = results
+    ? results.riskItems.filter(
+        (i) =>
+          activeSection === "all" ||
+          i.section.toLowerCase() === activeSection.toLowerCase()
+      )
+    : [];
 
   const sections = results
     ? ["all", ...Array.from(new Set(results.riskItems.map((i) => i.section)))]
     : [];
 
-  const counts = results?.riskItems.reduce(
-    (acc: Record<string, number>, i) => {
-      acc[i.risk] = (acc[i.risk] || 0) + 1;
-      return acc;
-    },
-    { high: 0, medium: 0, low: 0 }
-  ) ?? { high: 0, medium: 0, low: 0 };
+  const counts = results
+    ? results.riskItems.reduce<Record<string, number>>(
+        (acc, i) => {
+          acc[i.risk] = (acc[i.risk] || 0) + 1;
+          return acc;
+        },
+        { high: 0, medium: 0, low: 0 }
+      )
+    : { high: 0, medium: 0, low: 0 };
 
   const tap = { whileHover: { scale: 1.05 }, whileTap: { scale: 0.95 } };
 
   return (
     <div className="space-y-8">
-      {/* header */}
+      {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
-        <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
+        <div className="h-2 bg-gradient-to-r from-[rgb(193,120,41)] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
-          <span className="rounded-full bg-[color:var(--accent-light)] p-3 text-[color:var(--accent-dark)]">
+          <span className="rounded-full bg-[var(--accent-light)] p-3 text-[rgb(193,120,41)]">
             <FaShieldAlt size={22} />
           </span>
           <div>
-            <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
+            <h1 className="font-serif text-2xl font-bold text-[var(--brand-dark)]">
               Risk Assessment Tool
             </h1>
             <p className="text-gray-600">
@@ -164,18 +187,17 @@ const RiskAssessmentTool: React.FC = () => {
         </div>
       </header>
 
-      {/* content card */}
+      {/* Content */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <div className="p-8">
-            {/* uploader */}
+            {/* Uploader */}
             <div
               className="
                 flex cursor-pointer flex-col items-center justify-center gap-2
                 rounded-lg border-2 border-dashed border-gray-300
-                p-10 text-center
-                transition-colors
-                hover:border-[color:var(--accent-dark)]
+                p-10 text-center transition-colors
+                hover:border-[rgb(193,120,41)]
               "
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
@@ -204,7 +226,7 @@ const RiskAssessmentTool: React.FC = () => {
 
               {file ? (
                 <div>
-                  <FaFileAlt className="mx-auto text-4xl text-[color:var(--accent-dark)]" />
+                  <FaFileAlt className="mx-auto text-4xl text-[rgb(193,120,41)]" />
                   <p className="mt-3 font-medium text-gray-700">{file.name}</p>
                   <p className="text-sm text-gray-500">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -212,7 +234,7 @@ const RiskAssessmentTool: React.FC = () => {
                   <div className="mt-4 flex justify-center gap-3">
                     <button
                       onClick={reset}
-                      className="rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300"
+                      className="flex items-center justify-center gap-1 rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                     >
                       <FaTrash /> Remove
                     </button>
@@ -221,8 +243,8 @@ const RiskAssessmentTool: React.FC = () => {
                         e.stopPropagation();
                         analyze();
                       }}
-                      className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-1 text-sm text-white hover:bg-[color:var(--accent-dark)]/90"
                       {...tap}
+                      className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
                     >
                       <FaSearch /> Analyze
                     </motion.button>
@@ -239,18 +261,18 @@ const RiskAssessmentTool: React.FC = () => {
                   </p>
                 </>
               )}
-            </div>
 
-            {isAnalyzing && (
-              <div className="mt-8 text-center text-gray-700">
-                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
-                <p className="mt-3">Analyzing your document…</p>
-              </div>
-            )}
+              {isAnalyzing && (
+                <div className="mt-8 text-center text-gray-700">
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[rgb(193,120,41)]" />
+                  <p className="mt-3">Analyzing your document…</p>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <>
-            {/* summary */}
+            {/* Summary */}
             <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <FaFileAlt className="text-2xl text-gray-500" />
@@ -262,7 +284,7 @@ const RiskAssessmentTool: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Overall Risk</p>
                   <RiskLevel level={results.overallRisk} />
@@ -275,15 +297,22 @@ const RiskAssessmentTool: React.FC = () => {
                 </div>
                 <motion.button
                   onClick={reset}
-                  className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                   {...tap}
+                  className="min-w-[140px] flex justify-center rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
                 >
                   Analyze Another
+                </motion.button>
+                <motion.button
+                  onClick={downloadReport}
+                  {...tap}
+                  className="min-w-[140px] flex justify-center rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
+                >
+                  <FaDownload className="mr-1" /> Download Report
                 </motion.button>
               </div>
             </div>
 
-            {/* counters */}
+            {/* Counters */}
             <div className="grid gap-4 p-6 md:grid-cols-3">
               {Object.entries(counts).map(([lvl, count]) => (
                 <div
@@ -299,7 +328,7 @@ const RiskAssessmentTool: React.FC = () => {
               ))}
             </div>
 
-            {/* filter tabs */}
+            {/* Filters */}
             <div className="overflow-x-auto px-6">
               <div className="flex gap-2 border-b pb-2">
                 {sections.map((sec) => (
@@ -308,7 +337,7 @@ const RiskAssessmentTool: React.FC = () => {
                     onClick={() => setActiveSection(sec)}
                     className={`whitespace-nowrap rounded-md px-3 py-1 text-sm transition-colors ${
                       activeSection === sec
-                        ? "bg-[color:var(--accent-dark)] text-white"
+                        ? "bg-[rgb(193,120,41)] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -318,7 +347,7 @@ const RiskAssessmentTool: React.FC = () => {
               </div>
             </div>
 
-            {/* list */}
+            {/* List */}
             <div className="space-y-4 p-6">
               {filteredItems.length ? (
                 filteredItems.map((item) => (
@@ -335,9 +364,13 @@ const RiskAssessmentTool: React.FC = () => {
                       </div>
                       <RiskLevel level={item.risk} />
                     </div>
-                    <div className="flex gap-2 rounded-md border border-[color:var(--accent-light)] bg-[color:var(--accent-light)]/50 p-3 text-sm text-[color:var(--accent-dark)]">
-                      <FaInfoCircle className="mt-0.5 flex-shrink-0" />
-                      <span>{item.recommendation}</span>
+                    <div className="flex gap-2 rounded-md border border-[rgb(193,120,41)] bg-[rgb(193,120,41)]/10 p-3 text-sm">
+                      <span className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-[rgb(193,120,41)] text-white">
+                        <FaInfoCircle size={14} />
+                      </span>
+                      <span className="text-[rgb(193,120,41)]">
+                        {item.recommendation}
+                      </span>
                     </div>
                   </div>
                 ))

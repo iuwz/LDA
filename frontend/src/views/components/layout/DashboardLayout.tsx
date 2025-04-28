@@ -16,7 +16,7 @@ import {
   FaSignOutAlt,
   FaWrench,
 } from "react-icons/fa";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const LANGUAGES = [
@@ -70,9 +70,11 @@ const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    // TODO: implement your logout logic here
+    // TODO: clear your auth state / remove token here
+    navigate("/");
   };
 
   return (
