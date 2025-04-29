@@ -1,4 +1,4 @@
-// ComplianceChecker.tsx
+// src/views/pages/Dashboard/ComplianceChecker.tsx
 
 import React, { useState, ChangeEvent } from "react";
 import {
@@ -45,7 +45,7 @@ const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 const ComplianceStatus: React.FC<{ status: Status }> = ({ status }) => {
   const palette: Record<Status, string> = {
     compliant: "bg-green-100 text-green-800 border-green-200",
-    "non-compliant": "bg-red-100   text-red-800   border-red-200",
+    "non-compliant": "bg-red-100 text-red-800 border-red-200",
     warning: "bg-yellow-100 text-yellow-800 border-yellow-200",
   };
   const icons: Record<Status, React.ReactNode> = {
@@ -129,7 +129,6 @@ const ComplianceChecker: React.FC = () => {
     ],
   });
 
-  /* Handlers */
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
   const onDrop = (e: React.DragEvent) => {
@@ -149,7 +148,6 @@ const ComplianceChecker: React.FC = () => {
     setResults(null);
   };
 
-  /* Derived counts */
   const counts: Record<Status, number> = results
     ? results.regulations.reduce(
         (acc, { status }) => {
@@ -161,7 +159,7 @@ const ComplianceChecker: React.FC = () => {
     : { compliant: 0, "non-compliant": 0, warning: 0 };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
@@ -181,11 +179,12 @@ const ComplianceChecker: React.FC = () => {
       {/* Content */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-8 space-y-6">
             {/* Upload area */}
             <div
               className="
                 flex cursor-pointer flex-col items-center justify-center gap-2
+                w-full sm:w-auto
                 rounded-lg border-2 border-dashed border-gray-300
                 p-10 text-center
                 transition-colors
@@ -209,10 +208,12 @@ const ComplianceChecker: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
-                  <div className="mt-4 flex gap-3">
+
+                  {/* Buttons same line like RiskAssessmentTool */}
+                  <div className="mt-4 flex justify-center gap-3">
                     <button
                       onClick={reset}
-                      className="rounded-md bg-gray-200 px-4 py-1 text-gray-700 hover:bg-gray-300"
+                      className="flex items-center justify-center gap-1 rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                     >
                       <FaTrash /> Remove
                     </button>
@@ -221,9 +222,9 @@ const ComplianceChecker: React.FC = () => {
                         e.stopPropagation();
                         analyze();
                       }}
-                      className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-5 py-1 text-white"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
                     >
                       <FaSearch /> Analyze
                     </motion.button>
@@ -262,7 +263,7 @@ const ComplianceChecker: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex flex-wrap items-center gap-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-1">Status</p>
                   <ComplianceStatus status={results.overallStatus} />
@@ -275,9 +276,9 @@ const ComplianceChecker: React.FC = () => {
                 </div>
                 <motion.button
                   onClick={reset}
-                  className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
                 >
                   Analyze Another
                 </motion.button>
@@ -324,7 +325,7 @@ const ComplianceChecker: React.FC = () => {
                     <ComplianceStatus status={item.status} />
                   </div>
                   {item.status !== "compliant" && (
-                    <div className="flex items-start gap-2 rounded-md bg-[color:var(--accent-light)]/50 p-3">
+                    <div className="flex flex-col md:flex-row items-start gap-2 rounded-md bg-[color:var(--accent-light)]/50 p-3">
                       <FaInfoCircle className="text-[color:var(--accent-dark)] mt-1" />
                       <p className="text-[color:var(--accent-dark)] text-sm">
                         {item.recommendation}

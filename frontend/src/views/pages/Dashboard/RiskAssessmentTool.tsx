@@ -1,7 +1,3 @@
-// src/global.d.ts
-declare module "jspdf-autotable";
-
-// src/views/pages/Dashboard/RiskAssessmentTool.tsx
 import React, { useState } from "react";
 import {
   FaShieldAlt,
@@ -40,7 +36,7 @@ const RiskLevel: React.FC<{ level: "high" | "medium" | "low" }> = ({
 const RiskAssessmentTool: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeSection, setActiveSection] = useState("all");
+  const [activeSection, setActiveSection] = useState<string>("all");
   const [results, setResults] = useState<ReturnType<
     typeof mockAnalysis
   > | null>(null);
@@ -168,7 +164,7 @@ const RiskAssessmentTool: React.FC = () => {
   const tap = { whileHover: { scale: 1.05 }, whileTap: { scale: 0.95 } };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[rgb(193,120,41)] to-[var(--accent-light)]" />
@@ -284,17 +280,7 @@ const RiskAssessmentTool: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Overall Risk</p>
-                  <RiskLevel level={results.overallRisk} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Score</p>
-                  <span className="text-lg font-bold text-gray-800">
-                    {results.score}/100
-                  </span>
-                </div>
+              <div className="flex flex-wrap items-center gap-4">
                 <motion.button
                   onClick={reset}
                   {...tap}
@@ -313,7 +299,7 @@ const RiskAssessmentTool: React.FC = () => {
             </div>
 
             {/* Counters */}
-            <div className="grid gap-4 p-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
               {Object.entries(counts).map(([lvl, count]) => (
                 <div
                   key={lvl}
@@ -330,7 +316,7 @@ const RiskAssessmentTool: React.FC = () => {
 
             {/* Filters */}
             <div className="overflow-x-auto px-6">
-              <div className="flex gap-2 border-b pb-2">
+              <div className="flex flex-wrap gap-2 border-b pb-2">
                 {sections.map((sec) => (
                   <button
                     key={sec}
@@ -364,7 +350,7 @@ const RiskAssessmentTool: React.FC = () => {
                       </div>
                       <RiskLevel level={item.risk} />
                     </div>
-                    <div className="flex gap-2 rounded-md border border-[rgb(193,120,41)] bg-[rgb(193,120,41)]/10 p-3 text-sm">
+                    <div className="flex flex-col md:flex-row gap-2 rounded-md border border-[rgb(193,120,41)] bg-[rgb(193,120,41)]/10 p-3 text-sm">
                       <span className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-[rgb(193,120,41)] text-white">
                         <FaInfoCircle size={14} />
                       </span>
