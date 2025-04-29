@@ -1,3 +1,4 @@
+// src/components/common/toolList.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -17,7 +18,9 @@ const fadeContainer = {
 const fadeItem = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
 const SHADOW_GLOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-const ToolList: React.FC<{
+const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
+
+export const ToolList: React.FC<{
   tools: ToolCard[];
   hoverIdx: number | null;
   setHoverIdx: React.Dispatch<React.SetStateAction<number | null>>;
@@ -40,20 +43,34 @@ const ToolList: React.FC<{
               whileHover={{ y: -8, boxShadow: SHADOW_GLOW }}
               className="relative overflow-hidden rounded-xl border bg-white shadow-sm"
             >
-              <div className="h-2 bg-gradient-to-r from-accent-dark to-accent-light" />
+              {/* top gradient bar */}
+              <div
+                className="h-2"
+                style={{
+                  background: `linear-gradient(to right, ${ACCENT.dark}, ${ACCENT.light})`,
+                }}
+              />
 
               <div className="p-6">
                 <div className="mb-4 flex items-center">
-                  <span className="rounded-full p-3 bg-gradient-to-tr from-accent-dark to-accent-light text-white">
+                  <span
+                    className="rounded-full p-3 text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${ACCENT.dark}, ${ACCENT.light})`,
+                    }}
+                  >
                     <t.icon size={20} />
                   </span>
-                  <h3 className="ml-3 font-serif text-lg font-semibold text-brand-dark">
+                  <h3 className="ml-3 font-serif text-lg font-semibold text-[color:var(--brand-dark)]">
                     {t.title}
                   </h3>
                 </div>
                 <p className="mb-6 text-gray-600">{t.desc}</p>
                 <motion.button
-                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 bg-gradient-to-tr from-accent-dark to-accent-light text-white"
+                  className="flex items-center gap-2 rounded-lg px-4 py-2 text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${ACCENT.dark}, ${ACCENT.light})`,
+                  }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -67,5 +84,3 @@ const ToolList: React.FC<{
     </motion.div>
   </section>
 );
-
-export default ToolList;

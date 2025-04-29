@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from "react";
+// src/views/pages/Home/home.tsx
+import React, { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   FaBalanceScale,
@@ -13,7 +14,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 
-// Import PNG assets for team/testimonial photos (adjust paths/file names as needed)
+// PNG assets for team/testimonial photos
 import team1 from "../../../assets/images/icon.jpg";
 import team2 from "../../../assets/images/icon.jpg";
 import team3 from "../../../assets/images/icon.jpg";
@@ -24,7 +25,6 @@ import team6 from "../../../assets/images/icon.jpg";
 /* ---------------------------
    1) SERVICES DATA & COMPONENT
 ----------------------------*/
-
 const SERVICES = [
   {
     icon: FaBalanceScale,
@@ -105,14 +105,15 @@ function ServicesSection() {
             <motion.a
               key={i}
               href={service.link}
-              whileHover={{ scale: 1.1, y: -10 }}
+              whileHover={{ scale: 1.05, y: -5 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="block bg-white rounded-xl p-6 shadow-sm border border-gray-200 transition-all hover:shadow-xl hover:border-[#C17829]"
+              className="relative bg-white rounded-2xl p-8 shadow-md transition transform hover:shadow-xl hover:-translate-y-1 overflow-hidden"
               variants={{
                 hidden: { opacity: 0, y: 30 },
                 visible: { opacity: 1, y: 0 },
               }}
             >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
               <div className="flex justify-center mb-3">
                 <Icon className="text-4xl text-[#C17829]" />
               </div>
@@ -123,8 +124,8 @@ function ServicesSection() {
                 {service.description}
               </p>
               <ul className="list-disc list-inside text-left text-gray-600 text-sm space-y-1">
-                {service.bullets.map((bullet, idx) => (
-                  <li key={idx} dangerouslySetInnerHTML={{ __html: bullet }} />
+                {service.bullets.map((b, idx) => (
+                  <li key={idx}>{b}</li>
                 ))}
               </ul>
             </motion.a>
@@ -136,36 +137,21 @@ function ServicesSection() {
 }
 
 /* ---------------------------
-   BUBBLE GENERATOR COMPONENT
+   2) BUBBLE GENERATOR COMPONENT
 ----------------------------*/
-
 const BubbleGenerator = () => {
-  // Generate random bubbles with varied properties
   const bubbles = Array.from({ length: 40 }).map((_, i) => {
-    // Create different sizes for bubbles
-    const size = Math.random() * 120 + 30; // 30px to 150px
-
-    // Random positions
+    const size = Math.random() * 120 + 30;
     const top = Math.random() * 100;
     const left = Math.random() * 100;
-
-    // Random opacity
-    const opacity = Math.random() * 0.25 + 0.05; // 0.05 to 0.3
-
-    // Random animation durations (some faster, some slower)
-    const animDuration = Math.random() * 8 + 4; // 4 to 12 seconds
-
-    // Random animation delay
+    const opacity = Math.random() * 0.15 + 0.02;
+    const animDuration = Math.random() * 12 + 8;
     const delay = Math.random() * 2;
-
-    // Alternate between the two colors
     const color =
       i % 2 === 0
         ? "from-[#C17829]/30 to-[#C17829]/5"
         : "from-[#2C2C4A]/30 to-[#2C2C4A]/5";
-
-    // Random movement range (some move more, some less)
-    const moveRange = Math.random() * 50 + 30; // 30px to 80px
+    const moveRange = Math.random() * 50 + 30;
 
     return {
       id: i,
@@ -182,34 +168,24 @@ const BubbleGenerator = () => {
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {bubbles.map((bubble) => (
+      {bubbles.map((b) => (
         <motion.div
-          key={bubble.id}
-          className={`absolute rounded-full bg-gradient-to-r ${bubble.color}`}
+          key={b.id}
+          className={`absolute rounded-full bg-gradient-to-r ${b.color}`}
           style={{
-            width: `${bubble.size}px`,
-            height: `${bubble.size}px`,
-            top: `${bubble.top}%`,
-            left: `${bubble.left}%`,
-            opacity: bubble.opacity,
-            zIndex: 0,
+            width: b.size,
+            height: b.size,
+            top: `${b.top}%`,
+            left: `${b.left}%`,
+            opacity: b.opacity,
           }}
           animate={{
-            x: [
-              0,
-              Math.random() < 0.5 ? -bubble.moveRange : bubble.moveRange,
-              0,
-            ],
-            y: [
-              0,
-              Math.random() < 0.5 ? -bubble.moveRange : bubble.moveRange,
-              0,
-            ],
-            scale: [1, Math.random() * 0.4 + 0.8, 1],
+            x: [0, Math.random() < 0.5 ? -b.moveRange : b.moveRange, 0],
+            y: [0, Math.random() < 0.5 ? -b.moveRange : b.moveRange, 0],
           }}
           transition={{
-            duration: bubble.animDuration,
-            delay: bubble.delay,
+            duration: b.animDuration,
+            delay: b.delay,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -220,9 +196,8 @@ const BubbleGenerator = () => {
 };
 
 /* ---------------------------
-   2) WHY CHOOSE US COMPONENT
+   3) WHY CHOOSE US COMPONENT
 ----------------------------*/
-
 const whyFeatures = [
   {
     icon: FaBrain,
@@ -246,7 +221,60 @@ const whyFeatures = [
   },
 ];
 
-const testimonialCards = [
+function WhyChooseUs() {
+  return (
+    <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
+      <motion.div
+        className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
+        animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0"
+        animate={{ x: [0, -10, 0], y: [0, -10, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <div className="relative z-10 max-w-7xl mx-auto text-center">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#C17829] mb-6">
+          Why Choose LDA?
+        </h2>
+        <p className="text-gray-800 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
+          We combine cutting-edge AI with deep legal insights to streamline
+          document analysis, ensuring both{" "}
+          <span className="text-[#C17829] font-semibold">speed</span> and{" "}
+          <span className="text-[#C17829] font-semibold">accuracy</span>.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          {whyFeatures.map((f, i) => (
+            <motion.div
+              key={i}
+              className="relative bg-white rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
+              <div className="flex items-center justify-center mb-4">
+                <f.icon className="text-3xl text-[#C17829]" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold text-[#2C2C4A] mb-2">
+                {f.title}
+              </h3>
+              <p className="text-gray-700 text-sm">{f.text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------
+   4) TESTIMONIALS COMPONENT
+----------------------------*/
+const TESTIMONIALS = [
   {
     name: "Adam Wilson",
     role: "Senior Lawyer, West Law Group",
@@ -291,201 +319,78 @@ const testimonialCards = [
   },
 ];
 
-function WhyChooseUs() {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  function scrollLeft() {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: "smooth" });
-    }
-  }
-  function scrollRight() {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
-  }
+function Testimonials() {
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(3);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
-      }
-    }, 4000);
-    return () => clearInterval(interval);
+    function update() {
+      const w = window.innerWidth;
+      if (w >= 1024) setPerPage(3);
+      else if (w >= 640) setPerPage(2);
+      else setPerPage(1);
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
+  const totalPages = Math.ceil(TESTIMONIALS.length / perPage);
+  const start = page * perPage;
+  const visible = TESTIMONIALS.slice(start, start + perPage);
+
   return (
-    <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
-      {/* Floating shapes for Why Choose Us using your provided animation */}
-      <motion.div
-        className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
-        animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-[300px] h-[300px] bg-[#2C2C4A] rounded-full opacity-10 bottom-[-100px] right-[-100px] z-0"
-        animate={{ x: [0, -10, 0], y: [0, -10, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <div className="relative z-10 max-w-7xl mx-auto">
-        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#C17829] mb-6 text-center">
-          Why Choose LDA?
+    <section className="py-12 px-4 bg-white">
+      <div className="max-w-7xl mx-auto text-center mb-8">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#C17829] mb-6">
+          Our Clients
         </h2>
-        <p className="text-gray-800 text-base sm:text-lg md:text-xl max-w-2xl mx-auto text-center mb-8 leading-relaxed">
-          We combine cutting-edge AI with deep legal insights to streamline
-          document analysis, ensuring both{" "}
-          <span className="text-[#C17829] font-semibold">speed</span> and{" "}
-          <span className="text-[#C17829] font-semibold">accuracy</span>. Join
-          us on a path to more efficient, transparent, and innovative legal
-          workflows.
-        </p>
-
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.2 } },
-          }}
-        >
-          {whyFeatures.map((feat, i) => (
-            <motion.div
-              key={i}
-              className="p-6 bg-white rounded-md shadow-md transition-all duration-300 hover:shadow-xl group relative overflow-hidden"
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              whileHover={{
-                y: -8,
-                transition: { duration: 0.3 },
-              }}
-            >
-              {/* Animated background gradient on hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/5 to-[#2C2C4A]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Icon with animation */}
-              <div className="flex items-center justify-center mb-4 relative">
-                <motion.div
-                  className="p-3 rounded-full bg-[#C17829]/10 flex items-center justify-center"
-                  whileHover={{ rotate: 10, scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                >
-                  <feat.icon className="text-2xl text-[#C17829]" />
-                </motion.div>
-
-                {/* Decorative ring that appears on hover */}
-                <div className="absolute w-12 h-12 border-2 border-[#C17829]/20 rounded-full scale-0 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100" />
-              </div>
-
-              {/* Title with animation */}
-              <h3 className="font-serif text-lg font-semibold text-[#2C2C4A] text-center mb-2 group-hover:text-[#C17829] transition-colors duration-300">
-                {feat.title}
-              </h3>
-
-              {/* Text that slides up on hover */}
-              <p className="text-sm text-gray-700 text-center transform group-hover:translate-y-1 transition-transform duration-300">
-                {feat.text}
-              </p>
-
-              {/* Hidden line that appears on hover */}
-              <div className="w-0 h-0.5 bg-[#C17829] mx-auto mt-3 group-hover:w-16 transition-all duration-300 opacity-0 group-hover:opacity-100" />
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Call-to-Action Button */}
-      </div>
-
-      {/* Testimonials Section */}
-      <div className="relative z-10 max-w-7xl mx-auto text-center mb-4 mt-12">
-        <h3 className="text-2xl sm:text-3xl font-semibold text-[#2C2C4A]">
-          What Our Clients Say
-        </h3>
-        <p className="text-gray-800 max-w-md mx-auto leading-relaxed">
-          Trusted by legal professionals worldwide
+        <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
+          Hear what our satisfied clients have to say about their experience
+          with LDA.
         </p>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto">
+      <div className="relative max-w-7xl mx-auto px-4">
         <button
-          onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
-          aria-label="Scroll Left"
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          disabled={page === 0}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-60 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
         >
           <FaChevronLeft />
         </button>
         <button
-          onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[#C17829] text-white p-2 rounded-full shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
-          aria-label="Scroll Right"
+          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+          disabled={page === totalPages - 1}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-60 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
         >
           <FaChevronRight />
         </button>
 
-        {/* UPDATED TESTIMONIAL CARDS WITH ENHANCED HOVER EFFECTS */}
-        <div
-          ref={scrollContainerRef}
-          className="overflow-x-auto no-scrollbar flex gap-6 snap-x snap-mandatory scroll-smooth px-4 pb-4 pt-2"
-        >
-          {testimonialCards.map((t, idx) => (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((t, i) => (
             <motion.div
-              key={idx}
-              className="snap-center min-w-[300px] max-w-xs bg-white shadow-md transition-all duration-300 hover:shadow-xl rounded-xl p-6 flex flex-col group relative overflow-hidden"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: idx * 0.1 }}
-              whileHover={{
-                y: -8,
-                transition: { duration: 0.3 },
-              }}
+              key={i}
+              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
             >
-              {/* Animated background gradient on hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/5 to-[#2C2C4A]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              <div className="relative z-10">
-                <div className="flex items-center mb-3">
-                  {/* Avatar with animation */}
-                  <div className="relative mr-3">
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 15,
-                      }}
-                    >
-                      <img
-                        src={t.avatarUrl}
-                        alt={`${t.name} avatar`}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-[#C17829]/50"
-                      />
-                    </motion.div>
-
-                    {/* Decorative ring that appears on hover */}
-                    <div className="absolute w-14 h-14 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-[#C17829]/20 rounded-full scale-0 group-hover:scale-110 transition-transform duration-500 opacity-0 group-hover:opacity-100" />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-[#2C2C4A] group-hover:text-[#C17829] transition-colors duration-300">
-                      {t.name}
-                    </p>
-                    <p className="text-xs text-gray-500">{t.role}</p>
-                  </div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
+              <div className="flex items-center mb-4">
+                <img
+                  src={t.avatarUrl}
+                  alt={t.name}
+                  className="w-12 h-12 rounded-full border-2 border-[#C17829]/50 mr-3"
+                />
+                <div>
+                  <p className="font-semibold text-[#2C2C4A]">{t.name}</p>
+                  <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
-
-                {/* Quote text that slides up on hover */}
-                <p className="flex-1 text-sm text-gray-800 italic leading-relaxed transform group-hover:translate-y-1 transition-transform duration-300">
-                  "{t.quote}"
-                </p>
-
-                {/* Hidden line that appears on hover */}
-                <div className="w-0 h-0.5 bg-[#C17829] mx-auto mt-3 group-hover:w-16 transition-all duration-300 opacity-0 group-hover:opacity-100" />
               </div>
+              <p className="text-gray-700 italic leading-relaxed">
+                "{t.quote}"
+              </p>
             </motion.div>
           ))}
         </div>
@@ -495,18 +400,14 @@ function WhyChooseUs() {
 }
 
 /* ---------------------------
-   3) THE HOME COMPONENT
+   5) THE HOME COMPONENT
 ----------------------------*/
-
 export default function Home() {
   return (
     <main className="bg-white min-h-screen flex flex-col">
-      {/* HERO SECTION with Many Bubbles */}
+      {/* HERO */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
-        {/* Background bubbles */}
         <BubbleGenerator />
-
-        {/* Keep the original larger animated shapes for consistent effect */}
         <motion.div
           className="absolute w-[300px] h-[300px] bg-[#C17829] rounded-full opacity-20 top-[-100px] left-[-100px] z-0"
           animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
@@ -530,7 +431,8 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Empowering Legal Precision <br className="hidden sm:block" />
+            Empowering Legal Precision
+            <br className="hidden sm:block" />
             <span className="text-[#C17829]">with AI</span>
           </motion.h1>
           <motion.p
@@ -540,12 +442,11 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             Leveraging advanced AI tools to enhance accuracy and efficiency in
-            legal document analysis. Streamline compliance checks, risk
-            assessment, and rephrasing, all in one place.
+            legal document analysis.
           </motion.p>
           <motion.a
             href="#services"
-            className="inline-block px-6 py-3 bg-[#C17829] text-white rounded-full font-semibold text-lg shadow-md hover:bg-[#ad6823] hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
+            className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
@@ -555,11 +456,14 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* SERVICES SECTION */}
+      {/* SERVICES */}
       <ServicesSection />
 
-      {/* WHY CHOOSE US SECTION */}
+      {/* WHY CHOOSE US */}
       <WhyChooseUs />
+
+      {/* TESTIMONIALS */}
+      <Testimonials />
     </main>
   );
 }

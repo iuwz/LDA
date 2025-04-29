@@ -1,44 +1,23 @@
-// src/views/components/layout/DashboardLayout.tsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  FaBars,
+  FaTimes,
+  FaTachometerAlt,
   FaEdit,
   FaShieldAlt,
   FaClipboardCheck,
   FaLanguage,
   FaRobot,
-  FaTachometerAlt,
-  FaChevronRight,
-  FaChevronLeft,
-  FaUser,
   FaBalanceScale,
+  FaUser,
   FaCog,
   FaSignOutAlt,
-  FaWrench,
 } from "react-icons/fa";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "ar", label: "Arabic" },
-  { value: "fr", label: "French" },
-];
-
-const TFA_METHODS = [
-  { value: "email", label: "Email" },
-  { value: "phone", label: "Phone" },
-];
-
-// Removed the "Settings" entry here
 const navItems = [
-  {
-    icon: FaTachometerAlt,
-    title: "Dashboard",
-    path: "/dashboard",
-    end: true,
-  },
-  { icon: FaEdit, title: "Rephrasing Tool", path: "/dashboard/rephrasing" },
+  { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
+  { icon: FaEdit, title: "Rephrasing", path: "/dashboard/rephrasing" },
   {
     icon: FaShieldAlt,
     title: "Risk Assessment",
@@ -46,184 +25,184 @@ const navItems = [
   },
   {
     icon: FaClipboardCheck,
-    title: "Compliance Checker",
+    title: "Compliance",
     path: "/dashboard/compliance",
   },
-  {
-    icon: FaLanguage,
-    title: "Translation Tool",
-    path: "/dashboard/translation",
-  },
+  { icon: FaLanguage, title: "Translation", path: "/dashboard/translation" },
   { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
 ];
 
-const getCurrentPageTitle = (locationPath: string) => {
-  const current = navItems.find(
+const getCurrentTitle = (path: string) => {
+  const found = navItems.find(
     (i) =>
-      locationPath === i.path ||
-      (i.path !== "/dashboard" && locationPath.startsWith(i.path))
+      path === i.path || (i.path !== "/dashboard" && path.startsWith(i.path))
   );
-  return current ? current.title : "Dashboard";
+  return found?.title || "Dashboard";
 };
 
 const DashboardLayout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [accMenu, setAccMenu] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // TODO: clear your auth state / remove token here
-    navigate("/");
-  };
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const handleNavClick = () => setOpen(false);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-x-hidden">
-      {/* Toggle sidebar */}
-      {!isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 bg-white shadow-md p-2 rounded-r-md text-[#C17829] hover:bg-gray-100 z-50"
-        >
-          <FaChevronRight />
-        </button>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {open && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setOpen(false)}
+        />
       )}
 
-      {/* Sidebar */}
-      <motion.aside
-        className="fixed md:relative z-30 h-full bg-white shadow-lg overflow-y-auto overflow-x-hidden"
-        initial={false}
-        animate={{ width: isSidebarOpen ? "16rem" : 0 }}
-        transition={{ duration: 0.3 }}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg flex flex-col
+          transform transition-transform duration-300 ease-in-out
+          ${open ? "translate-x-0" : "-translate-x-full"}
+          md:relative md:translate-x-0
+        `}
       >
-        {/* Logo & collapse button */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <NavLink to="/dashboard" className="flex items-center space-x-2">
+        <div className="flex items-center justify-between p-4 border-b">
+          <NavLink
+            to="/dashboard"
+            className="flex items-center space-x-2"
+            onClick={handleNavClick}
+          >
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
             <span className="text-xl font-bold text-[#C17829] font-serif">
               LDA
             </span>
           </NavLink>
           <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="text-gray-500 p-2 rounded-md hover:bg-gray-100"
+            className="md:hidden p-1 hover:bg-gray-100 rounded"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
           >
-            <FaChevronLeft />
+            <FaTimes />
           </button>
         </div>
 
-        <nav className="mt-4 px-3 overflow-x-hidden">
-          {/* Main nav items */}
-          <ul className="space-y-1">
-            {navItems.map(({ icon: Icon, title, path, end }, idx) => (
-              <li key={idx}>
-                <NavLink
-                  to={path}
-                  end={end}
-                  className={({ isActive }) =>
-                    `flex items-center p-3 rounded-md transition-all hover:bg-gray-100 ${
-                      isActive
-                        ? "bg-[#f7ede1] text-[#C17829] font-medium border-l-4 border-[#C17829]"
-                        : "text-gray-700"
-                    }`
-                  }
-                >
-                  <Icon className="text-lg mr-3" />
-                  <span>{title}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-
-          {/* Red Logout button above the profile */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 mt-4 text-red-600 rounded-md hover:bg-gray-100"
-          >
-            <FaSignOutAlt className="text-lg mr-3" />
-            <span>Logout</span>
-          </button>
-
-          {/* Profile & gear menu */}
-          <div className="absolute bottom-0 w-full p-4 border-t">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-[#2C2C4A] flex items-center justify-center text-white">
-                  <FaUser />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">John Doe</p>
-                  <p className="text-xs text-gray-500">Legal Advisor</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setIsAccountMenuOpen((v) => !v)}
-                className="text-gray-500 p-2 rounded-md hover:bg-gray-100 relative"
-              >
-                <FaCog />
-              </button>
-
-              {isAccountMenuOpen && (
-                <div className="absolute right-4 bottom-16 w-40 bg-white shadow-md rounded-md border z-40">
-                  <NavLink
-                    to="/dashboard/profile"
-                    onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
-                  >
-                    <FaUser className="mr-2" />
-                    Edit Profile
-                  </NavLink>
-                  <NavLink
-                    to="/dashboard/settings"
-                    onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
-                  >
-                    <FaWrench className="mr-2" />
-                    Settings
-                  </NavLink>
-                  <button
-                    onClick={() => {
-                      setIsAccountMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
-                  >
-                    <FaSignOutAlt className="mr-2" />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </nav>
-      </motion.aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm z-10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center space-x-3">
-              {!isSidebarOpen && (
-                <FaBalanceScale className="text-2xl text-[#C17829]" />
-              )}
-              <h1 className="text-xl font-semibold text-[#2C2C4A]">
-                {getCurrentPageTitle(location.pathname)}
-              </h1>
-            </div>
+        <div className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+          {navItems.map(({ icon: Icon, title, path, end }, idx) => (
             <NavLink
-              to="/"
-              className="text-sm text-gray-600 hover:text-[#C17829] px-3 py-1"
+              key={idx}
+              to={path}
+              end={end}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
+                 ${
+                   isActive
+                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                     : "text-gray-700 hover:bg-gray-100"
+                 }`
+              }
             >
-              Home
+              <Icon className="mr-3" />
+              <span className="truncate">{title}</span>
             </NavLink>
+          ))}
+
+          <button
+            onClick={() => {
+              navigate("/");
+              setOpen(false);
+            }}
+            className="mt-4 w-full flex items-center px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-gray-100"
+          >
+            <FaSignOutAlt className="mr-3" /> Logout
+          </button>
+        </div>
+
+        <div className="border-t p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white">
+                <FaUser />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">John Doe</p>
+                <p className="text-xs text-gray-500">Legal Advisor</p>
+              </div>
+            </div>
+            <button
+              className="p-1 hover:bg-gray-100 rounded"
+              onClick={() => setAccMenu((v) => !v)}
+              aria-label="Account menu"
+            >
+              <FaCog />
+            </button>
           </div>
+          {accMenu && (
+            <div className="mt-2 space-y-1">
+              <NavLink
+                to="/dashboard/profile"
+                className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                onClick={handleNavClick}
+              >
+                <FaUser className="mr-2" /> Profile
+              </NavLink>
+              <NavLink
+                to="/dashboard/settings"
+                className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                onClick={handleNavClick}
+              >
+                <FaCog className="mr-2" /> Settings
+              </NavLink>
+              <button
+                onClick={() => {
+                  navigate("/");
+                  setAccMenu(false);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <div
+        className={`
+          flex-1 flex flex-col overflow-hidden transition-all duration-300
+          ${open ? "md:pl-64" : "md:pl-0"}
+        `}
+      >
+        <header className="flex items-center justify-between bg-white shadow px-4 sm:px-6 lg:px-8 h-12">
+          <div className="flex items-center">
+            <button
+              className="md:hidden mr-3 p-1 text-[#C17829] hover:bg-gray-100 rounded"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              {open ? <FaTimes size={20} /> : <FaBars size={20} />}
+            </button>
+            <h1 className="text-lg sm:text-xl font-semibold text-[#2C2C4A] truncate">
+              {getCurrentTitle(location.pathname)}
+            </h1>
+          </div>
+          <NavLink
+            to="/"
+            className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]"
+          >
+            Home
+          </NavLink>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
-          </div>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <Outlet />
         </main>
       </div>
     </div>
