@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login, register } from "../../../api";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
-import { useLocation } from "react-router-dom";
 
-// SignIn Component
+/* ───────────────────────── Sign-In ───────────────────────── */
+
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -16,7 +17,16 @@ interface SignInFormProps {
   error?: string | null;
 }
 
-function SignInForm({ email, setEmail, password, setPassword, onSubmit, error }: SignInFormProps) {
+function SignInForm({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  onSubmit,
+  error,
+}: SignInFormProps) {
+  const [showPw, setShowPw] = useState(false);
+
   return (
     <>
       <div className="text-center mb-8">
@@ -26,24 +36,27 @@ function SignInForm({ email, setEmail, password, setPassword, onSubmit, error }:
         <p className="text-gray-600">Access your account</p>
       </div>
 
-      <form className="mt-12" onSubmit={e => { e.preventDefault(); onSubmit(); }}>
+      <form
+        className="mt-12"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        {/* Email */}
         <div className="mb-5">
-          <label className="block text-gray-700 font-medium mb-2">
-            Username
-          </label>
+          <label className="block text-gray-700 font-medium mb-2">Email</label>
           <input
             type="email"
-            className="
-              w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
-              focus:outline-none focus:ring-2 focus:ring-[#C17829]
-              focus:border-[#C17829] transition-all
-            "
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             required
           />
         </div>
+
+        {/* Password w| eye toggle */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             <label className="block text-gray-700 font-medium">Password</label>
@@ -54,20 +67,28 @@ function SignInForm({ email, setEmail, password, setPassword, onSubmit, error }:
               Forgot Password?
             </a>
           </div>
-          <input
-            type="password"
-            className="
-              w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
-              focus:outline-none focus:ring-2 focus:ring-[#C17829]
-              focus:border-[#C17829] transition-all
-            "
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            required
-          />
+
+          <div className="relative">
+            <input
+              type={showPw ? "text" : "password"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
+              onClick={() => setShowPw((s) => !s)}
+              aria-label={showPw ? "Hide password" : "Show password"}
+            >
+              {showPw ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
         </div>
 
+        {/* Remember-me */}
         <div className="flex items-center mb-8">
           <input
             type="checkbox"
@@ -80,17 +101,19 @@ function SignInForm({ email, setEmail, password, setPassword, onSubmit, error }:
         </div>
 
         {error && <p className="text-red-600 mt-2">{error}</p>}
-        <Button type="submit" className="
-            w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg
-            hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all
-            active:bg-[#A66F24] hover:scale-[1.01]
-          ">Sign In</Button>
+        <Button
+          type="submit"
+          className="w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
+        >
+          Sign In
+        </Button>
       </form>
     </>
   );
 }
 
-// SignUp Component
+/* ───────────────────────── Sign-Up ───────────────────────── */
+
 interface SignUpFormProps {
   username: string;
   setUsername: (v: string) => void;
@@ -100,8 +123,6 @@ interface SignUpFormProps {
   setPassword: (v: string) => void;
   onSubmit: () => void;
   error?: string | null;
-
-  // Validation props:
   isValidEmail: (val: string) => boolean;
   hasUppercase: boolean;
   hasNumber: boolean;
@@ -110,7 +131,6 @@ interface SignUpFormProps {
   isAllValid: boolean;
 }
 
-// Update the function signature to accept all of those props:
 function SignUpForm({
   username,
   setUsername,
@@ -120,8 +140,6 @@ function SignUpForm({
   setPassword,
   onSubmit,
   error,
-
-  // Validation props
   isValidEmail,
   hasUppercase,
   hasNumber,
@@ -129,6 +147,15 @@ function SignUpForm({
   hasMinLength,
   isAllValid,
 }: SignUpFormProps) {
+  const [showPw, setShowPw] = useState(false);
+
+  /* strength as percentage of rules satisfied */
+  const metRules = [hasUppercase, hasNumber, hasSymbol, hasMinLength].filter(
+    Boolean
+  ).length;
+  const strengthWidth = `${metRules * 25}%`;
+  const strengthColor = isAllValid ? "bg-green-500" : "bg-yellow-400";
+
   return (
     <>
       <div className="text-center mb-8">
@@ -138,7 +165,12 @@ function SignUpForm({
         <p className="text-gray-600">Join our platform</p>
       </div>
 
-      <form onSubmit={e => { e.preventDefault(); onSubmit(); }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
         {/* Username */}
         <div className="mb-4">
           <label className="block text-gray-700 font-medium mb-2">
@@ -146,13 +178,9 @@ function SignUpForm({
           </label>
           <input
             type="text"
-            className="
-              w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
-              focus:outline-none focus:ring-2 focus:ring-[#C17829]
-              focus:border-[#C17829] transition-all
-            "
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
             value={username}
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             placeholder="Choose a username"
             required
           />
@@ -163,17 +191,12 @@ function SignUpForm({
           <label className="block text-gray-700 font-medium mb-2">Email</label>
           <input
             type="email"
-            className="
-              w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
-              focus:outline-none focus:ring-2 focus:ring-[#C17829]
-              focus:border-[#C17829] transition-all
-            "
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="example@example.com"
             required
           />
-          {/* Email validation feedback */}
           {email.length > 0 && !isValidEmail(email) && (
             <p className="text-red-600 text-sm mt-1 flex items-center">
               <span className="mr-1">✗</span> Invalid email format
@@ -191,69 +214,78 @@ function SignUpForm({
           <label className="block text-gray-700 font-medium mb-2">
             Password
           </label>
-          <input
-            type="password"
-            className="
-              w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
-              focus:outline-none focus:ring-2 focus:ring-[#C17829]
-              focus:border-[#C17829] transition-all
-            "
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Create a strong password"
-            required
-          />
-          {/* Password Rule Checks */}
+
+          <div className="relative">
+            <input
+              type={showPw ? "text" : "password"}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a strong password"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
+              onClick={() => setShowPw((s) => !s)}
+              aria-label={showPw ? "Hide password" : "Show password"}
+            >
+              {showPw ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          {/* Rule checklist */}
           <div className="mt-3 text-sm space-y-1.5 bg-gray-50 p-3 rounded-lg">
             <p
-              className={
-                hasUppercase
-                  ? "text-green-600 flex items-center"
-                  : "text-gray-500 flex items-center"
-              }
+              className={`${
+                hasUppercase ? "text-green-600" : "text-gray-500"
+              } flex items-center`}
             >
               <span className="mr-2">{hasUppercase ? "✓" : "○"}</span> Uppercase
               letter
             </p>
             <p
-              className={
-                hasNumber
-                  ? "text-green-600 flex items-center"
-                  : "text-gray-500 flex items-center"
-              }
+              className={`${
+                hasNumber ? "text-green-600" : "text-gray-500"
+              } flex items-center`}
             >
               <span className="mr-2">{hasNumber ? "✓" : "○"}</span> Number
             </p>
             <p
-              className={
-                hasSymbol
-                  ? "text-green-600 flex items-center"
-                  : "text-gray-500 flex items-center"
-              }
+              className={`${
+                hasSymbol ? "text-green-600" : "text-gray-500"
+              } flex items-center`}
             >
               <span className="mr-2">{hasSymbol ? "✓" : "○"}</span> Special
               character
             </p>
             <p
-              className={
-                hasMinLength
-                  ? "text-green-600 flex items-center"
-                  : "text-gray-500 flex items-center"
-              }
+              className={`${
+                hasMinLength ? "text-green-600" : "text-gray-500"
+              } flex items-center`}
             >
               <span className="mr-2">{hasMinLength ? "✓" : "○"}</span> At least
               8 characters
             </p>
           </div>
+
+          {/* Strength bar */}
+          {password.length > 0 && (
+            <div className="mt-3 h-2 w-full bg-gray-200 rounded">
+              <div
+                className={`h-full rounded ${strengthColor}`}
+                style={{ width: strengthWidth }}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Sign Up Button */}
         {error && <p className="text-red-600 mt-2">{error}</p>}
-        <Button type="submit" disabled={!isAllValid} className="
-            w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg
-            hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all
-            active:bg-[#A66F24] hover:scale-[1.01]
-          ">
+        <Button
+          type="submit"
+          disabled={!isAllValid}
+          className="w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all active:bg-[#A66F24] hover:scale-[1.01]"
+        >
           Create Account
         </Button>
       </form>
@@ -261,18 +293,20 @@ function SignUpForm({
   );
 }
 
-// Main Auth Component
+/* ───────────────────────── Master Auth ───────────────────────── */
+
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const navigate = useNavigate();
 
-  // Form fields & errors
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Handlers
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  /* ── handlers ── */
   const handleSignIn = async () => {
     setError(null);
     try {
@@ -293,60 +327,31 @@ export default function Auth() {
     }
   };
 
-  const location = useLocation();
-
-  // Use effect to check for URL parameters when component mounts
+  /* ── URL param / state check ── */
   useEffect(() => {
-    // Check for URL params or state
-    const queryParams = new URLSearchParams(location.search);
-    const form = queryParams.get("form");
-
-    // If form=login is in the URL, ensure we show login form
-    if (form === "login") {
-      setIsSignUp(false);
-    }
-    // If form=register is in the URL, show register form
-    else if (form === "register") {
-      setIsSignUp(true);
-    }
-    // Also check for state from React Router navigation
+    const q = new URLSearchParams(location.search);
+    const form = q.get("form");
+    if (form === "login") setIsSignUp(false);
+    else if (form === "register") setIsSignUp(true);
     else if (location.state && typeof location.state === "object") {
-      // @ts-ignore - we know state might have isSignUp property
-      const routerState = location.state as { isSignUp?: boolean };
-      if (routerState.isSignUp !== undefined) {
-        setIsSignUp(routerState.isSignUp);
-      }
+      const s = location.state as { isSignUp?: boolean };
+      if (s.isSignUp !== undefined) setIsSignUp(s.isSignUp);
     }
   }, [location]);
 
-  // Basic email validation
-  function isValidEmail(value: string) {
-    return /.+@.+\..+/.test(value.trim());
-  }
+  /* ── validators ── */
+  const isValidEmail = (val: string) => /.+@.+\..+/.test(val.trim());
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+  const hasMinLength = password.length >= 8;
+  const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  // Basic password checks
-  function checkPasswordRules(pass: string) {
-    const hasUppercase = /[A-Z]/.test(pass);
-    const hasNumber = /\d/.test(pass);
-    const hasSymbol = /[^A-Za-z0-9]/.test(pass);
-    const hasMinLength = pass.length >= 8;
-    return {
-      hasUppercase,
-      hasNumber,
-      hasSymbol,
-      hasMinLength,
-      isAllValid: hasUppercase && hasNumber && hasSymbol && hasMinLength,
-    };
-  }
-
-  const { hasUppercase, hasNumber, hasSymbol, hasMinLength, isAllValid } =
-    checkPasswordRules(password);
-
+  /* ── JSX ── */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-hidden fixed inset-0">
-      {/* Background floating bubbles - increased number and variation */}
+      {/* animated bubbles */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Large background floating shapes */}
         <motion.div
           className="fixed w-[400px] h-[400px] bg-[#C17829] rounded-full opacity-10 top-[-100px] left-[-100px]"
           animate={{ x: [0, 40, 0], y: [0, 40, 0] }}
@@ -368,16 +373,14 @@ export default function Auth() {
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        {/* Create many smaller animated bubbles */}
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className={`fixed rounded-full bg-gradient-to-r 
-              ${i % 2 === 0
+            className={`fixed rounded-full bg-gradient-to-r ${
+              i % 2 === 0
                 ? "from-[#C17829]/10 to-[#C17829]/5"
                 : "from-[#2C2C4A]/10 to-[#2C2C4A]/5"
-              }
-            `}
+            }`}
             style={{
               width: `${Math.random() * 100 + 20}px`,
               height: `${Math.random() * 100 + 20}px`,
@@ -392,7 +395,7 @@ export default function Auth() {
               scale: [1, Math.random() * 0.4 + 0.8, 1],
             }}
             transition={{
-              duration: Math.random() * 5 + 3, // Much faster animation: 3-8 seconds
+              duration: Math.random() * 5 + 3,
               repeat: Infinity,
               ease: "easeInOut",
             }}
@@ -400,7 +403,7 @@ export default function Auth() {
         ))}
       </div>
 
-      {/* Auth container */}
+      {/* auth card */}
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
         <motion.div
           className="w-full max-w-5xl flex flex-wrap overflow-hidden bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl"
@@ -408,9 +411,8 @@ export default function Auth() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          {/* LEFT SIDE: Form container - always on left */}
+          {/* form side */}
           <div className="w-full md:w-1/2 p-8 md:p-16 flex items-center justify-center z-10">
-            {/* Fixed height wrapper to ensure consistent size */}
             <div className="w-full max-w-md h-[650px] flex items-center">
               <AnimatePresence mode="wait">
                 {isSignUp ? (
@@ -423,19 +425,17 @@ export default function Auth() {
                     className="w-full"
                   >
                     <SignUpForm
-                      // Basic form state
+                      /* state */
                       username={username}
                       setUsername={setUsername}
                       email={email}
                       setEmail={setEmail}
                       password={password}
                       setPassword={setPassword}
-
-                      // Submission handler + error display
+                      /* submit */
                       onSubmit={handleSignUp}
                       error={error}
-
-                      // Validation helpers
+                      /* validation */
                       isValidEmail={isValidEmail}
                       hasUppercase={hasUppercase}
                       hasNumber={hasNumber}
@@ -443,7 +443,6 @@ export default function Auth() {
                       hasMinLength={hasMinLength}
                       isAllValid={isAllValid}
                     />
-
                   </motion.div>
                 ) : (
                   <motion.div
@@ -468,24 +467,23 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* RIGHT SIDE: Background Image Container */}
+          {/* image side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
-            {/* Image panels */}
             <motion.div
               className="absolute inset-0 z-10 flex"
               animate={{ x: isSignUp ? "-100%" : "0%" }}
               transition={{
                 duration: 0.6,
-                ease: [0.43, 0.13, 0.23, 0.96], // Custom easing for smoother motion
+                ease: [0.43, 0.13, 0.23, 0.96],
               }}
             >
-              {/* Right image panel (for sign-in) */}
+              {/* sign-in side */}
               <div className="w-full flex-shrink-0 h-full relative">
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{ backgroundImage: `url(${myImage})` }}
-                ></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#2C2C4A]/70 to-[#C17829]/50"></div>
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#2C2C4A]/70 to-[#C17829]/50" />
                 <div className="relative h-full flex flex-col items-center justify-center text-center p-12 text-white">
                   <h2 className="font-serif text-3xl font-bold mb-6">
                     New to our platform?
@@ -496,25 +494,20 @@ export default function Auth() {
                   </p>
                   <Button
                     onClick={() => setIsSignUp(true)}
-                    className="
-                      px-8 py-3 rounded-full bg-white text-[#2C2C4A] 
-                      font-semibold border-2 border-white
-                      transition-all duration-300 shadow-lg hover:bg-white/90 
-                      hover:border-white/90 hover:scale-105 hover:shadow-xl
-                    "
+                    className="px-8 py-3 rounded-full bg-white text-[#2C2C4A] font-semibold border-2 border-white transition-all duration-300 shadow-lg hover:bg-white/90 hover:border-white/90 hover:scale-105 hover:shadow-xl"
                   >
                     Create Account
                   </Button>
                 </div>
               </div>
 
-              {/* Left image panel (for sign-up) */}
+              {/* sign-up side */}
               <div className="w-full flex-shrink-0 h-full relative">
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{ backgroundImage: `url(${myImage})` }}
-                ></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/50 to-[#2C2C4A]/70"></div>
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#C17829]/50 to-[#2C2C4A]/70" />
                 <div className="relative h-full flex flex-col items-center justify-center text-center p-12 text-white">
                   <h2 className="font-serif text-3xl font-bold mb-6">
                     Already have an account?
@@ -525,12 +518,7 @@ export default function Auth() {
                   </p>
                   <Button
                     onClick={() => setIsSignUp(false)}
-                    className="
-                      px-8 py-3 rounded-full bg-white text-[#2C2C4A] 
-                      font-semibold border-2 border-white
-                      transition-all duration-300 shadow-lg hover:bg-white/90 
-                      hover:border-white/90 hover:scale-105 hover:shadow-xl
-                    "
+                    className="px-8 py-3 rounded-full bg-white text-[#2C2C4A] font-semibold border-2 border-white transition-all duration-300 shadow-lg hover:bg-white/90 hover:border-white/90 hover:scale-105 hover:shadow-xl"
                   >
                     Sign In
                   </Button>
@@ -539,18 +527,14 @@ export default function Auth() {
             </motion.div>
           </div>
 
-          {/* Mobile toggle - only shows on small screens */}
+          {/* mobile toggle */}
           <div className="md:hidden mt-8 text-center">
             <p className="text-gray-600 mb-3">
               {isSignUp ? "Already have an account?" : "New to our platform?"}
             </p>
             <Button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="
-                px-6 py-2 rounded-full bg-transparent border border-[#C17829]
-                text-[#C17829] hover:bg-[#C17829] hover:text-white
-                transition-all
-              "
+              onClick={() => setIsSignUp((s) => !s)}
+              className="px-6 py-2 rounded-full bg-transparent border border-[#C17829] text-[#C17829] hover:bg-[#C17829] hover:text-white transition-all"
             >
               {isSignUp ? "Sign In" : "Create Account"}
             </Button>
