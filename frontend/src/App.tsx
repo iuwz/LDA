@@ -1,10 +1,15 @@
 // src/App.tsx
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
+
+// Base URL for your FastAPI backend (via Vite env var)
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Import pages
 import Home from "./views/pages/Home/home";
@@ -17,20 +22,47 @@ import RiskAssessmentTool from "./views/pages/Dashboard/RiskAssessmentTool";
 import ComplianceChecker from "./views/pages/Dashboard/ComplianceChecker";
 import TranslationTool from "./views/pages/Dashboard/TranslationTool";
 import DashboardChatbot from "./views/pages/Dashboard/DashboardChatbot";
-import ChatbotWidget from "./views/components/common/ChatbotWidget";
 import EditProfile from "./views/pages/Dashboard/EditProfile";
-import Settings from "./views/pages/Dashboard/Settings"; // ← new
+import Settings from "./views/pages/Dashboard/Settings";
 
 // Import layout components
 import Navbar from "./views/components/layout/navbar";
 import Footer from "./views/components/layout/footer";
 import DashboardLayout from "./views/components/layout/DashboardLayout";
+import ChatbotWidget from "./views/components/common/ChatbotWidget";
+
+// ─── PrivateRoute ──────────────────────────────────────────────────────────
+// Wraps your dashboard routes and redirects to /auth if not authenticated.
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch(`${API_BASE}/auth/me`, {
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Not authenticated");
+      })
+      .catch(() => {
+        navigate("/auth", { replace: true });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [navigate]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  return children;
+}
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Routes with Navbar and Footer */}
+        {/* Public routes with Navbar, Footer, and ChatbotWidget */}
         <Route
           path="/"
           element={
@@ -76,11 +108,18 @@ function App() {
           }
         />
 
-        {/* Dashboard Routes - without Navbar and Footer */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        {/* Protected Dashboard Routes */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <PrivateRoute>
+              <DashboardLayout />
+            </PrivateRoute>
+          }
+        >
           <Route index element={<DashboardHome />} />
           <Route path="profile" element={<EditProfile />} />
-          <Route path="settings" element={<Settings />} /> {/* ← new */}
+          <Route path="settings" element={<Settings />} />
           <Route path="rephrasing" element={<RephrasingTool />} />
           <Route path="risk-assessment" element={<RiskAssessmentTool />} />
           <Route path="compliance" element={<ComplianceChecker />} />
@@ -88,7 +127,7 @@ function App() {
           <Route path="chatbot" element={<DashboardChatbot />} />
         </Route>
 
-        {/* Redirect to home for any unmatched routes */}
+        {/* Redirect any unknown route to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

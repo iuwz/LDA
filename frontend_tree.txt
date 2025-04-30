@@ -1,0 +1,66 @@
+
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.cjs
+├── postcss.config.js
+├── requirment.txt
+├── src
+│   ├── App.tsx
+│   ├── assets
+│   │   └── images
+│   │       ├── about-hero.jpeg
+│   │       ├── icon.jpg
+│   │       ├── our-story.jpeg
+│   │       └── pic.jpg
+│   ├── global.d.ts
+│   ├── index.css
+│   ├── main.tsx
+│   ├── pages
+│   │   ├── about.tsx
+│   │   └── chatbotPage.tsx
+│   ├── views
+│   │   ├── components
+│   │   │   ├── common
+│   │   │   │   ├── Banner.tsx
+│   │   │   │   ├── ChatbotWidget.tsx
+│   │   │   │   ├── FileUpload.tsx
+│   │   │   │   ├── Hero.tsx
+│   │   │   │   ├── ToolsSection.tsx
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── chatBot.tsx
+│   │   │   │   ├── toolList.tsx
+│   │   │   │   ├── uploadedFiles.tsx
+│   │   │   │   └── welcomSection.tsx
+│   │   │   └── layout
+│   │   │       ├── DashboardLayout.tsx
+│   │   │       ├── footer.tsx
+│   │   │       └── navbar.tsx
+│   │   └── pages
+│   │       ├── About
+│   │       │   └── about.tsx
+│   │       ├── Auth
+│   │       │   └── auth.tsx
+│   │       ├── Contact
+│   │       │   └── contact.tsx
+│   │       ├── Dashboard
+│   │       │   ├── ComplianceChecker.tsx
+│   │       │   ├── DashboardChatbot.tsx
+│   │       │   ├── DashboardHome.tsx
+│   │       │   ├── EditProfile.tsx
+│   │       │   ├── RephrasingTool.tsx
+│   │       │   ├── RiskAssessmentTool.tsx
+│   │       │   ├── Settings.tsx
+│   │       │   └── TranslationTool.tsx
+│   │       └── Home
+│   │           └── home.tsx
+│   └── vite-env.d.ts
+├── tailwind.config.js
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
+

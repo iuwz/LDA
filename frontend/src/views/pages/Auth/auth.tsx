@@ -1,11 +1,22 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { login, register } from "../../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 import { useLocation } from "react-router-dom";
 
 // SignIn Component
-function SignInForm() {
+interface SignInFormProps {
+  email: string;
+  setEmail: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  onSubmit: () => void;
+  error?: string | null;
+}
+
+function SignInForm({ email, setEmail, password, setPassword, onSubmit, error }: SignInFormProps) {
   return (
     <>
       <div className="text-center mb-8">
@@ -15,19 +26,22 @@ function SignInForm() {
         <p className="text-gray-600">Access your account</p>
       </div>
 
-      <form className="mt-12">
+      <form className="mt-12" onSubmit={e => { e.preventDefault(); onSubmit(); }}>
         <div className="mb-5">
           <label className="block text-gray-700 font-medium mb-2">
             Username
           </label>
           <input
-            type="text"
+            type="email"
             className="
               w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
               focus:outline-none focus:ring-2 focus:ring-[#C17829]
               focus:border-[#C17829] transition-all
             "
-            placeholder="Enter your username"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            required
           />
         </div>
         <div className="mb-8">
@@ -47,7 +61,10 @@ function SignInForm() {
               focus:outline-none focus:ring-2 focus:ring-[#C17829]
               focus:border-[#C17829] transition-all
             "
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             placeholder="Enter your password"
+            required
           />
         </div>
 
@@ -62,15 +79,12 @@ function SignInForm() {
           </label>
         </div>
 
-        <Button
-          className="
+        {error && <p className="text-red-600 mt-2">{error}</p>}
+        <Button type="submit" className="
             w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg
             hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all
             active:bg-[#A66F24] hover:scale-[1.01]
-          "
-        >
-          Sign In
-        </Button>
+          ">Sign In</Button>
       </form>
     </>
   );
@@ -78,10 +92,16 @@ function SignInForm() {
 
 // SignUp Component
 interface SignUpFormProps {
+  username: string;
+  setUsername: (v: string) => void;
   email: string;
-  setEmail: (val: string) => void;
+  setEmail: (v: string) => void;
   password: string;
-  setPassword: (val: string) => void;
+  setPassword: (v: string) => void;
+  onSubmit: () => void;
+  error?: string | null;
+
+  // Validation props:
   isValidEmail: (val: string) => boolean;
   hasUppercase: boolean;
   hasNumber: boolean;
@@ -90,11 +110,18 @@ interface SignUpFormProps {
   isAllValid: boolean;
 }
 
+// Update the function signature to accept all of those props:
 function SignUpForm({
+  username,
+  setUsername,
   email,
   setEmail,
   password,
   setPassword,
+  onSubmit,
+  error,
+
+  // Validation props
   isValidEmail,
   hasUppercase,
   hasNumber,
@@ -111,7 +138,7 @@ function SignUpForm({
         <p className="text-gray-600">Join our platform</p>
       </div>
 
-      <form>
+      <form onSubmit={e => { e.preventDefault(); onSubmit(); }}>
         {/* Username */}
         <div className="mb-4">
           <label className="block text-gray-700 font-medium mb-2">
@@ -124,7 +151,10 @@ function SignUpForm({
               focus:outline-none focus:ring-2 focus:ring-[#C17829]
               focus:border-[#C17829] transition-all
             "
+            value={username}
+            onChange={e => setUsername(e.target.value)}
             placeholder="Choose a username"
+            required
           />
         </div>
 
@@ -133,14 +163,15 @@ function SignUpForm({
           <label className="block text-gray-700 font-medium mb-2">Email</label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             className="
               w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
               focus:outline-none focus:ring-2 focus:ring-[#C17829]
               focus:border-[#C17829] transition-all
             "
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             placeholder="example@example.com"
+            required
           />
           {/* Email validation feedback */}
           {email.length > 0 && !isValidEmail(email) && (
@@ -162,14 +193,15 @@ function SignUpForm({
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             className="
               w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
               focus:outline-none focus:ring-2 focus:ring-[#C17829]
               focus:border-[#C17829] transition-all
             "
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             placeholder="Create a strong password"
+            required
           />
           {/* Password Rule Checks */}
           <div className="mt-3 text-sm space-y-1.5 bg-gray-50 p-3 rounded-lg">
@@ -216,13 +248,12 @@ function SignUpForm({
         </div>
 
         {/* Sign Up Button */}
-        <Button
-          className="
+        {error && <p className="text-red-600 mt-2">{error}</p>}
+        <Button type="submit" disabled={!isAllValid} className="
             w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg
             hover:bg-[#ad6823] shadow-md hover:shadow-lg transition-all
             active:bg-[#A66F24] hover:scale-[1.01]
-          "
-        >
+          ">
           Create Account
         </Button>
       </form>
@@ -233,8 +264,35 @@ function SignUpForm({
 // Main Auth Component
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+
+  // Form fields & errors
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Handlers
+  const handleSignIn = async () => {
+    setError(null);
+    try {
+      await login({ email, password });
+      navigate("/dashboard");
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setError(null);
+    try {
+      await register({ username, email, hashed_password: password });
+      navigate("/dashboard");
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
   const location = useLocation();
 
   // Use effect to check for URL parameters when component mounts
@@ -315,10 +373,9 @@ export default function Auth() {
           <motion.div
             key={i}
             className={`fixed rounded-full bg-gradient-to-r 
-              ${
-                i % 2 === 0
-                  ? "from-[#C17829]/10 to-[#C17829]/5"
-                  : "from-[#2C2C4A]/10 to-[#2C2C4A]/5"
+              ${i % 2 === 0
+                ? "from-[#C17829]/10 to-[#C17829]/5"
+                : "from-[#2C2C4A]/10 to-[#2C2C4A]/5"
               }
             `}
             style={{
@@ -366,10 +423,19 @@ export default function Auth() {
                     className="w-full"
                   >
                     <SignUpForm
+                      // Basic form state
+                      username={username}
+                      setUsername={setUsername}
                       email={email}
                       setEmail={setEmail}
                       password={password}
                       setPassword={setPassword}
+
+                      // Submission handler + error display
+                      onSubmit={handleSignUp}
+                      error={error}
+
+                      // Validation helpers
                       isValidEmail={isValidEmail}
                       hasUppercase={hasUppercase}
                       hasNumber={hasNumber}
@@ -377,6 +443,7 @@ export default function Auth() {
                       hasMinLength={hasMinLength}
                       isAllValid={isAllValid}
                     />
+
                   </motion.div>
                 ) : (
                   <motion.div
@@ -387,7 +454,14 @@ export default function Auth() {
                     transition={{ duration: 0.3 }}
                     className="w-full"
                   >
-                    <SignInForm />
+                    <SignInForm
+                      email={email}
+                      setEmail={setEmail}
+                      password={password}
+                      setPassword={setPassword}
+                      onSubmit={handleSignIn}
+                      error={error}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

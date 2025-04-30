@@ -1,0 +1,71 @@
+
+
+├── __pycache__
+│   └── main.cpython-312.pyc
+├── app
+│   ├── core
+│   │   ├── __pycache__
+│   │   │   ├── database.cpython-312.pyc
+│   │   │   └── openai_client.cpython-312.pyc
+│   │   ├── database.py
+│   │   └── openai_client.py
+│   ├── middleware
+│   │   ├── __pycache__
+│   │   │   └── jwt_middleware.cpython-312.pyc
+│   │   └── jwt_middleware.py
+│   ├── mvc
+│   │   ├── controllers
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── analysis.cpython-312.pyc
+│   │   │   │   ├── auth.cpython-312.pyc
+│   │   │   │   ├── chatbot.cpython-312.pyc
+│   │   │   │   ├── compliance.cpython-312.pyc
+│   │   │   │   ├── documents.cpython-312.pyc
+│   │   │   │   ├── rephrase.cpython-312.pyc
+│   │   │   │   └── translate.cpython-312.pyc
+│   │   │   ├── analysis.py
+│   │   │   ├── auth.py
+│   │   │   ├── chatbot.py
+│   │   │   ├── compliance.py
+│   │   │   ├── documents.py
+│   │   │   ├── rephrase.py
+│   │   │   └── translate.py
+│   │   ├── models
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   └── user.cpython-312.pyc
+│   │   │   └── user.py
+│   │   └── views
+│   │       ├── __init__.py
+│   │       ├── __pycache__
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   ├── admin.cpython-312.pyc
+│   │       │   ├── analysis.cpython-312.pyc
+│   │       │   ├── auth.cpython-312.pyc
+│   │       │   ├── chatbot.cpython-312.pyc
+│   │       │   ├── compliance.cpython-312.pyc
+│   │       │   ├── documents.cpython-312.pyc
+│   │       │   ├── rephrase.cpython-312.pyc
+│   │       │   └── translate.cpython-312.pyc
+│   │       ├── admin.py
+│   │       ├── analysis.py
+│   │       ├── auth.py
+│   │       ├── chatbot.py
+│   │       ├── compliance.py
+│   │       ├── documents.py
+│   │       ├── rephrase.py
+│   │       └── translate.py
+│   └── utils
+│       ├── __pycache__
+│       │   ├── jwt_utils.cpython-312.pyc
+│       │   └── security.cpython-312.pyc
+│       ├── jwt_utils.py
+│       ├── promote_to_admin.py
+│       └── security.py
+├── main.py
+├── package-lock.json
+└── requirements.txt
+
