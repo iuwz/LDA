@@ -1,6 +1,6 @@
 # backend/app/mvc/views/auth.py
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from app.mvc.models.user import User
@@ -39,7 +39,7 @@ async def login(request: LoginRequest, req: Request):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,       # ← in production set True and serve over HTTPS
+            secure=False,       # in production set True and serve over HTTPS
             samesite="lax",
             max_age=15 * 60     # 15 minutes, match your token expiry
         )
@@ -49,3 +49,17 @@ async def login(request: LoginRequest, req: Request):
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    Clears the HTTP-only access_token cookie so the session is destroyed.
+    """
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        httponly=True,
+        secure=False,    # match your login cookie settings
+        samesite="lax",
+    )
+    return {"message": "Logged out successfully"}

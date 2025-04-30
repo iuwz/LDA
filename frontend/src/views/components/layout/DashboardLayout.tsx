@@ -1,3 +1,5 @@
+// src/views/components/layout/DashboardLayout.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   FaBars,
@@ -14,6 +16,7 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../../../api";
 
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
@@ -54,6 +57,17 @@ const DashboardLayout: React.FC = () => {
   }, [open]);
 
   const handleNavClick = () => setOpen(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+    navigate("/auth", { replace: true });
+    setOpen(false);
+    setAccMenu(false);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -101,11 +115,10 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${
-                   isActive
-                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                     : "text-gray-700 hover:bg-gray-100"
-                 }`
+                 ${isActive
+                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                  : "text-gray-700 hover:bg-gray-100"
+                }`
               }
             >
               <Icon className="mr-3" />
@@ -114,10 +127,7 @@ const DashboardLayout: React.FC = () => {
           ))}
 
           <button
-            onClick={() => {
-              navigate("/");
-              setOpen(false);
-            }}
+            onClick={handleLogout}
             className="mt-4 w-full flex items-center px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-gray-100"
           >
             <FaSignOutAlt className="mr-3" /> Logout
@@ -160,11 +170,7 @@ const DashboardLayout: React.FC = () => {
                 <FaCog className="mr-2" /> Settings
               </NavLink>
               <button
-                onClick={() => {
-                  navigate("/");
-                  setAccMenu(false);
-                  setOpen(false);
-                }}
+                onClick={handleLogout}
                 className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
               >
                 <FaSignOutAlt className="mr-2" /> Logout

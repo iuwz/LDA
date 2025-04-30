@@ -35,6 +35,16 @@ export function register(data: RegisterReq) {
     }).then(r => handleResponse<RegisterRes>(r));
 }
 
+// Logout endpoint: clears the cookie
+export function logout() {
+    return fetch(`${API_BASE}/auth/logout`, {
+        ...common,
+        method: "POST",
+    }).then(r => {
+        if (!r.ok) throw new Error("Logout failed");
+    });
+}
+
 // ─── RISK ────────────────────────────────────────────────────────────────
 export interface AnalyzeRiskReq { document_text: string; }
 export interface AnalyzeRiskRes { analysis_result: { id: string; risks: any[] } }
