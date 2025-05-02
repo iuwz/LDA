@@ -1,17 +1,17 @@
 // src/App.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useNavigate,
+  useLocation,
 } from "react-router-dom";
 
-// Base URL for your FastAPI backend (via Vite env var)
+// ── ENV – API base URL ────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-// Import pages
+// ── Pages ────────────────────────────────────────────────────────────────────
 import Home from "./views/pages/Home/home";
 import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
@@ -25,44 +25,52 @@ import DashboardChatbot from "./views/pages/Dashboard/DashboardChatbot";
 import EditProfile from "./views/pages/Dashboard/EditProfile";
 import Settings from "./views/pages/Dashboard/Settings";
 
-// Import layout components
+// ── Layout & common components ───────────────────────────────────────────────
 import Navbar from "./views/components/layout/navbar";
 import Footer from "./views/components/layout/footer";
 import DashboardLayout from "./views/components/layout/DashboardLayout";
 import ChatbotWidget from "./views/components/common/ChatbotWidget";
+import LoadingScreen from "./views/components/common/LoadingScreen";
 
-// ─── PrivateRoute ──────────────────────────────────────────────────────────
-// Wraps your dashboard routes and redirects to /auth if not authenticated.
+/* ────────────────────────────── PrivateRoute ────────────────────────────────
+   Checks authentication by calling /auth/me. Displays a branded loading screen
+   for at least MIN_SPINNER ms to prevent flicker.                           */
 function PrivateRoute({ children }: { children: JSX.Element }) {
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [status, setStatus] = useState<"loading" | "ok" | "fail">("loading");
+  const location = useLocation();
+  const startRef = useRef<number>(Date.now());
+  const MIN_SPINNER = 700; // ms
 
   useEffect(() => {
-    fetch(`${API_BASE}/auth/me`, {
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Not authenticated");
-      })
-      .catch(() => {
-        navigate("/auth", { replace: true });
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [navigate]);
+    const finish = (next: "ok" | "fail") => {
+      const elapsed = Date.now() - startRef.current;
+      const delay = Math.max(0, MIN_SPINNER - elapsed);
+      setTimeout(() => setStatus(next), delay);
+    };
 
-  if (loading) {
-    return <div>Loading...</div>;
+    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        finish("ok");
+      })
+      .catch(() => finish("fail"));
+  }, []);
+
+  if (status === "loading") return <LoadingScreen />;
+
+  if (status === "fail") {
+    return <Navigate to="/auth" replace state={{ from: location }} />;
   }
+
   return children;
 }
 
+/* ─────────────────────────────────── App ────────────────────────────────────*/
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes with Navbar, Footer, and ChatbotWidget */}
+        {/* ── Public routes ─────────────────────────────────────────────────── */}
         <Route
           path="/"
           element={
@@ -108,7 +116,7 @@ function App() {
           }
         />
 
-        {/* Protected Dashboard Routes */}
+        {/* ── Protected dashboard routes ────────────────────────────────────── */}
         <Route
           path="/dashboard/*"
           element={
@@ -127,7 +135,7 @@ function App() {
           <Route path="chatbot" element={<DashboardChatbot />} />
         </Route>
 
-        {/* Redirect any unknown route to home */}
+        {/* ── Fallback ──────────────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
