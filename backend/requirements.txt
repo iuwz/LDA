@@ -10,3 +10,5 @@ pyjwt
 openai
 python-docx
 PyPDF2
+reportlab
+

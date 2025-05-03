@@ -43,12 +43,13 @@ except ImportError:
     DocxDocument = None
     logger.warning("python-docx not installed. DOCX content extraction will be limited.")
 try:
-    # Using the newer PdfReader from PyPDF2
     from PyPDF2 import PdfReader
     logger.info("PyPDF2 library found.")
 except ImportError:
     PdfReader = None
     logger.warning("PyPDF2 not installed. PDF content extraction will be basic.")
+# While pdfminer.six is useful, PyPDF2 is simpler for basic text extraction
+# from PyPDF2.errors import PdfReadError
 
 
 router = APIRouter(tags=["Documents"])
@@ -65,16 +66,7 @@ async def extract_text_from_stream(stream, filename: str):
     file_extension = filename.split('.')[-1].lower()
     # Read the entire stream content into memory for processing
     try:
-        # Read up to a certain size to prevent loading huge files into memory
-        # Adjust size as needed, or implement chunking if necessary
-        max_size = 50 * 1024 * 1024 # 50 MB limit for text extraction
-        content = await stream.read(max_size)
-        # Check if the file was larger than max_size
-        if await stream.read(1): # Try to read one more byte
-             logger.warning(f"File {filename} exceeds {max_size} bytes, only partial content read.")
-             # You might want to handle this case differently, e.g., return an error message
-             pass # For now, continue with partial content
-
+        content = await stream.read()
     except Exception as e:
         logger.error(f"Failed to read file stream for {filename}: {e}")
         return f"Error reading file content: {e}"
@@ -98,9 +90,9 @@ async def extract_text_from_stream(stream, filename: str):
                 return f"PDF file: {filename} is encrypted. Content preview not available."
 
             for page_num in range(len(reader.pages)):
+                # Use get_text() which is more robust than extract_text() in newer PyPDF2
                 page = reader.pages[page_num]
-                # CORRECTED: Use extract_text() instead of get_text()
-                text += page.extract_text() or ""
+                text += page.get_text() or ""
             return text
         except Exception as e: # Catching a broad exception for robustness
             logger.error(f"Error extracting text from PDF {filename}: {e}")
@@ -140,7 +132,6 @@ async def upload_document(
     db = request.app.state.db
     # Read file content in chunks if it can be very large, but for text extraction
     # we often need the whole content. Reading all at once for simplicity here.
-    # Consider adding a size limit here as well for uploads if needed.
     file_content = await file.read()
 
     file_id = await upload_file_to_gridfs(db, file_content, file.filename)
@@ -228,10 +219,10 @@ async def delete_document(
         raise HTTPException(status_code=403, detail="You do not own this document.")
 
     # 1) delete GridFS file
-    fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs") # type: ignore
-    await fs.delete(ObjectId(record["file_id"])) # type: ignore
+    fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs")  # type: ignore
+    await fs.delete(ObjectId(record["file_id"]))  # type: ignore
 
     # 2) delete metadata record
-    await db.documents.delete_one({"_id": ObjectId(doc_id)}) # type: ignore
+    await db.documents.delete_one({"_id": ObjectId(doc_id)})  # type: ignore
 
     return {"detail": "Deleted"}
