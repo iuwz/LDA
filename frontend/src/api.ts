@@ -11,8 +11,20 @@ async function handleResponse<T>(res: Response): Promise<T> {
         const body = await res.json().catch(() => ({}));
         throw new Error((body as any).detail || res.statusText);
     }
-    return res.json() as Promise<T>;
+    // Check for empty response body before parsing JSON
+    const text = await res.text();
+    return text ? (JSON.parse(text) as T) : ({} as T);
 }
+
+// Helper to handle text responses specifically
+async function handleTextResponse(res: Response): Promise<string> {
+    if (!res.ok) {
+        const body = await res.text(); // Get error details as text
+        throw new Error(body || res.statusText);
+    }
+    return res.text();
+}
+
 
 // ─── AUTH ────────────────────────────────────────────────────────────────
 export interface LoginReq { email: string; password: string; }
@@ -98,15 +110,84 @@ export function listDocuments() {
         .then(r => handleResponse<DocumentRecord[]>(r));
 }
 
+// Function to fetch document content by ID (still needed for display in text mode if user switches)
+export function getDocumentContent(docId: string): Promise<string> {
+  // Use handleTextResponse because the backend endpoint returns plain text
+  return fetch(`${API_BASE}/documents/content/${docId}`, {
+      credentials: "include",
+      method: "GET",
+  }).then(r => handleTextResponse(r));
+}
+
+// Endpoint to download a specific document by ID (used for the rephrased document)
+export function downloadDocumentById(docId: string, filename: string) {
+  // We don't use handleResponse here as we expect a file stream, not JSON
+  return fetch(`${API_BASE}/documents/download/${docId}`, {
+      credentials: "include",
+      method: "GET",
+  }).then(res => {
+      if (!res.ok) {
+          // If the server returns an error (e.g., 404, 403), try to read it as text
+           return res.text().then(text => {
+               throw new Error(`Download failed: ${res.statusText} - ${text}`);
+           }).catch(() => {
+               // Fallback error if text reading fails
+                throw new Error(`Download failed: ${res.statusText}`);
+           });
+      }
+      // Use the browser's download mechanism
+      const disposition = res.headers.get('Content-Disposition');
+      let suggestedFilename = filename;
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+          const filenameMatch = disposition.match(/filename\*?=([^;]+)/i);
+          if (filenameMatch && filenameMatch[1]) {
+              suggestedFilename = decodeURIComponent(filenameMatch[1].replace(/^UTF-8''/i, '')).replace(/['"]/g, '');
+          } else {
+             const basicFilenameMatch = disposition.match(/filename="?([^"]+)"?/i);
+             if(basicFilenameMatch && basicFilenameMatch[1]){
+                  suggestedFilename = basicFilenameMatch[1];
+             }
+          }
+      }
+
+      return res.blob().then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = suggestedFilename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          a.remove();
+      });
+  });
+}
+
+
 // ─── REPHRASE & TRANSLATE ─────────────────────────────────────────────────
-export interface RephraseRes { report_id: string; rephrased_text: string }
-export function rephrase(document_text: string) {
+
+// Define response types for rephrasing
+export interface RephraseTextResponse { report_id: string; rephrased_text: string }
+export interface RephraseDocumentResponse { report_id: string; rephrased_doc_id: string; rephrased_doc_filename: string }
+
+// Update the rephrase function to handle both text and document inputs
+export function rephrase(data: { document_text: string, style: string } | { doc_id: string, style: string }): Promise<RephraseTextResponse | RephraseDocumentResponse> {
+     const requestBody: any = { style: data.style };
+     if ('document_text' in data) {
+         requestBody.document_text = data.document_text;
+     } else if ('doc_id' in data) {
+         requestBody.doc_id = data.doc_id;
+     } else {
+         return Promise.reject(new Error("Invalid rephrase input: either document_text or doc_id must be provided."));
+     }
+
     return fetch(`${API_BASE}/rephrase`, {
         ...common,
         method: "POST",
-        body: JSON.stringify({ document_text }),
-    }).then(r => handleResponse<RephraseRes>(r));
+        body: JSON.stringify(requestBody),
+    }).then(r => handleResponse<RephraseTextResponse | RephraseDocumentResponse>(r));
 }
+
 
 export interface TranslateRes { report_id: string; translated_text: string }
 export function translate(document_text: string, target_lang: string) {

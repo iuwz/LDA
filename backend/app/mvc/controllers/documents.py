@@ -71,7 +71,7 @@ async def get_document_record(db: AsyncIOMotorDatabase, doc_id: str):
 
 async def open_gridfs_file(db: AsyncIOMotorDatabase, file_id: str):
     """
-    Open a download stream from GridFS for the given file_id. 
+    Open a download stream from GridFS for the given file_id.
     Returns (gridfs_stream, filename).
     """
     if not ObjectId.is_valid(file_id):

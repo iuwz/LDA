@@ -8,3 +8,5 @@ python-dotenv
 passlib[bcrypt]
 pyjwt
 openai
+python-docx
+PyPDF2
