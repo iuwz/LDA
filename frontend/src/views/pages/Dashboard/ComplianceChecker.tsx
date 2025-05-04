@@ -20,7 +20,7 @@ import {
   uploadDocument,
   listDocuments,
   checkCompliance,
-  downloadComplianceReport,
+  downloadComplianceReportPdf,
   DocumentRecord,
   ComplianceReportResponse,
   ComplianceIssue,
@@ -224,7 +224,7 @@ const ComplianceChecker: React.FC = () => {
       return;
     }
     try {
-      await downloadComplianceReport(results.report_id);
+      await downloadComplianceReportPdf(results.report_id);
     } catch (e: any) {
       setError(`Download failed: ${e.message}`);
     }
