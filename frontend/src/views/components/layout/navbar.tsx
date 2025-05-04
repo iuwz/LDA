@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-   FaBalanceScale,
-   FaGlobe,
-   FaHome,
-   FaBars,
-   FaTimes,
-   FaSearch,
-   FaChartBar,
-   FaMoon,
-   FaSun,
+  FaBalanceScale,
+  FaGlobe,
+  FaHome,
+  FaBars,
+  FaTimes,
+  FaSearch,
+  FaChartBar,
+  FaMoon,
+  FaSun,
   FaChevronDown,
-   FaRegQuestionCircle,   // ← add this
-  } from "react-icons/fa";
+  FaRegQuestionCircle,   // ← add this
+} from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
@@ -121,7 +121,7 @@ const Navbar: React.FC = () => {
 
   // Both Login and Register should show the same form
   const handleRegisterClick = () => {
-    navigate("/auth?form=login");
+    navigate("/auth?form=register");
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
@@ -179,17 +179,17 @@ const Navbar: React.FC = () => {
             <span>Home</span>
           </NavLink>
           <NavLink
-  to="/dashboard"
-  className={({ isActive }) =>
-    "flex items-center space-x-1 transition-colors hover:text-[#C17829] " +
-    (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
-  }
->
-  {/* you can swap in any icon you like here */}
-  <FaChartBar />
-  <span>Dashboard</span>
-</NavLink>
-          
+            to="/dashboard"
+            className={({ isActive }) =>
+              "flex items-center space-x-1 transition-colors hover:text-[#C17829] " +
+              (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
+            }
+          >
+            {/* you can swap in any icon you like here */}
+            <FaChartBar />
+            <span>Dashboard</span>
+          </NavLink>
+
           <a
             href="#services"
             onClick={scrollToServices}
@@ -221,16 +221,14 @@ const Navbar: React.FC = () => {
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-2 lg:space-x-4 ml-4">
           {/* Modern Search Bar */}
           <div
-            className={`relative transition-all duration-300 ${
-              isSearchFocused ? "w-24 sm:w-36 lg:w-56" : "w-20 sm:w-32 lg:w-40"
-            }`}
+            className={`relative transition-all duration-300 ${isSearchFocused ? "w-24 sm:w-36 lg:w-56" : "w-20 sm:w-32 lg:w-40"
+              }`}
           >
             <div
-              className={`relative flex items-center overflow-hidden rounded-full transition-all duration-300 bg-white shadow-sm ${
-                isSearchFocused
+              className={`relative flex items-center overflow-hidden rounded-full transition-all duration-300 bg-white shadow-sm ${isSearchFocused
                   ? "shadow-md ring-2 ring-[#C17829]/30"
                   : "hover:shadow"
-              }`}
+                }`}
             >
               <input
                 type="text"
@@ -240,9 +238,8 @@ const Navbar: React.FC = () => {
                 onBlur={() => setIsSearchFocused(false)}
               />
               <FaSearch
-                className={`absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
-                  isSearchFocused ? "text-[#C17829]" : "text-gray-400"
-                } text-xs sm:text-sm`}
+                className={`absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${isSearchFocused ? "text-[#C17829]" : "text-gray-400"
+                  } text-xs sm:text-sm`}
               />
             </div>
           </div>
@@ -258,30 +255,27 @@ const Navbar: React.FC = () => {
                 {currentLanguage}
               </span>
               <FaChevronDown
-                className={`ml-1 text-xs text-[#2C2C4A] transition-transform duration-200 ${
-                  isLanguageDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`ml-1 text-xs text-[#2C2C4A] transition-transform duration-200 ${isLanguageDropdownOpen ? "rotate-180" : ""
+                  }`}
               />
             </div>
 
             {isLanguageDropdownOpen && (
               <div className="absolute right-0 mt-1 bg-white rounded-md shadow-lg py-1 w-28 sm:w-32 z-50 border border-gray-100">
                 <button
-                  className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${
-                    currentLanguage === "EN"
+                  className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${currentLanguage === "EN"
                       ? "bg-gray-100 text-[#C17829] font-medium"
                       : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onClick={() => changeLanguage("EN")}
                 >
                   English
                 </button>
                 <button
-                  className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${
-                    currentLanguage === "AR"
+                  className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${currentLanguage === "AR"
                       ? "bg-gray-100 text-[#C17829] font-medium"
                       : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onClick={() => changeLanguage("AR")}
                 >
                   العربية
@@ -431,16 +425,16 @@ const Navbar: React.FC = () => {
             <span>Home</span>
           </NavLink>
           <NavLink
-  to="/dashboard"
-  onClick={toggleMobileMenu}
-  className={({ isActive }) =>
-    "flex items-center space-x-2 transition-colors hover:text-[#C17829] text-sm xs:text-base " +
-    (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
-  }
->
-  <FaRegQuestionCircle />
-  <span>Dashboard</span>
-</NavLink>
+            to="/dashboard"
+            onClick={toggleMobileMenu}
+            className={({ isActive }) =>
+              "flex items-center space-x-2 transition-colors hover:text-[#C17829] text-sm xs:text-base " +
+              (isActive ? "text-[#C17829] font-semibold" : "text-[#2C2C4A]")
+            }
+          >
+            <FaRegQuestionCircle />
+            <span>Dashboard</span>
+          </NavLink>
 
           <a
             href="#services"
@@ -480,21 +474,19 @@ const Navbar: React.FC = () => {
             </div>
             <div className="flex space-x-3">
               <button
-                className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${
-                  currentLanguage === "EN"
+                className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${currentLanguage === "EN"
                     ? "bg-[#C17829] text-white"
                     : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
-                }`}
+                  }`}
                 onClick={() => changeLanguage("EN")}
               >
                 English
               </button>
               <button
-                className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${
-                  currentLanguage === "AR"
+                className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${currentLanguage === "AR"
                     ? "bg-[#C17829] text-white"
                     : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
-                }`}
+                  }`}
                 onClick={() => changeLanguage("AR")}
               >
                 العربية
@@ -522,7 +514,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Global Styles for Animations and Custom Breakpoints */}
-      
+
     </div>
   );
 };
