@@ -2,436 +2,297 @@
 
 import logging
 import json
-from fastapi import HTTPException
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
-from typing import List, Dict, Any, Optional
 import datetime
 import re
 from io import BytesIO
+from typing import List, Dict, Any, Optional
+from textwrap import wrap
 
-# Import python-docx library components
+from fastapi import HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from bson import ObjectId
+
 from docx import Document
-from docx.shared import Inches
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.shared import Pt
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
-# Import document controllers/helpers including the text extraction
-from app.mvc.controllers.documents import get_document_record, open_gridfs_file, extract_full_text_from_stream
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
-# Import compliance models
-from app.mvc.models.compliance import ComplianceIssue, ComplianceReport
-
-# Import GPT helper
 from app.core.openai_client import call_gpt
+from app.mvc.controllers.documents import (
+    get_document_record,
+    open_gridfs_file,
+    extract_full_text_from_stream,
+)
+from app.mvc.models.compliance import ComplianceIssue
 
 logger = logging.getLogger(__name__)
 
-# Original example mock rules
+# ─── Fallback rules ─────────────────────────────────────────────────────────
 MOCK_RULES = [
-    {
-        "rule_id": "R1",
-        "pattern": "Confidential",
-        "description": "Document marked confidential requires an NDA clause"
-    },
-    {
-        "rule_id": "R2",
-        "pattern": "Penalty",
-        "description": "Check if penalty exceeds legal limit"
-    },
-    # Add more mock rules as needed for testing fallback
-    {
-        "rule_id": "R3",
-        "pattern": "Jurisdiction",
-        "description": "Ensure governing law and jurisdiction clauses are present"
-    }
+    {"rule_id": "R1",  "pattern": "Confidential",        "description": "Document marked confidential requires an NDA clause"},
+    {"rule_id": "R2",  "pattern": "Penalty",             "description": "Check if penalty exceeds legal limit"},
+    {"rule_id": "R3",  "pattern": "Jurisdiction",        "description": "Ensure governing law and jurisdiction clauses are present"},
+    {"rule_id": "R4",  "pattern": "indefinitely",        "description": "Data retention period must be finite and clearly defined."},
+    {"rule_id": "R5",  "pattern": "sub[- ]processors",   "description": "Usage of Sub-processors must be limited and disclosed."},
+    {"rule_id": "R6",  "pattern": "legitimate interests","description": "Legitimate interests as lawful basis requires balancing test."},
+    {"rule_id": "R7",  "pattern": "any country",         "description": "International transfers need safeguards (e.g., SCCs)."},
+    {"rule_id": "R8",  "pattern": "Data Subjects",       "description": "Processor must assist with Data Subject rights by law."},
+    {"rule_id": "R9",  "pattern": "indirect",            "description": "Unlimited exclusion of liability is unenforceable."},
+    {"rule_id": "R10", "pattern": "arbitration",         "description": "Arbitration location must be specified and fair."},
 ]
 
-# Helper to extract a text snippet around a matched pattern
-def extract_snippet(text: str, pattern: str, window_size: int = 50) -> str:
-    """
-    Finds the first occurrence of a pattern (case-insensitive) in the text
-    and returns a snippet around it.
-    """
-    # Escape pattern for regex special characters
-    escaped_pattern = re.escape(pattern)
-    # Build regex to find the pattern
-    match = re.search(escaped_pattern, text, re.IGNORECASE)
-    if not match:
-        return f"Pattern '{pattern}' not found in text."
-
-    start, end = match.span()
-
-    # Determine snippet boundaries
-    snippet_start = max(0, start - window_size)
-    snippet_end = min(len(text), end + window_size)
-
-    # Extract snippet
-    snippet = text[snippet_start:snippet_end]
-
-    # Add ellipses if snippet is truncated
-    if snippet_start > 0:
-        snippet = "..." + snippet
-    if snippet_end < len(text):
-        snippet = snippet + "..."
-
+def extract_snippet(text: str, pattern: str, window_size: int = 100) -> str:
+    """Return a snippet of text around the first match of pattern."""
+    m = re.search(re.escape(pattern), text, re.IGNORECASE)
+    if not m:
+        return f"(snippet for '{pattern}' not found)"
+    start, end = m.span()
+    s = max(0, start - window_size)
+    e = min(len(text), end + window_size)
+    snippet = text[s:e]
+    if s > 0:
+        snippet = "…" + snippet
+    if e < len(text):
+        snippet = snippet + "…"
     return snippet
 
+# ─── Core compliance check ────────────────────────────────────────────────────
 async def run_compliance_check(
     db: AsyncIOMotorDatabase,
     user_id: str,
-    document_text: str = None, # Make text optional
-    doc_id: str = None # Add doc_id as optional
-) -> Dict[str, Any]: # Use Dict[str, Any] as return type hint for flexibility
+    document_text: str = None,
+    doc_id: str = None
+) -> Dict[str, Any]:
+    if not (document_text or doc_id):
+        raise HTTPException(400, "Either document_text or doc_id must be provided.")
+    if document_text and doc_id:
+        raise HTTPException(400, "Provide only one of document_text or doc_id.")
 
-    """
-    Performs a compliance check on the given document text or the text from a document ID.
-    If document_text is provided, checks text directly.
-    If doc_id is provided, fetches and extracts text from the document for analysis.
-
-    Uses GPT for analysis if possible, falls back to scanning known patterns.
-
-    Stores the final issues in 'compliance_reports' collection and returns:
-      {
-        "report_id": <str>,
-        "issues": <list of issues>
-      }
-    Raises HTTPException on failure.
-    """
-
-    if document_text is None and doc_id is None:
-        raise HTTPException(status_code=400, detail="Either document_text or doc_id must be provided.")
-    if document_text is not None and doc_id is not None:
-         raise HTTPException(status_code=400, detail="Only one of document_text or doc_id should be provided.")
-
-
-    logger.info(f"Starting compliance check for user_id={user_id}")
-
-    original_doc_id = doc_id # Store original doc_id for the report
-
-    # 1. Get the document text to analyze
-    text_to_analyze = ""
+    # Load text if doc_id provided
     if doc_id:
-        logger.info(f"Fetching text from document ID: {doc_id}")
-        try:
-            record = await get_document_record(db, doc_id)
-            grid_out, filename = await open_gridfs_file(db, record["file_id"])
-            text_to_analyze = await extract_full_text_from_stream(grid_out, filename)
+        record = await get_document_record(db, doc_id)
+        stream, filename = await open_gridfs_file(db, record["file_id"])
+        document_text = await extract_full_text_from_stream(stream, filename)
+        if document_text.startswith("Error"):
+            raise HTTPException(422, document_text)
 
-            if text_to_analyze.startswith("Error"): # Check for error messages from text extraction
-                 logger.error(f"Text extraction failed for doc_id {doc_id}: {text_to_analyze}")
-                 raise HTTPException(status_code=422, detail=f"Failed to extract text from document: {text_to_analyze}")
-
-            logger.info(f"Successfully extracted text from document ID: {doc_id}")
-
-        except HTTPException:
-             raise # Re-raise FastAPI exceptions
-        except Exception as e:
-             logger.error(f"An error occurred fetching or extracting text for doc_id {doc_id}: {e}", exc_info=True)
-             raise HTTPException(status_code=500, detail=f"Failed to process document for compliance check: {e}")
-
-    elif document_text:
-        text_to_analyze = document_text
-        logger.info("Using provided document text for compliance check.")
-
-
-    if not text_to_analyze:
-         raise HTTPException(status_code=400, detail="No text available to perform compliance check.")
-
-
-    # 2. Attempt GPT-based analysis
-    # Updated prompt to ask for text snippet
-    system_message = (
-        "You are a compliance AI assistant. Identify any issues or potential "
-        "violations in the given document text. Focus on legal and regulatory compliance aspects relevant to Saudi Arabia."
-        "Return valid JSON with a top-level key 'issues' that is a list of objects. Each object should have "
-        "'rule_id', 'description', 'status' fields. Use rule_id='GPT' for issues identified by AI."
-        "If no issues are found, return an empty list for the 'issues' key."
-        "**IMPORTANT:** For each issue identified, include a field `extracted_text_snippet` containing the exact or approximate text snippet from the document that is most relevant to the issue. Provide a snippet of reasonable length (e.g., a sentence or two). If you cannot pinpoint a specific snippet, set this field to `null`."
-        "Example of expected JSON format:\n"
-        "{\n"
-        "  \"issues\": [\n"
-        "    {\n"
-        "      \"rule_id\": \"GPT\",\n"
-        "      \"description\": \"Issue description\",\n"
-        "      \"status\": \"Issue Found\", // or \"Warning\"\n"
-        "      \"extracted_text_snippet\": \"...text snippet from document...\" // or null\n"
-        "    }\n"
-        "  ]\n"
-        "}"
-        "Return valid JSON ONLY. Do not include any additional text or formatting outside the JSON."
-    )
-    user_prompt = f"Document text for compliance check:\n{text_to_analyze}"
-
-    gpt_issues: List[Dict[str, Any]] = [] # Initialize as empty list with type hint and use Dict for flexibility
-    use_gpt_fallback = True # Flag to control fallback logic
-
+    # GPT-based analysis
+    gpt_issues: List[Dict[str, Any]] = []
+    use_fallback = True
     try:
-        logger.info("Calling GPT for compliance analysis...")
-        # NOTE: For very long texts, you will need to implement chunking here,
-        # send chunks to the AI, and combine the results. This is similar
-        # to the rephrasing tool's document handling challenge.
-        gpt_response = call_gpt(
-            prompt=user_prompt,
-            system_message=system_message,
-            temperature=0.2 # Keep temperature low for factual analysis
+        sys_msg = (
+            "You are a compliance AI assistant. Identify issues in the text, "
+            "return JSON {'issues': [...]}, each with 'rule_id','description','status',"
+            " and 'extracted_text_snippet'."
         )
+        resp = call_gpt(prompt=document_text, system_message=sys_msg, temperature=0.2)
+        parsed = json.loads(resp)
+        if isinstance(parsed.get("issues"), list):
+            for item in parsed["issues"]:
+                try:
+                    ci = ComplianceIssue(**item)
+                    gpt_issues.append(ci.model_dump())
+                except:
+                    continue
+            if gpt_issues:
+                use_fallback = False
+    except:
+        use_fallback = True
 
-        if gpt_response:
-            try:
-                parsed = json.loads(gpt_response)
-                # Validate the structure of the parsed response
-                if "issues" in parsed and isinstance(parsed["issues"], list):
-                    # Validate each item in the issues list against ComplianceIssue model
-                    validated_issues = []
-                    for issue_data in parsed["issues"]:
-                         try:
-                             # Attempt to validate using the Pydantic model (will now include snippet)
-                             validated_issue = ComplianceIssue(**issue_data)
-                             # Use model_dump() for Pydantic v2+ to get a dictionary
-                             validated_issues.append(validated_issue.model_dump())
-                         except Exception as model_error:
-                              logger.warning(f"Failed to validate GPT issue format: {issue_data}. Error: {model_error}. Skipping issue.")
-                              # Optionally, add a general warning issue about unexpected AI output format
-                              # validated_issues.append({"rule_id": "GPT-Format-Warning", "description": f"AI returned issue in unexpected format: {issue_data}", "status": "Warning", "extracted_text_snippet": None})
-
-                    gpt_issues = validated_issues
-                    logger.info(f"GPT compliance analysis parsed successfully. Found {len(gpt_issues)} potential issues.")
-                    use_gpt_fallback = False # GPT analysis was successful and usable
-
-                else:
-                    logger.warning("GPT response did not contain 'issues' as a list or top-level key. Using fallback.")
-            except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse GPT response as JSON: {e}. Using fallback.")
-            except Exception as e: # Catch other parsing/validation errors
-                 logger.error(f"Error processing GPT response structure: {e}", exc_info=True)
-                 logger.warning("Error processing GPT response structure. Using fallback.")
-        else:
-            logger.warning("GPT call returned no response. Using fallback.")
-
-    except Exception as e:
-         logger.error(f"Error calling GPT for compliance analysis: {e}", exc_info=True)
-         logger.warning("GPT call failed. Using fallback logic.")
-
-
-    # 3. Determine final issues list (GPT results or fallback)
+    # Build final_issues
     final_issues: List[Dict[str, Any]] = []
-    if use_gpt_fallback or not gpt_issues: # Use fallback if flag is true OR if GPT issues list is empty
-        logger.info("Performing mock rule-based compliance check as fallback.")
-        found_issues = []
+    if use_fallback:
         for rule in MOCK_RULES:
-            # Perform simple case-insensitive pattern match
-            if text_to_analyze and rule["pattern"].lower() in text_to_analyze.lower():
-                # Extract snippet for mock rules
-                snippet = extract_snippet(text_to_analyze, rule["pattern"])
-                found_issues.append({
+            if rule["pattern"].lower() in document_text.lower():
+                snippet = extract_snippet(document_text, rule["pattern"])
+                final_issues.append({
                     "rule_id": rule["rule_id"],
                     "description": rule["description"],
-                    "status": "Issue Found", # Mock rules just mark as "Issue Found"
-                    "extracted_text_snippet": snippet # Include the snippet
+                    "status": "Issue Found",
+                    "extracted_text_snippet": snippet
                 })
-
-        # If no issues found by fallback, add a "no issues" record
-        if not found_issues:
-            found_issues.append({
+        if not final_issues:
+            final_issues.append({
                 "rule_id": "None",
                 "description": "No compliance issues detected by basic scan.",
                 "status": "OK",
-                "extracted_text_snippet": None # No snippet for OK status
+                "extracted_text_snippet": None
             })
-
-        final_issues = found_issues
     else:
-        # GPT returned a valid list of issues, use them
-        # Note: Snippets for GPT issues rely on the AI successfully providing them
-        # in the `extracted_text_snippet` field as requested in the prompt.
         final_issues = gpt_issues
 
-
-    # 4. Insert the compliance report into MongoDB
-    compliance_doc = {
+    # Store report
+    preview = (document_text[:500] + "...") if len(document_text) > 500 else document_text
+    report = {
         "user_id": user_id,
-        # Store a preview of the text, especially for document checks
-        "document_text_preview": text_to_analyze[:500] + "..." if text_to_analyze and len(text_to_analyze) > 500 else text_to_analyze,
-        "original_doc_id": original_doc_id, # Store the doc ID if applicable
-        "issues": final_issues, # Store the final list of issues (including snippets)
-        "timestamp": datetime.datetime.utcnow() # Add a timestamp
+        "document_text_preview": preview,
+        "original_doc_id": doc_id,
+        "issues": final_issues,
+        "timestamp": datetime.datetime.utcnow()
     }
+    res = await db.compliance_reports.insert_one(report)
 
+    return {"report_id": str(res.inserted_id), "issues": final_issues}
 
-    try:
-        result = await db.compliance_reports.insert_one(compliance_doc)
-        report_id = str(result.inserted_id)
-        logger.info(f"Compliance report created with _id={report_id}")
-    except Exception as e:
-        logger.error(f"Error inserting compliance report: {e}", exc_info=True)
-        # If report storage fails, raise an error as the result cannot be retrieved later
-        raise HTTPException(status_code=500, detail="Failed to store compliance report.")
-
-
-    # 5. Return the report ID and issues for the frontend
-    return {
-        "report_id": report_id,
-        "issues": final_issues # Return the final list of issues (including snippets)
-    }
-
+# ─── Fetch stored report ─────────────────────────────────────────────────────
 async def get_compliance_report(
     db: AsyncIOMotorDatabase,
     report_id: str,
     user_id: str
-) -> Dict[str, Any]: # Return Dict[str, Any] for consistency
-
-    """
-    Retrieve a compliance report by ID and verify it belongs to the user.
-
-    Returns the report document (with '_id' converted to string) if valid;
-    otherwise raises HTTPException (400, 403, or 404).
-    """
+) -> Dict[str, Any]:
     if not ObjectId.is_valid(report_id):
-        raise HTTPException(status_code=400, detail="Invalid report ID format")
-
-    # Find the report, ensure it belongs to the user
+        raise HTTPException(400, "Invalid report ID.")
     doc = await db.compliance_reports.find_one({"_id": ObjectId(report_id), "user_id": user_id})
     if not doc:
-        # Check if report exists but belongs to someone else for a more specific error
-        exists_but_not_owned = await db.compliance_reports.find_one({"_id": ObjectId(report_id)})
-        if exists_but_not_owned:
-            raise HTTPException(status_code=403, detail="Access denied (not your report)")
-        else:
-            raise HTTPException(status_code=404, detail="Compliance report not found")
-
-
-    # Convert ObjectId to string before returning
+        raise HTTPException(404, "Report not found or access denied.")
     doc["_id"] = str(doc["_id"])
-    # Ensure nested ObjectIds (like in issues if any were stored) are also converted if needed
-    # In our current ComplianceIssue model, there are no ObjectIds, but good practice to consider.
-
     return doc
 
-# Function to generate text report (kept for reference or other uses)
-def generate_compliance_report_text(report_data: Dict[str, Any]) -> str:
-    """
-    Formats a compliance report dictionary into a plain text string for download.
-    """
-    report_id = report_data.get("_id", "N/A") # Use _id from fetched doc
-    timestamp = report_data.get("timestamp")
-    user_id = report_data.get("user_id", "N/A")
-    original_doc_id = report_data.get("original_doc_id", "N/A")
-    issues = report_data.get("issues", [])
-    document_text_preview = report_data.get("document_text_preview", "N/A")
-
-    report_text = f"Compliance Report ID: {report_id}\n"
-    report_text += f"Generated At: {timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') if timestamp else 'N/A'}\n"
-    report_text += f"User: {user_id}\n"
-    report_text += f"Original Document ID: {original_doc_id}\n"
-    report_text += "-"*30 + "\n"
-    report_text += "Analysis Summary:\n"
-    report_text += "-"*30 + "\n"
-
-    if issues:
-        for i, issue in enumerate(issues):
-            report_text += f"Issue {i+1}:\n"
-            report_text += f"  Rule ID: {issue.get('rule_id', 'N/A')}\n"
-            report_text += f"  Status: {issue.get('status', 'N/A')}\n"
-            report_text += f"  Description: {issue.get('description', 'N/A')}\n"
-            # Include the extracted text snippet in the text report if it exists
-            snippet = issue.get('extracted_text_snippet')
-            if snippet:
-                report_text += f"  Relevant Text: \"{snippet}\"\n"
-
-            # Add location if available and relevant
-            # location = issue.get('location')
-            # if location:
-            #     report_text += f"  Location: {location}\n"
-            report_text += "-"*10 + "\n"
-    else:
-        report_text += "No issues reported.\n"
-
-    report_text += "\n" + "="*30 + "\n"
-    report_text += "Document Text Preview:\n"
-    report_text += "="*30 + "\n"
-    report_text += document_text_preview
-    report_text += "\n" + "="*30 + "\n"
-    report_text += "End of Report\n"
-
-    return report_text
-
-
-# --- DOCX Generation Logic using python-docx ---
-def generate_compliance_report_docx(report_data: Dict[str, Any]) -> Optional[BytesIO]:
-    """
-    Generates a DOCX report from compliance report data using python-docx.
-    Returns a BytesIO buffer containing the DOCX content on success, or None on failure.
-    """
-    logger.info(f"Attempting to generate DOCX for report ID: {report_data.get('_id')}")
-
+# ─── DOCX generator ──────────────────────────────────────────────────────────
+def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
     buffer = BytesIO()
-    document = Document() # Create a new Word document
+    document = Document()
 
-    try:
-        # --- Report Title ---
-        document.add_heading('Compliance Report', 0) # Level 0 is main title
+    # Cover page
+    document.add_heading("Compliance Report", level=0)
+    meta = document.add_table(rows=4, cols=2)
+    meta.style = 'Light List Accent 1'
+    meta.cell(0,0).text = "Report ID:"
+    meta.cell(0,1).text = report_data.get("_id", "N/A")
+    ts = report_data.get("timestamp")
+    meta.cell(1,0).text = "Generated At:"
+    meta.cell(1,1).text = ts.strftime('%Y-%m-%d %H:%M:%S UTC') if ts else "N/A"
+    meta.cell(2,0).text = "User:"
+    meta.cell(2,1).text = report_data.get("user_id", "N/A")
+    meta.cell(3,0).text = "Document:"
+    meta.cell(3,1).text = report_data.get("original_doc_id", "N/A")
+    document.add_page_break()
 
-        # --- Report Information ---
-        report_id = report_data.get("_id", "N/A")
-        timestamp = report_data.get("timestamp")
-        user_id = report_data.get("user_id", "N/A")
-        analyzed_filename = report_data.get("analyzedFilename", "N/A") # Assuming this might be available
+    # Summary
+    document.add_heading("1. Summary of Findings", level=1)
+    counts = {"Compliant":0, "Non-Compliant":0, "Warning":0, "Unknown":0}
+    for issue in report_data["issues"]:
+        st = issue["status"].lower()
+        if st == "ok": counts["Compliant"] += 1
+        elif st == "issue found": counts["Non-Compliant"] += 1
+        elif st == "warning": counts["Warning"] += 1
+        else: counts["Unknown"] += 1
 
-        document.add_paragraph(f"Report ID: {report_id}")
-        document.add_paragraph(f"Generated At: {timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') if timestamp else 'N/A'}")
-        document.add_paragraph(f"User: {user_id}")
+    tbl = document.add_table(rows=1, cols=5)
+    hdr = tbl.rows[0].cells
+    hdr[0].text, hdr[1].text, hdr[2].text, hdr[3].text, hdr[4].text = (
+        "Total Issues", "Compliant", "Non-Compliant", "Warning", "Unknown"
+    )
+    row = tbl.add_row().cells
+    row[0].text = str(len(report_data["issues"]))
+    row[1].text = str(counts["Compliant"])
+    row[2].text = str(counts["Non-Compliant"])
+    row[3].text = str(counts["Warning"])
+    row[4].text = str(counts["Unknown"])
+    document.add_page_break()
 
-        if analyzed_filename and analyzed_filename != "N/A":
-             document.add_paragraph(f"Analyzed Document: {analyzed_filename}")
-        elif report_data.get("original_doc_id"):
-             document.add_paragraph(f"Original Document ID: {report_data.get('original_doc_id', 'N/A')}")
+    # Detailed issues
+    document.add_heading("2. Detailed Issues", level=1)
+    for idx, issue in enumerate(report_data["issues"], start=1):
+        document.add_heading(f"Issue {idx}", level=2)
+        t = document.add_table(rows=4, cols=2)
+        t.style = 'Light Grid Accent 2'
+        t.cell(0,0).text, t.cell(0,1).text = "Rule ID", issue.get("rule_id","")
+        t.cell(1,0).text, t.cell(1,1).text = "Status", issue.get("status","")
+        t.cell(2,0).text, t.cell(2,1).text = "Description", issue.get("description","")
+        snippet = issue.get("extracted_text_snippet") or "–"
+        t.cell(3,0).text, t.cell(3,1).text = "Relevant Snippet", snippet
+        document.add_paragraph("")
 
+    # Footer
+    footer = document.sections[-1].footer
+    p = footer.paragraphs[0]
+    p.text = f"Generated on {datetime.datetime.utcnow():%Y-%m-%d %H:%M:%S UTC}"
+    p.alignment = 1
 
-        document.add_paragraph() # Add some space
+    document.save(buffer)
+    buffer.seek(0)
+    return buffer
 
-        # --- Issues Section ---
-        document.add_heading('Issues Found:', level=1)
-        document.add_paragraph() # Add some space
+# ─── PDF generator ───────────────────────────────────────────────────────────
+def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elems = []
 
-        issues = report_data.get("issues", [])
-        if not issues:
-            document.add_paragraph("No issues reported.").italic = True
-        else:
-            # Add issues as paragraphs
-            for i, issue in enumerate(issues):
-                document.add_paragraph(f"Issue {i+1}:", style='Heading 2') # Use a heading style for each issue
+    # Title and metadata
+    elems.append(Paragraph("Compliance Report", styles["Title"]))
+    elems.append(Spacer(1, 12))
+    meta_data = [
+        ["Report ID:", report_data.get("_id","N/A")],
+        ["Generated At:", report_data.get("timestamp").strftime("%Y-%m-%d %H:%M:%S UTC") if report_data.get("timestamp") else "N/A"],
+        ["User:", report_data.get("user_id","N/A")],
+        ["Document:", report_data.get("original_doc_id","N/A")],
+    ]
+    meta_tbl = Table(meta_data, colWidths=[100, 350])
+    meta_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        ("BOX", (0,0), (-1,-1), 1, colors.black),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+    ]))
+    elems.append(meta_tbl)
+    elems.append(Spacer(1, 24))
 
-                document.add_paragraph(f"Rule ID: {issue.get('rule_id', 'N/A')}")
-                document.add_paragraph(f"Status: {issue.get('status', 'N/A')}")
+    # Summary
+    elems.append(Paragraph("1. Summary of Findings", styles["Heading2"]))
+    counts = {"Compliant":0, "Non-Compliant":0, "Warning":0, "Unknown":0}
+    for issue in report_data["issues"]:
+        st = issue["status"].lower()
+        if st == "ok": counts["Compliant"] += 1
+        elif st == "issue found": counts["Non-Compliant"] += 1
+        elif st == "warning": counts["Warning"] += 1
+        else: counts["Unknown"] += 1
+    summary_data = [
+        ["Total Issues", "Compliant", "Non-Compliant", "Warning", "Unknown"],
+        [str(len(report_data["issues"])),
+         str(counts["Compliant"]),
+         str(counts["Non-Compliant"]),
+         str(counts["Warning"]),
+         str(counts["Unknown"])],
+    ]
+    sum_tbl = Table(summary_data, colWidths=[80]*5)
+    sum_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.lightblue),
+        ("BOX", (0,0), (-1,-1), 1, colors.black),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+    ]))
+    elems.append(sum_tbl)
+    elems.append(Spacer(1, 24))
 
-                # Add description
-                description_para = document.add_paragraph("Description: ")
-                description_para.add_run(issue.get('description', 'N/A'))
+    # Detailed issues
+    elems.append(Paragraph("2. Detailed Issues", styles["Heading2"]))
+    for idx, issue in enumerate(report_data["issues"], 1):
+        elems.append(Paragraph(f"Issue {idx}: {issue.get('description')}", styles["Heading3"]))
+        details = [
+            ["Rule ID", issue.get("rule_id","")],
+            ["Status", issue.get("status","")],
+            ["Description", issue.get("description","")],
+            ["Relevant Snippet", issue.get("extracted_text_snippet") or "–"],
+        ]
+        det_tbl = Table(details, colWidths=[100, 350])
+        det_tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.whitesmoke),
+            ("BOX", (0,0), (-1,-1), 1, colors.black),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+        ]))
+        elems.append(det_tbl)
+        elems.append(Spacer(1, 12))
 
-                # Add snippet if available
-                snippet = issue.get('extracted_text_snippet')
-                if snippet:
-                    snippet_para = document.add_paragraph("Relevant Text: ")
-                    # Add run with quotes and italic style
-                    snippet_para.add_run(f'"{snippet}"').italic = True
+    # Footer
+    elems.append(Spacer(1, 24))
+    elems.append(Paragraph(f"Generated on {datetime.datetime.utcnow():%Y-%m-%d %H:%M:%S UTC}", styles["Normal"]))
 
-                document.add_paragraph() # Space after each issue
-
-
-        # --- Optional: Document Text Preview ---
-        document_text_preview = report_data.get("document_text_preview", "N/A")
-        if document_text_preview and document_text_preview != "N/A":
-            document.add_heading('Document Text Preview:', level=1)
-            document.add_paragraph()
-            document.add_paragraph(document_text_preview) # Add preview text
-
-        # Save the document to the BytesIO buffer
-        document.save(buffer)
-        buffer.seek(0) # Rewind the buffer
-
-        return buffer # Return the buffer on success
-
-    except Exception as e:
-        logger.error(f"Error generating DOCX for report ID {report_data.get('_id')}: {e}", exc_info=True)
-        # Return None if generation fails
-        return None
+    doc.build(elems)
+    buffer.seek(0)
+    return buffer
