@@ -115,8 +115,10 @@ function SignInForm({
 /* ───────────────────────── Sign-Up ───────────────────────── */
 
 interface SignUpFormProps {
-  username: string;
-  setUsername: (v: string) => void;
+  firstName: string;
+  setFirstName: (v: string) => void;
+  lastName: string;
+  setLastName: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
   password: string;
@@ -131,22 +133,17 @@ interface SignUpFormProps {
   isAllValid: boolean;
 }
 
+
 function SignUpForm({
-  username,
-  setUsername,
-  email,
-  setEmail,
-  password,
-  setPassword,
-  onSubmit,
-  error,
+  firstName, setFirstName,
+  lastName, setLastName,
+  email, setEmail,
+  password, setPassword,
+  onSubmit, error,
   isValidEmail,
-  hasUppercase,
-  hasNumber,
-  hasSymbol,
-  hasMinLength,
-  isAllValid,
+  hasUppercase, hasNumber, hasSymbol, hasMinLength, isAllValid,
 }: SignUpFormProps) {
+
   const [showPw, setShowPw] = useState(false);
 
   /* strength as percentage of rules satisfied */
@@ -171,20 +168,32 @@ function SignUpForm({
           onSubmit();
         }}
       >
-        {/* Username */}
+        {/* First Name */}
         <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2">
-            Username
-          </label>
+          <label className="block text-gray-700 font-medium mb-2">First Name</label>
           <input
             type="text"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Choose a username"
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            placeholder="Enter your first name"
             required
           />
         </div>
+
+        {/* Last Name */}
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">Last Name</label>
+          <input
+            type="text"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] focus:border-[#C17829] transition-all"
+            value={lastName}
+            onChange={e => setLastName(e.target.value)}
+            placeholder="Enter your last name"
+            required
+          />
+        </div>
+
 
         {/* Email */}
         <div className="mb-4">
@@ -237,32 +246,28 @@ function SignUpForm({
           {/* Rule checklist */}
           <div className="mt-3 text-sm space-y-1.5 bg-gray-50 p-3 rounded-lg">
             <p
-              className={`${
-                hasUppercase ? "text-green-600" : "text-gray-500"
-              } flex items-center`}
+              className={`${hasUppercase ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
             >
               <span className="mr-2">{hasUppercase ? "✓" : "○"}</span> Uppercase
               letter
             </p>
             <p
-              className={`${
-                hasNumber ? "text-green-600" : "text-gray-500"
-              } flex items-center`}
+              className={`${hasNumber ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
             >
               <span className="mr-2">{hasNumber ? "✓" : "○"}</span> Number
             </p>
             <p
-              className={`${
-                hasSymbol ? "text-green-600" : "text-gray-500"
-              } flex items-center`}
+              className={`${hasSymbol ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
             >
               <span className="mr-2">{hasSymbol ? "✓" : "○"}</span> Special
               character
             </p>
             <p
-              className={`${
-                hasMinLength ? "text-green-600" : "text-gray-500"
-              } flex items-center`}
+              className={`${hasMinLength ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
             >
               <span className="mr-2">{hasMinLength ? "✓" : "○"}</span> At least
               8 characters
@@ -298,7 +303,9 @@ function SignUpForm({
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const [username, setUsername] = useState("");
+  // Replace username with firstName & lastName
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -320,7 +327,12 @@ export default function Auth() {
   const handleSignUp = async () => {
     setError(null);
     try {
-      await register({ username, email, hashed_password: password });
+      await register({
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        hashed_password: password
+      });
       navigate("/dashboard");
     } catch (e: any) {
       setError(e.message);
@@ -376,11 +388,10 @@ export default function Auth() {
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className={`fixed rounded-full bg-gradient-to-r ${
-              i % 2 === 0
-                ? "from-[#C17829]/10 to-[#C17829]/5"
-                : "from-[#2C2C4A]/10 to-[#2C2C4A]/5"
-            }`}
+            className={`fixed rounded-full bg-gradient-to-r ${i % 2 === 0
+              ? "from-[#C17829]/10 to-[#C17829]/5"
+              : "from-[#2C2C4A]/10 to-[#2C2C4A]/5"
+              }`}
             style={{
               width: `${Math.random() * 100 + 20}px`,
               height: `${Math.random() * 100 + 20}px`,
@@ -425,17 +436,12 @@ export default function Auth() {
                     className="w-full"
                   >
                     <SignUpForm
-                      /* state */
-                      username={username}
-                      setUsername={setUsername}
-                      email={email}
-                      setEmail={setEmail}
-                      password={password}
-                      setPassword={setPassword}
-                      /* submit */
+                      firstName={firstName} setFirstName={setFirstName}
+                      lastName={lastName} setLastName={setLastName}
+                      email={email} setEmail={setEmail}
+                      password={password} setPassword={setPassword}
                       onSubmit={handleSignUp}
                       error={error}
-                      /* validation */
                       isValidEmail={isValidEmail}
                       hasUppercase={hasUppercase}
                       hasNumber={hasNumber}
@@ -443,6 +449,7 @@ export default function Auth() {
                       hasMinLength={hasMinLength}
                       isAllValid={isAllValid}
                     />
+
                   </motion.div>
                 ) : (
                   <motion.div

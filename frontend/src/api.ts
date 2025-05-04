@@ -11,10 +11,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
         // Try to read as JSON first, fall back to text if JSON parsing fails
         try {
             const body = await res.json();
-             // Assuming backend error structure has a 'detail' field
+            // Assuming backend error structure has a 'detail' field
             throw new Error(body.detail || res.statusText);
         } catch (e) {
-             // If JSON parsing failed or 'detail' was not present, use status text
+            // If JSON parsing failed or 'detail' was not present, use status text
             throw new Error(res.statusText);
         }
     }
@@ -44,7 +44,13 @@ export function login(data: LoginReq) {
     }).then(r => handleResponse<LoginRes>(r));
 }
 
-export interface RegisterReq { username: string; email: string; hashed_password: string; }
+export interface RegisterReq {
+    first_name: string;
+    last_name: string;
+    email: string;
+    hashed_password: string;
+}
+
 export interface RegisterRes { message: string; user: any; }
 export function register(data: RegisterReq) {
     return fetch(`${API_BASE}/auth/register`, {
@@ -136,33 +142,33 @@ export async function downloadDocumentById(docId: string, filename: string): Pro
         });
 
         if (!response.ok) {
-             // Try to read error as text, fall back to status text
-             const errorDetail = await response.text().catch(() => response.statusText);
+            // Try to read error as text, fall back to status text
+            const errorDetail = await response.text().catch(() => response.statusText);
             throw new Error(`Failed to download document ${filename}: ${response.status} ${response.statusText} - ${errorDetail}`);
         }
 
         // Get filename from headers if available, otherwise use provided filename
         const contentDisposition = response.headers.get('Content-Disposition');
         let effectiveFilename = filename; // Default fallback filename
-         if (contentDisposition) {
+        if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename\*?=UTF-8''(.+)$/);
             if (filenameMatch && filenameMatch[1]) {
                 // Decode URI component for UTF-8 filenames
                 effectiveFilename = decodeURIComponent(filenameMatch[1]);
             } else {
-                 // Fallback to basic filename="...", handling potential quotes
-                 const basicFilenameMatch = contentDisposition.match(/filename="(.+)"/);
-                 if (basicFilenameMatch && basicFilenameMatch[1]) {
-                      effectiveFilename = basicFilenameMatch[1].replace(/['"]/g, ''); // Remove surrounding quotes
-                 } else {
-                      // Fallback to simple filename=... (less common but possible)
-                       const simpleFilenameMatch = contentDisposition.match(/filename=([^;]+)/i);
-                       if(simpleFilenameMatch && simpleFilenameMatch[1]){
-                           effectiveFilename = simpleFilenameMatch[1].trim().replace(/['"]/g, '');
-                       }
-                 }
+                // Fallback to basic filename="...", handling potential quotes
+                const basicFilenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (basicFilenameMatch && basicFilenameMatch[1]) {
+                    effectiveFilename = basicFilenameMatch[1].replace(/['"]/g, ''); // Remove surrounding quotes
+                } else {
+                    // Fallback to simple filename=... (less common but possible)
+                    const simpleFilenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+                    if (simpleFilenameMatch && simpleFilenameMatch[1]) {
+                        effectiveFilename = simpleFilenameMatch[1].trim().replace(/['"]/g, '');
+                    }
+                }
             }
-         }
+        }
 
 
         // Create a blob from the response
@@ -196,15 +202,15 @@ export interface RephraseDocumentResponse { report_id: string; rephrased_doc_id:
 
 // Update the rephrase function to handle both text and document inputs
 export function rephrase(data: { document_text: string, style: string } | { doc_id: string, style: string }): Promise<RephraseTextResponse | RephraseDocumentResponse> {
-     const requestBody: any = { style: data.style };
-     if ('document_text' in data && data.document_text !== undefined && data.document_text !== null && data.document_text !== "") { // Explicitly check for undefined/null/empty string
-         requestBody.document_text = data.document_text;
-     } else if ('doc_id' in data && data.doc_id !== undefined && data.doc_id !== null && data.doc_id !== "") { // Explicitly check for undefined/null/empty string
-         requestBody.doc_id = data.doc_id;
-     } else {
-         // This case should ideally be caught by UI validation, but good practice here too.
-         return Promise.reject(new Error("Invalid rephrase input: either non-empty document_text or doc_id must be provided."));
-     }
+    const requestBody: any = { style: data.style };
+    if ('document_text' in data && data.document_text !== undefined && data.document_text !== null && data.document_text !== "") { // Explicitly check for undefined/null/empty string
+        requestBody.document_text = data.document_text;
+    } else if ('doc_id' in data && data.doc_id !== undefined && data.doc_id !== null && data.doc_id !== "") { // Explicitly check for undefined/null/empty string
+        requestBody.doc_id = data.doc_id;
+    } else {
+        // This case should ideally be caught by UI validation, but good practice here too.
+        return Promise.reject(new Error("Invalid rephrase input: either non-empty document_text or doc_id must be provided."));
+    }
 
 
     return fetch(`${API_BASE}/rephrase`, {
@@ -245,12 +251,12 @@ export function checkCompliance(data: { document_text: string } | { doc_id: stri
     const requestBody: any = {};
     // Ensure only one of document_text or doc_id is sent and has a value
     if ('document_text' in data && data.document_text !== undefined && data.document_text !== null && data.document_text !== "") {
-         requestBody.document_text = data.document_text;
+        requestBody.document_text = data.document_text;
     } else if ('doc_id' in data && data.doc_id !== undefined && data.doc_id !== null && data.doc_id !== "") {
-         requestBody.doc_id = data.doc_id;
+        requestBody.doc_id = data.doc_id;
     } else {
         // This case should ideally be caught by UI validation, but good practice here too.
-         return Promise.reject(new Error("Invalid compliance input: either non-empty document_text or doc_id must be provided."));
+        return Promise.reject(new Error("Invalid compliance input: either non-empty document_text or doc_id must be provided."));
     }
 
 
@@ -263,7 +269,7 @@ export function checkCompliance(data: { document_text: string } | { doc_id: stri
 
 // Add function to download compliance report by ID
 export async function downloadComplianceReport(reportId: string): Promise<void> {
-     try {
+    try {
         // Create a new Headers object by copying common headers
         const headers = new Headers(common.headers);
         // Explicitly delete the 'Content-Type' header for file downloads
@@ -283,28 +289,28 @@ export async function downloadComplianceReport(reportId: string): Promise<void> 
             throw new Error(`Failed to download compliance report ${reportId}: ${response.status} ${response.statusText} - ${errorDetail}`);
         }
 
-         // Get filename from headers if available, otherwise use a default
+        // Get filename from headers if available, otherwise use a default
         const contentDisposition = response.headers.get('Content-Disposition');
         let filename = `compliance_report_${reportId}.txt`; // Default filename
-         if (contentDisposition) {
+        if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename\*?=UTF-8''(.+)$/);
             if (filenameMatch && filenameMatch[1]) {
-                 // Decode URI component for UTF-8 filenames
+                // Decode URI component for UTF-8 filenames
                 filename = decodeURIComponent(filenameMatch[1]);
             } else {
-                 // Fallback to basic filename="...", handling potential quotes
-                 const basicFilenameMatch = contentDisposition.match(/filename="(.+)"/);
-                 if (basicFilenameMatch && basicFilenameMatch[1]) {
-                      filename = basicFilenameMatch[1].replace(/['"]/g, ''); // Remove surrounding quotes
-                 } else {
-                      // Fallback to simple filename=... (less common but possible)
-                       const simpleFilenameMatch = contentDisposition.match(/filename=([^;]+)/i);
-                       if(simpleFilenameMatch && simpleFilenameMatch[1]){
-                           filename = simpleFilenameMatch[1].trim().replace(/['"]/g, '');
-                       }
-                 }
+                // Fallback to basic filename="...", handling potential quotes
+                const basicFilenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (basicFilenameMatch && basicFilenameMatch[1]) {
+                    filename = basicFilenameMatch[1].replace(/['"]/g, ''); // Remove surrounding quotes
+                } else {
+                    // Fallback to simple filename=... (less common but possible)
+                    const simpleFilenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+                    if (simpleFilenameMatch && simpleFilenameMatch[1]) {
+                        filename = simpleFilenameMatch[1].trim().replace(/['"]/g, '');
+                    }
+                }
             }
-         }
+        }
 
 
         // Create a blob from the response

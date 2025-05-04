@@ -1,6 +1,7 @@
 // src/views/components/layout/DashboardLayout.tsx
 
 import React, { useState, useEffect } from "react";
+
 import {
   FaBars,
   FaTimes,
@@ -11,41 +12,44 @@ import {
   FaLanguage,
   FaRobot,
   FaBalanceScale,
-  FaUser,
   FaCog,
   FaSignOutAlt,
+  FaUser,
 } from "react-icons/fa";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../api";
 
+// Base URL for back-end
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
   { icon: FaEdit, title: "Rephrasing", path: "/dashboard/rephrasing" },
-  {
-    icon: FaShieldAlt,
-    title: "Risk Assessment",
-    path: "/dashboard/risk-assessment",
-  },
-  {
-    icon: FaClipboardCheck,
-    title: "Compliance",
-    path: "/dashboard/compliance",
-  },
+  { icon: FaShieldAlt, title: "Risk Assessment", path: "/dashboard/risk-assessment" },
+  { icon: FaClipboardCheck, title: "Compliance", path: "/dashboard/compliance" },
   { icon: FaLanguage, title: "Translation", path: "/dashboard/translation" },
   { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
 ];
 
 const getCurrentTitle = (path: string) => {
   const found = navItems.find(
-    (i) =>
-      path === i.path || (i.path !== "/dashboard" && path.startsWith(i.path))
+    (i) => path === i.path || (i.path !== "/dashboard" && path.startsWith(i.path))
   );
   return found?.title || "Dashboard";
 };
 
+interface UserMe {
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+}
+
 const DashboardLayout: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [accMenu, setAccMenu] = useState(false);
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [role, setRole] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -55,6 +59,21 @@ const DashboardLayout: React.FC = () => {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  // Fetch current user info for display
+  useEffect(() => {
+    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Not authenticated");
+        return res.json();
+      })
+      .then((data: UserMe) => {
+        if (data.first_name) setFirstName(data.first_name);
+        if (data.last_name) setLastName(data.last_name);
+        if (data.role) setRole(data.role);
+      })
+      .catch((err) => console.error("Failed to fetch user info:", err));
+  }, []);
 
   const handleNavClick = () => setOpen(false);
 
@@ -68,6 +87,10 @@ const DashboardLayout: React.FC = () => {
     setOpen(false);
     setAccMenu(false);
   };
+
+  // Compute user initials
+  const initials =
+    (firstName.charAt(0) || "") + (lastName.charAt(0) || "");
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -87,21 +110,11 @@ const DashboardLayout: React.FC = () => {
         `}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <NavLink
-            to="/dashboard"
-            className="flex items-center space-x-2"
-            onClick={handleNavClick}
-          >
+          <NavLink to="/dashboard" className="flex items-center space-x-2" onClick={handleNavClick}>
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
-            <span className="text-xl font-bold text-[#C17829] font-serif">
-              LDA
-            </span>
+            <span className="text-xl font-bold text-[#C17829] font-serif">LDA</span>
           </NavLink>
-          <button
-            className="md:hidden p-1 hover:bg-gray-100 rounded"
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-          >
+          <button className="md:hidden p-1 hover:bg-gray-100 rounded" onClick={() => setOpen(false)} aria-label="Close menu">
             <FaTimes />
           </button>
         </div>
@@ -137,19 +150,15 @@ const DashboardLayout: React.FC = () => {
         <div className="border-t p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white">
-                <FaUser />
+              <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
+                {initials || <FaCog />}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-gray-500">Legal Advisor</p>
+                <p className="text-sm font-medium truncate">{firstName} {lastName}</p>
+                <p className="text-xs text-gray-500 capitalize">{role || "User"}</p>
               </div>
             </div>
-            <button
-              className="p-1 hover:bg-gray-100 rounded"
-              onClick={() => setAccMenu((v) => !v)}
-              aria-label="Account menu"
-            >
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setAccMenu((v) => !v)} aria-label="Account menu">
               <FaCog />
             </button>
           </div>
@@ -180,12 +189,7 @@ const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      <div
-        className={`
-          flex-1 flex flex-col overflow-hidden transition-all duration-300
-          ${open ? "md:pl-64" : "md:pl-0"}
-        `}
-      >
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${open ? "md:pl-64" : "md:pl-0"}`}>
         <header className="flex items-center justify-between bg-white shadow px-4 sm:px-6 lg:px-8 h-12">
           <div className="flex items-center">
             <button
@@ -199,10 +203,7 @@ const DashboardLayout: React.FC = () => {
               {getCurrentTitle(location.pathname)}
             </h1>
           </div>
-          <NavLink
-            to="/"
-            className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]"
-          >
+          <NavLink to="/" className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]">
             Home
           </NavLink>
         </header>

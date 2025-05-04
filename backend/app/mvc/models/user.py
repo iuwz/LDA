@@ -1,8 +1,11 @@
+# backend/app/mvc/models/user.py
+
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class User(BaseModel):
-    username: str
+    first_name: str
+    last_name: str
     email: EmailStr
     hashed_password: str
     role: str = "user"  # Default role for new registrations
@@ -10,7 +13,8 @@ class User(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "username": "johndoe",
+                "first_name": "John",
+                "last_name": "Doe",
                 "email": "johndoe@example.com",
                 "hashed_password": "hashed_password_string",
                 "role": "user"
