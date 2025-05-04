@@ -5,7 +5,7 @@ from app.utils.security import require_admin
 from app.mvc.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter( tags=["Admin"])
 
 @router.get("/users")
 async def list_users(
