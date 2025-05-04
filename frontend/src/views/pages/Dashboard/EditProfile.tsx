@@ -1,5 +1,3 @@
-// src/views/pages/Dashboard/EditProfile.tsx
-
 import React, { useState, useEffect } from "react";
 import {
   FaUser,
@@ -11,57 +9,121 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
+const isValidEmail = (val: string) => /.+@.+\..+/.test(val.trim());
+const passwordCriteria = (password: string) => ({
+  hasUppercase: /[A-Z]/.test(password),
+  hasNumber: /\d/.test(password),
+  hasSymbol: /[^A-Za-z0-9]/.test(password),
+  hasMinLength: password.length >= 8,
+});
+
 const EditProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
-
-  // Basic info
-  const [profilePic, setProfilePic] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("john.doe@example.com");
-  const [phone, setPhone] = useState("");
-
-  // Password
-  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // Submission state
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Preview profile pic
   useEffect(() => {
-    if (!profilePic) return setPreviewUrl(null);
-    const reader = new FileReader();
-    reader.onload = () => setPreviewUrl(reader.result as string);
-    reader.readAsDataURL(profilePic);
-  }, [profilePic]);
+    fetch(
+      `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/me`,
+      {
+        credentials: "include",
+      }
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load profile");
+        return res.json();
+      })
+      .then((data) => {
+        setFirstName(data.first_name || "");
+        setLastName(data.last_name || "");
+        setEmail(data.email || "");
+      })
+      .catch((err) => setErrorMessage(err.message));
+  }, []);
 
-  const handlePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isEditing) return;
-    const file = e.target.files?.[0] ?? null;
-    setProfilePic(file);
-  };
+  const { hasUppercase, hasNumber, hasSymbol, hasMinLength } =
+    passwordCriteria(newPassword);
+  const isPasswordValid =
+    hasUppercase && hasNumber && hasSymbol && hasMinLength;
+  const isFormValid =
+    firstName.trim() !== "" &&
+    lastName.trim() !== "" &&
+    isValidEmail(email) &&
+    (!showChangePassword ||
+      (currentPassword.trim() !== "" &&
+        isPasswordValid &&
+        newPassword === confirmPassword));
+
+  const metRulesCount = [
+    hasUppercase,
+    hasNumber,
+    hasSymbol,
+    hasMinLength,
+  ].filter(Boolean).length;
+  const strengthWidth = `${(metRulesCount / 4) * 100}%`;
+  const strengthColor = isPasswordValid ? "bg-green-500" : "bg-yellow-400";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isEditing) return;
     setErrorMessage(null);
-    if (password && password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
+    if (!firstName.trim() || !lastName.trim() || !isValidEmail(email)) {
+      setErrorMessage("Please fill in all fields with valid values.");
       return;
+    }
+    if (showChangePassword) {
+      if (!currentPassword) {
+        setErrorMessage("Please enter your current password.");
+        return;
+      }
+      if (!isPasswordValid) {
+        setErrorMessage(
+          "New password must be at least 8 characters and include uppercase, number, and symbol."
+        );
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setErrorMessage("New passwords do not match.");
+        return;
+      }
     }
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((res) => setTimeout(res, 1500));
+      const body: any = { first_name: firstName, last_name: lastName, email };
+      if (showChangePassword) {
+        body.current_password = currentPassword;
+        body.new_password = newPassword;
+      }
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/me`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        throw new Error(errBody?.detail || res.statusText);
+      }
       setSuccessMessage("Profile updated successfully!");
       setIsEditing(false);
-    } catch {
-      setErrorMessage("Failed to update profile. Please try again.");
+      setShowChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to update profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +131,6 @@ const EditProfile: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -88,8 +149,6 @@ const EditProfile: React.FC = () => {
           </div>
         </div>
       </header>
-
-      {/* Alerts */}
       {errorMessage && (
         <div className="rounded-md bg-red-100 p-4 text-red-800">
           {errorMessage}
@@ -100,166 +159,165 @@ const EditProfile: React.FC = () => {
           {successMessage}
         </div>
       )}
-
-      {/* Form/View Section with pencil inside */}
       <section className="relative rounded-xl border bg-white shadow-sm p-6">
-        {/* Pencil Button */}
         <button
-          onClick={() => setIsEditing((v) => !v)}
+          onClick={() => {
+            setIsEditing(!isEditing);
+            setErrorMessage(null);
+            setSuccessMessage(null);
+            setShowChangePassword(false);
+          }}
           className="absolute top-4 right-4 text-[color:var(--accent-dark)] hover:text-[color:var(--accent-light)]"
-          aria-label={isEditing ? "Cancel editing" : "Edit profile"}
         >
           <FaPencilAlt size={18} />
         </button>
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Profile Picture */}
-          <div className="flex items-center space-x-4">
-            <div className="h-20 w-20 overflow-hidden rounded-full bg-gray-100">
-              {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
                 />
               ) : (
-                <FaUser className="h-full w-full text-gray-300 p-4" />
+                <p className="p-3 bg-gray-50 rounded-md">{firstName}</p>
               )}
             </div>
-            {isEditing && (
-              <label className="cursor-pointer text-sm text-[color:var(--accent-dark)] hover:underline">
-                Change Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePicChange}
-                  className="hidden"
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name
               </label>
-            )}
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
+                />
+              ) : (
+                <p className="p-3 bg-gray-50 rounded-md">{lastName}</p>
+              )}
+            </div>
           </div>
-
-          {/* Full Name */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Full Name
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
             </label>
             {isEditing ? (
               <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
               />
             ) : (
-              <p className="p-3 bg-gray-50 rounded-md">{name}</p>
+              <p className="p-3 bg-gray-50 rounded-md">{email}</p>
             )}
           </div>
-
-          {/* Email & Phone */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email Address
-              </label>
-              {isEditing ? (
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
-                />
-              ) : (
-                <p className="p-3 bg-gray-50 rounded-md">{email}</p>
-              )}
-            </div>
-            {/* Phone */}
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Phone Number
-              </label>
-              {isEditing ? (
-                <input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(123) 456-7890"
-                  className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
-                />
-              ) : (
-                <p className="p-3 bg-gray-50 rounded-md">{phone || "—"}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Password Fields (edit only) */}
           {isEditing && (
+            <div className="pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setShowChangePassword(!showChangePassword)}
+                className="text-sm text-[color:var(--accent-dark)] hover:underline"
+              >
+                {showChangePassword
+                  ? "Cancel Password Change"
+                  : "Change Password"}
+              </button>
+            </div>
+          )}
+          {isEditing && showChangePassword && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-3 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
+                />
+              </div>
               <div className="relative">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   New Password
                 </label>
                 <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full rounded-md border border-gray-300 p-3 pr-10 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((v) => !v)}
+                  onClick={() => setShowNewPassword(!showNewPassword)}
                   className="absolute right-3 top-9 text-gray-400"
                 >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
+                <div className="mt-2 text-xs space-y-1">
+                  <p
+                    className={
+                      hasUppercase ? "text-green-600" : "text-gray-500"
+                    }
+                  >
+                    {hasUppercase ? "✓" : "○"} Uppercase letter
+                  </p>
+                  <p className={hasNumber ? "text-green-600" : "text-gray-500"}>
+                    {hasNumber ? "✓" : "○"} Number
+                  </p>
+                  <p className={hasSymbol ? "text-green-600" : "text-gray-500"}>
+                    {hasSymbol ? "✓" : "○"} Symbol
+                  </p>
+                  <p
+                    className={
+                      hasMinLength ? "text-green-600" : "text-gray-500"
+                    }
+                  >
+                    {hasMinLength ? "✓" : "○"} At least 8 characters
+                  </p>
+                </div>
+                {newPassword.length > 0 && (
+                  <div className="mt-3 h-2 w-full bg-gray-200 rounded">
+                    <div
+                      className={`h-full rounded ${strengthColor}`}
+                      style={{ width: strengthWidth }}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="relative">
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Confirm Password
+              <div className="relative md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm New Password
                 </label>
                 <input
-                  id="confirmPassword"
-                  type={showConfirm ? "text" : "password"}
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full rounded-md border border-gray-300 p-3 pr-10 focus:ring focus:ring-[color:var(--accent-dark)] outline-none"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-9 text-gray-400"
                 >
-                  {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
             </div>
           )}
-
-          {/* Action Buttons */}
           {isEditing && (
             <div className="flex items-center space-x-4 pt-4 border-t">
               <motion.button
                 type="submit"
+                disabled={!isFormValid || isSubmitting}
                 className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-6 py-2 text-white shadow-sm hover:bg-[color:var(--accent-light)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -268,7 +326,12 @@ const EditProfile: React.FC = () => {
               </motion.button>
               <motion.button
                 type="button"
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setShowChangePassword(false);
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
                 className="flex items-center gap-2 rounded-md bg-gray-200 px-6 py-2 text-gray-700 hover:bg-gray-300 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

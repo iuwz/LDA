@@ -1,3 +1,5 @@
+// src/views/pages/RiskAssessmentTool.tsx
+
 import React, { useState } from "react";
 import {
   FaShieldAlt,
@@ -11,19 +13,32 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
+import {
+  analyzeRiskFile,
+  RiskAnalysisResponse,
+  RiskItemBackend,
+} from "../../../api";
+
+type Severity = "high" | "medium" | "low";
+
+interface RiskItem {
+  id: number;
+  section: string;
+  clause: string;
+  issue: string;
+  risk: Severity;
+  recommendation: string;
+}
 
 const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
 
-const RiskLevel: React.FC<{ level: "high" | "medium" | "low" }> = ({
-  level,
-}) => {
+const RiskLevel: React.FC<{ level: Severity }> = ({ level }) => {
   const palette = {
     high: "bg-red-100 text-red-800 border-red-200",
     medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
     low: "bg-green-100 text-green-700 border-green-200",
   } as const;
-
   return (
     <span
       className={`rounded border px-2 py-1 text-xs font-medium ${palette[level]}`}
@@ -37,91 +52,50 @@ const RiskAssessmentTool: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("all");
-  const [results, setResults] = useState<ReturnType<
-    typeof mockAnalysis
-  > | null>(null);
+  const [results, setResults] = useState<{
+    id: string;
+    riskItems: RiskItem[];
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  function mockAnalysis() {
-    return {
-      overallRisk: "medium" as const,
-      score: 65,
-      riskItems: [
-        {
-          id: 1,
-          section: "Liability",
-          clause: "§8.2",
-          issue: "Unlimited liability may be unenforceable.",
-          risk: "high" as const,
-          recommendation: "Add jurisdiction-specific limitations.",
-        },
-        {
-          id: 2,
-          section: "Termination",
-          clause: "§12.4",
-          issue: "Ambiguous termination notice.",
-          risk: "medium" as const,
-          recommendation: "Specify exact notice period.",
-        },
-        {
-          id: 3,
-          section: "Privacy",
-          clause: "§6.1",
-          issue: "No secure deletion policy.",
-          risk: "medium" as const,
-          recommendation: "Add secure deletion requirements.",
-        },
-        {
-          id: 4,
-          section: "IP",
-          clause: "§4.3",
-          issue: "Derivative-work ownership unclear.",
-          risk: "high" as const,
-          recommendation: "Define ownership of modifications.",
-        },
-        {
-          id: 5,
-          section: "Payments",
-          clause: "§3.5",
-          issue: "Rate change with minimal notice.",
-          risk: "low" as const,
-          recommendation: "Extend notice period.",
-        },
-        {
-          id: 6,
-          section: "General",
-          clause: "§14.7",
-          issue: "Governing law lacks venue.",
-          risk: "low" as const,
-          recommendation: "Add specific venue.",
-        },
-      ],
-    };
-  }
-
-  const analyze = () => {
+  const analyze = async () => {
     if (!file) return;
+    setError(null);
     setIsAnalyzing(true);
-    setTimeout(() => {
-      setResults(mockAnalysis());
+    try {
+      const resp: RiskAnalysisResponse = await analyzeRiskFile(file);
+      const raw = Array.isArray(resp.risks) ? resp.risks : [];
+      const mapped: RiskItem[] = raw.map((r: RiskItemBackend, idx: number) => ({
+        id: idx + 1,
+        section: r.section,
+        clause: (r as any).clause ?? r.section,
+        issue: r.risk_description,
+        risk: (r.severity || "Low").toLowerCase() as Severity,
+        recommendation: r.recommendation ?? "No recommendation provided.",
+      }));
+      setResults({ id: resp.id, riskItems: mapped });
+      setActiveSection("all");
+    } catch (err: any) {
+      console.error("Risk analysis failed:", err);
+      setError(`Risk analysis failed: ${err.message}`);
+    } finally {
       setIsAnalyzing(false);
-    }, 1800);
+    }
   };
 
   const reset = () => {
     setFile(null);
     setResults(null);
     setActiveSection("all");
+    setError(null);
   };
 
   const downloadReport = () => {
     if (!results) return;
-
     const doc = new jsPDF({ unit: "pt", format: "letter" });
     doc.setFontSize(18);
     doc.text("Risk Assessment Report", 40, 50);
-
-    // @ts-expect-error: autoTable plugin
-    doc.autoTable({
+    autoTable(doc, {
       startY: 80,
       head: [["ID", "Section", "Clause", "Issue", "Risk", "Recommendation"]],
       body: results.riskItems.map((i) => [
@@ -135,7 +109,6 @@ const RiskAssessmentTool: React.FC = () => {
       styles: { fontSize: 10, cellPadding: 4 },
       headStyles: { fillColor: [193, 120, 41] },
     });
-
     doc.save("risk_report.pdf");
   };
 
@@ -151,8 +124,8 @@ const RiskAssessmentTool: React.FC = () => {
     ? ["all", ...Array.from(new Set(results.riskItems.map((i) => i.section)))]
     : [];
 
-  const counts = results
-    ? results.riskItems.reduce<Record<string, number>>(
+  const counts: Record<Severity, number> = results
+    ? results.riskItems.reduce(
         (acc, i) => {
           acc[i.risk] = (acc[i.risk] || 0) + 1;
           return acc;
@@ -165,7 +138,6 @@ const RiskAssessmentTool: React.FC = () => {
 
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[rgb(193,120,41)] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -183,11 +155,9 @@ const RiskAssessmentTool: React.FC = () => {
         </div>
       </header>
 
-      {/* Content */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <div className="p-8">
-            {/* Uploader */}
             <div
               className="
                 flex cursor-pointer flex-col items-center justify-center gap-2
@@ -219,7 +189,6 @@ const RiskAssessmentTool: React.FC = () => {
                   }
                 }}
               />
-
               {file ? (
                 <div>
                   <FaFileAlt className="mx-auto text-4xl text-[rgb(193,120,41)]" />
@@ -257,18 +226,17 @@ const RiskAssessmentTool: React.FC = () => {
                   </p>
                 </>
               )}
-
               {isAnalyzing && (
                 <div className="mt-8 text-center text-gray-700">
                   <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[rgb(193,120,41)]" />
                   <p className="mt-3">Analyzing your document…</p>
                 </div>
               )}
+              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
             </div>
           </div>
         ) : (
           <>
-            {/* Summary */}
             <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <FaFileAlt className="text-2xl text-gray-500" />
@@ -297,8 +265,6 @@ const RiskAssessmentTool: React.FC = () => {
                 </motion.button>
               </div>
             </div>
-
-            {/* Counters */}
             <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
               {Object.entries(counts).map(([lvl, count]) => (
                 <div
@@ -313,8 +279,6 @@ const RiskAssessmentTool: React.FC = () => {
                 </div>
               ))}
             </div>
-
-            {/* Filters */}
             <div className="overflow-x-auto px-6">
               <div className="flex flex-wrap gap-2 border-b pb-2">
                 {sections.map((sec) => (
@@ -332,8 +296,6 @@ const RiskAssessmentTool: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            {/* List */}
             <div className="space-y-4 p-6">
               {filteredItems.length ? (
                 filteredItems.map((item) => (

@@ -1,3 +1,5 @@
+# backend/app/mvc/views/analysis.py
+
 import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
@@ -10,13 +12,17 @@ router = APIRouter(tags=["Analysis"])
 class RiskAnalysisRequest(BaseModel):
     document_text: str
 
-@router.post("/risk")
+@router.post("/risk", tags=["Analysis"])
 async def analyze_risk_endpoint(
     request_data: RiskAnalysisRequest,
+    *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """API endpoint to analyze legal document risk."""
+    """
+    API endpoint to analyze legal document risk.
+    Expects JSON body {"document_text": "..."}.
+    """
     db = request.app.state.db
     user_id = current_user.email
 
@@ -27,15 +33,18 @@ async def analyze_risk_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Internal server error: {e}")
+        logging.error(f"Internal server error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/risk")
+@router.get("/risk", tags=["Analysis"])
 async def list_user_risk_reports(
+    *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """List all risk reports for the logged-in user."""
+    """
+    List all risk reports for the logged-in user.
+    """
     db = request.app.state.db
     user_id = current_user.email
 
@@ -47,12 +56,13 @@ async def list_user_risk_reports(
         logging.info(f"Returning {len(reports)} reports for user_id {user_id}")
         return reports
     except Exception as e:
-        logging.error(f"Error listing risk reports for user_id {user_id}: {e}")
+        logging.error(f"Error listing risk reports for user_id {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/risk/{report_id}")
+@router.get("/risk/{report_id}", tags=["Analysis"])
 async def get_risk_report_endpoint(
     report_id: str,
+    *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
@@ -70,5 +80,5 @@ async def get_risk_report_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Internal server error while retrieving report: {e}")
+        logging.error(f"Internal server error while retrieving report: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

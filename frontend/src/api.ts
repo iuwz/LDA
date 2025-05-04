@@ -1,5 +1,4 @@
 // src/api.ts
-
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const common: RequestInit = {
@@ -28,9 +27,6 @@ async function handleTextResponse(res: Response): Promise<string> {
   return res.text();
 }
 
-
-// ─── AUTH ────────────────────────────────────────────────────────────────
-
 export interface LoginReq { email: string; password: string; }
 export interface LoginRes { access_token: string; token_type: "bearer"; }
 export function login(data: LoginReq) {
@@ -41,13 +37,7 @@ export function login(data: LoginReq) {
   }).then(r => handleResponse<LoginRes>(r));
 }
 
-export interface RegisterReq {
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  email: string;
-  hashed_password: string;
-}
+export interface RegisterReq { username?: string; first_name?: string; last_name?: string; email: string; hashed_password: string; }
 export interface RegisterRes { message: string; user: any; }
 export function register(data: RegisterReq) {
   return fetch(`${API_BASE}/auth/register`, {
@@ -66,9 +56,6 @@ export function logout() {
   });
 }
 
-
-// ─── RISK ────────────────────────────────────────────────────────────────
-
 export interface AnalyzeRiskRes { analysis_result: { id: string; risks: any[] } }
 export function analyzeRisk(document_text: string) {
   return fetch(`${API_BASE}/risk/analyze`, {
@@ -78,8 +65,19 @@ export function analyzeRisk(document_text: string) {
   }).then(r => handleResponse<AnalyzeRiskRes>(r));
 }
 
-
-// ─── CHATBOT ────────────────────────────────────────────────────────────
+export interface RiskItemBackend { section: string; clause: string; risk_description: string; severity: "Low" | "Medium" | "High"; recommendation?: string; }
+export interface RiskAnalysisResponse { id: string; risks: RiskItemBackend[]; }
+export function analyzeRiskFile(file: File): Promise<RiskAnalysisResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  return fetch(`${API_BASE}/risk/analyze-file`, {
+    credentials: "include",
+    method: "POST",
+    body: form,
+  })
+    .then(r => handleResponse<{ analysis_result: { id: string; risks: RiskItemBackend[] } }>(r))
+    .then(data => ({ id: data.analysis_result.id, risks: data.analysis_result.risks }));
+}
 
 export interface ChatResponse { session_id: string; bot_response: string; }
 export function chat(query: string) {
@@ -89,9 +87,6 @@ export function chat(query: string) {
     body: JSON.stringify({ query }),
   }).then(r => handleResponse<ChatResponse>(r));
 }
-
-
-// ─── DOCUMENTS ──────────────────────────────────────────────────────────
 
 export interface DocumentRecord { _id: string; filename: string; owner_id: string; file_id: string }
 export interface UploadRes { doc_id: string; gridfs_file_id: string }
@@ -104,62 +99,56 @@ export function uploadDocument(file: File): Promise<UploadRes> {
     body: form,
   }).then(r => handleResponse<UploadRes>(r));
 }
+
 export function listDocuments(): Promise<DocumentRecord[]> {
   return fetch(`${API_BASE}/documents`, { ...common, method: "GET" })
     .then(r => handleResponse<DocumentRecord[]>(r));
 }
+
 export function getDocumentContent(docId: string): Promise<string> {
   return fetch(`${API_BASE}/documents/content/${docId}`, {
     credentials: "include",
     method: "GET",
   }).then(r => handleTextResponse(r));
 }
+
 export async function downloadDocumentById(docId: string, filename: string): Promise<void> {
-  // unchanged from before
-  try {
-    const headers = new Headers(common.headers);
-    headers.delete('Content-Type');
-    const res = await fetch(`${API_BASE}/documents/download/${docId}`, {
-      ...common,
-      method: "GET",
-      headers,
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => res.statusText);
-      throw new Error(`Failed to download document ${filename}: ${res.status} ${detail}`);
-    }
-    const cd = res.headers.get('Content-Disposition') || '';
-    let effectiveFilename = filename;
-    const m = cd.match(/filename\*?=UTF-8''(.+)$/);
-    if (m && m[1]) effectiveFilename = decodeURIComponent(m[1]);
-    else {
-      const m2 = cd.match(/filename="(.+)"/);
-      if (m2 && m2[1]) effectiveFilename = m2[1].replace(/['"]/g, '');
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = effectiveFilename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error("Download failed:", err);
-    alert(`Download failed: ${(err as Error).message}`);
+  const headers = new Headers(common.headers);
+  headers.delete("Content-Type");
+  const res = await fetch(`${API_BASE}/documents/download/${docId}`, {
+    ...common,
+    method: "GET",
+    headers,
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`Failed to download document ${filename}: ${res.status} ${detail}`);
   }
+  const cd = res.headers.get("Content-Disposition") || "";
+  let effectiveFilename = filename;
+  const m = cd.match(/filename\*?=UTF-8''(.+)$/);
+  if (m && m[1]) effectiveFilename = decodeURIComponent(m[1]);
+  else {
+    const m2 = cd.match(/filename="(.+)"/);
+    if (m2 && m2[1]) effectiveFilename = m2[1].replace(/['"]/g, "");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = effectiveFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-
-// ─── REPHRASE & TRANSLATE ─────────────────────────────────────────────────
-
-export interface RephraseTextResponse { report_id: string; rephrased_text: string }
-export interface RephraseDocumentResponse { report_id: string; rephrased_doc_id: string; rephrased_doc_filename: string }
+export interface RephraseTextResponse { report_id: string; rephrased_text: string; }
+export interface RephraseDocumentResponse { report_id: string; rephrased_doc_id: string; rephrased_doc_filename: string; }
 export function rephrase(data: { document_text: string; style: string } | { doc_id: string; style: string }) {
   const body: any = { style: data.style };
-  if ('document_text' in data && data.document_text) body.document_text = data.document_text;
-  else if ('doc_id' in data && data.doc_id) body.doc_id = data.doc_id;
+  if ("document_text" in data && data.document_text) body.document_text = data.document_text;
+  else if ("doc_id" in data && data.doc_id) body.doc_id = data.doc_id;
   else return Promise.reject(new Error("Provide document_text or doc_id"));
   return fetch(`${API_BASE}/rephrase`, {
     ...common,
@@ -167,7 +156,8 @@ export function rephrase(data: { document_text: string; style: string } | { doc_
     body: JSON.stringify(body),
   }).then(r => handleResponse<RephraseTextResponse | RephraseDocumentResponse>(r));
 }
-export interface TranslateRes { report_id: string; translated_text: string }
+
+export interface TranslateRes { report_id: string; translated_text: string; }
 export function translate(document_text: string, target_lang: string) {
   return fetch(`${API_BASE}/translate`, {
     ...common,
@@ -176,18 +166,8 @@ export function translate(document_text: string, target_lang: string) {
   }).then(r => handleResponse<TranslateRes>(r));
 }
 
-
-// ─── COMPLIANCE ─────────────────────────────────────────────────────────
-
-export interface ComplianceIssue {
-  rule_id: string;
-  description: string;
-  status: string;
-  extracted_text_snippet?: string | null;
-}
-export interface ComplianceReportResponse { report_id: string; issues: ComplianceIssue[] }
-
-// 1) Check
+export interface ComplianceIssue { rule_id: string; description: string; status: string; extracted_text_snippet?: string | null; }
+export interface ComplianceReportResponse { report_id: string; issues: ComplianceIssue[]; }
 export function checkCompliance(data: { document_text?: string; doc_id?: string }): Promise<ComplianceReportResponse> {
   const body: any = {};
   if (data.document_text) body.document_text = data.document_text;
@@ -200,36 +180,29 @@ export function checkCompliance(data: { document_text?: string; doc_id?: string 
   }).then(r => handleResponse<ComplianceReportResponse>(r));
 }
 
-// 2) Download DOCX via JS-fetch (if you still want this)
 export async function downloadComplianceReport(reportId: string): Promise<void> {
-  try {
-    const headers = new Headers(common.headers);
-    headers.delete("Content-Type");
-    const res = await fetch(`${API_BASE}/compliance/report/download/${reportId}`, {
-      ...common,
-      method: "GET",
-      headers,
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => res.statusText);
-      throw new Error(`DOCX download failed: ${res.status} ${detail}`);
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `compliance_report_${reportId}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error("Compliance report download failed:", err);
-    alert(`Compliance report download failed: ${(err as Error).message}`);
+  const headers = new Headers(common.headers);
+  headers.delete("Content-Type");
+  const res = await fetch(`${API_BASE}/compliance/report/download/${reportId}`, {
+    ...common,
+    method: "GET",
+    headers,
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`DOCX download failed: ${res.status} ${detail}`);
   }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `compliance_report_${reportId}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-// 3) Download PDF via simple <a> (no fetch)
 export function downloadComplianceReportPdf(reportId: string): void {
   const url = `${API_BASE}/compliance/report/pdf/${reportId}`;
   const a = document.createElement("a");
