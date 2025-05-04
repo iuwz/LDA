@@ -1,6 +1,5 @@
-// TranslationTool.tsx
-
 import React, { useState } from "react";
+import { translateText, translateFile } from "../../../api";
 import {
   FaLanguage,
   FaCopy,
@@ -37,48 +36,42 @@ const TranslationTool: React.FC = () => {
   const sourceLang = fromEnglish ? "English" : "Arabic";
   const targetLang = fromEnglish ? "Arabic" : "English";
 
-  /* ——— mock translation ——— */
-  const mockTranslateText = () => {
+  const handleTranslate = async () => {
     setIsTranslating(true);
-    setTimeout(() => {
-      setTranslatedText(
-        fromEnglish
-          ? "ستمتثل الطرف لجميع القوانين واللوائح المطبقة."
-          : "The party will comply with all applicable laws and regulations."
-      );
-      setIsTranslating(false);
-    }, 1200);
-  };
-
-  const mockTranslateDocument = () => {
-    setDocProcessing(true);
-    setTimeout(() => {
-      const result = fromEnglish
-        ? "ستمتثل الطرف لجميع القوانين واللوائح المطبقة."
-        : "The party will comply with all applicable laws and regulations.";
-
-      const blob = new Blob([result], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      setDocUrl(url);
+    if (file) {
+      setDocProcessing(true);
+      try {
+        const { blob, filename } = await translateFile(
+          file,
+          targetLang.toLowerCase()
+        );
+        const url = URL.createObjectURL(blob);
+        setDocUrl(url);
+      } catch (e) {
+        console.error(e);
+      }
       setDocProcessing(false);
-    }, 1800);
+    } else {
+      try {
+        const res = await translateText(sourceText, targetLang.toLowerCase());
+        setTranslatedText(res.translated_text);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setIsTranslating(false);
   };
 
-  /* ——— handlers ——— */
-  const handleTranslate = () => {
-    if (file) mockTranslateDocument();
-    else if (sourceText.trim()) mockTranslateText();
-  };
   const handleCopy = () => {
     navigator.clipboard.writeText(translatedText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
     setDocUrl(null);
-    setDocProcessing(false);
     setTranslatedText("");
     if (f) {
       setSourceText(
@@ -203,7 +196,7 @@ const TranslationTool: React.FC = () => {
             ) : (
               <a
                 href={docUrl}
-                download={`translated_${sourceLang}_to_${targetLang}.txt`}
+                download
                 className="inline-flex items-center gap-2 px-6 py-2 bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] rounded-md shadow-sm hover:bg-[color:var(--accent-dark)] hover:text-white transition-colors"
               >
                 <FaLanguage /> Download Translated Document
@@ -236,7 +229,7 @@ const TranslationTool: React.FC = () => {
                     onClick={handleCopy}
                     className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
                   >
-                    {copied ? <FaCheck /> : <FaCopy />}
+                    {copied ? <FaCheck /> : <FaCopy />}{" "}
                     {copied ? "Copied" : "Copy"}
                   </button>
                 )}
@@ -265,8 +258,7 @@ const TranslationTool: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaExchangeAlt />
-            Swap Directions
+            <FaExchangeAlt /> Swap Directions
           </motion.button>
           {!file && (
             <motion.button
@@ -284,8 +276,7 @@ const TranslationTool: React.FC = () => {
                 scale: sourceText.trim() && !isTranslating ? 0.95 : 1,
               }}
             >
-              <FaLanguage />
-              <span>Translate</span>
+              <FaLanguage /> <span>Translate</span>
             </motion.button>
           )}
         </div>

@@ -1,6 +1,5 @@
 import uvicorn
 import logging
-from io import BytesIO
 from fastapi import FastAPI, Request, HTTPException, Depends, UploadFile, File
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -12,6 +11,7 @@ from app.middleware.jwt_middleware import JWTMiddleware
 from app.utils.security import get_current_user, verify_password, get_password_hash
 from app.mvc.models.user import UserInDB
 
+# Routers
 from app.mvc.views.auth import router as auth_router
 from app.mvc.views.documents import router as documents_router
 from app.mvc.views.compliance import router as compliance_router
@@ -20,6 +20,7 @@ from app.mvc.views.translate import router as translate_router
 from app.mvc.views.chatbot import router as chatbot_router
 from app.mvc.views.admin import router as admin_router
 
+# Controllers
 from app.mvc.controllers.analysis import analyze_risk, get_risk_report
 from app.mvc.controllers.rephrase import extract_full_text_from_stream
 
@@ -91,12 +92,14 @@ def create_app() -> FastAPI:
             if not verify_password(input.current_password, current_user.hashed_password):
                 raise HTTPException(status_code=400, detail="Current password is incorrect")
             update_data["hashed_password"] = get_password_hash(input.new_password)
+
         result = await db["users"].update_one(
             {"_id": ObjectId(current_user.id)},
             {"$set": update_data}
         )
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="User not found")
+
         return {
             "first_name": input.first_name,
             "last_name":  input.last_name,
@@ -114,9 +117,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=401, detail="Unauthorized")
         db = request.app.state.db
         return {
-            "analysis_result": await analyze_risk(
-                input_data.document_text, user_id, db
-            )
+            "analysis_result": await analyze_risk(input_data.document_text, user_id, db)
         }
 
     @app.post("/risk/analyze-file", tags=["Risk"])
@@ -128,6 +129,7 @@ def create_app() -> FastAPI:
         if not user_id:
             raise HTTPException(status_code=401, detail="Unauthorized")
         db = request.app.state.db
+
         raw = await file.read()
         class AsyncBytes:
             def __init__(self, b: bytes):
@@ -138,8 +140,9 @@ def create_app() -> FastAPI:
         text = await extract_full_text_from_stream(async_stream, file.filename)
         if text.startswith("Error:"):
             raise HTTPException(status_code=422, detail=text)
+
         result = await analyze_risk(text, user_id, db)
-        return {"analysis_result": result}
+        return { "analysis_result": result }
 
     @app.get("/risk/{report_id}", tags=["Risk"])
     async def retrieve_risk_report(
@@ -150,14 +153,15 @@ def create_app() -> FastAPI:
         if not user_id:
             raise HTTPException(status_code=401, detail="Unauthorized")
         db = request.app.state.db
+
         report = await get_risk_report(report_id, db)
         if report.get("user_id") != user_id:
             raise HTTPException(status_code=403, detail="Access denied (not your report)")
-        return {"risk_report": report}
+        return { "risk_report": report }
 
     @app.get("/", tags=["Root"])
     async def root():
-        return {"message": "Welcome to the LDA API"}
+        return { "message": "Welcome to the LDA API" }
 
     return app
 
