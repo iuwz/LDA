@@ -49,17 +49,6 @@ const Banner: React.FC = () => {
             </p>
           </div>
         </div>
-
-        <div className="flex flex-col w-full gap-3 sm:flex-row sm:w-auto sm:gap-4">
-          <div className="flex items-center justify-center gap-2 w-full rounded-full px-4 py-2 text-white bg-[color:var(--accent-dark)]">
-            <FaChartLine size={16} />
-            <span className="text-sm">Activity up 23%</span>
-          </div>
-          <div className="flex items-center justify-center gap-2 w-full rounded-full px-4 py-2 text-white bg-[color:var(--brand-dark)]">
-            <FaBell size={16} />
-            <span className="text-sm">3 Tasks</span>
-          </div>
-        </div>
       </div>
     </div>
   );
