@@ -15,6 +15,7 @@ import {
   FaCog,
   FaSignOutAlt,
   FaUser,
+  FaUserShield,
 } from "react-icons/fa";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../api";
@@ -25,15 +26,24 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
   { icon: FaEdit, title: "Rephrasing", path: "/dashboard/rephrasing" },
-  { icon: FaShieldAlt, title: "Risk Assessment", path: "/dashboard/risk-assessment" },
-  { icon: FaClipboardCheck, title: "Compliance", path: "/dashboard/compliance" },
+  {
+    icon: FaShieldAlt,
+    title: "Risk Assessment",
+    path: "/dashboard/risk-assessment",
+  },
+  {
+    icon: FaClipboardCheck,
+    title: "Compliance",
+    path: "/dashboard/compliance",
+  },
   { icon: FaLanguage, title: "Translation", path: "/dashboard/translation" },
   { icon: FaRobot, title: "Chatbot", path: "/dashboard/chatbot" },
 ];
 
 const getCurrentTitle = (path: string) => {
   const found = navItems.find(
-    (i) => path === i.path || (i.path !== "/dashboard" && path.startsWith(i.path))
+    (i) =>
+      path === i.path || (i.path !== "/dashboard" && path.startsWith(i.path))
   );
   return found?.title || "Dashboard";
 };
@@ -88,9 +98,11 @@ const DashboardLayout: React.FC = () => {
     setAccMenu(false);
   };
 
+  // Check if user is admin
+  const isAdmin = role === "admin";
+
   // Compute user initials
-  const initials =
-    (firstName.charAt(0) || "") + (lastName.charAt(0) || "");
+  const initials = (firstName.charAt(0) || "") + (lastName.charAt(0) || "");
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -110,11 +122,21 @@ const DashboardLayout: React.FC = () => {
         `}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <NavLink to="/dashboard" className="flex items-center space-x-2" onClick={handleNavClick}>
+          <NavLink
+            to="/dashboard"
+            className="flex items-center space-x-2"
+            onClick={handleNavClick}
+          >
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
-            <span className="text-xl font-bold text-[#C17829] font-serif">LDA</span>
+            <span className="text-xl font-bold text-[#C17829] font-serif">
+              LDA
+            </span>
           </NavLink>
-          <button className="md:hidden p-1 hover:bg-gray-100 rounded" onClick={() => setOpen(false)} aria-label="Close menu">
+          <button
+            className="md:hidden p-1 hover:bg-gray-100 rounded"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+          >
             <FaTimes />
           </button>
         </div>
@@ -128,16 +150,36 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${isActive
-                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                  : "text-gray-700 hover:bg-gray-100"
-                }`
+                 ${
+                   isActive
+                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                     : "text-gray-700 hover:bg-gray-100"
+                 }`
               }
             >
               <Icon className="mr-3" />
               <span className="truncate">{title}</span>
             </NavLink>
           ))}
+
+          {/* Admin Panel Link - only visible for admin users */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
+                 ${
+                   isActive
+                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                     : "text-gray-700 hover:bg-gray-100"
+                 }`
+              }
+            >
+              <FaUserShield className="mr-3" />
+              <span className="truncate">Admin Panel</span>
+            </NavLink>
+          )}
 
           <button
             onClick={handleLogout}
@@ -154,11 +196,19 @@ const DashboardLayout: React.FC = () => {
                 {initials || <FaCog />}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{firstName} {lastName}</p>
-                <p className="text-xs text-gray-500 capitalize">{role || "User"}</p>
+                <p className="text-sm font-medium truncate">
+                  {firstName} {lastName}
+                </p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {role || "User"}
+                </p>
               </div>
             </div>
-            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setAccMenu((v) => !v)} aria-label="Account menu">
+            <button
+              className="p-1 hover:bg-gray-100 rounded"
+              onClick={() => setAccMenu((v) => !v)}
+              aria-label="Account menu"
+            >
               <FaCog />
             </button>
           </div>
@@ -178,6 +228,16 @@ const DashboardLayout: React.FC = () => {
               >
                 <FaCog className="mr-2" /> Settings
               </NavLink>
+              {/* Admin link in menu too */}
+              {isAdmin && (
+                <NavLink
+                  to="/admin"
+                  className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                  onClick={handleNavClick}
+                >
+                  <FaUserShield className="mr-2" /> Admin Panel
+                </NavLink>
+              )}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
@@ -189,7 +249,11 @@ const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${open ? "md:pl-64" : "md:pl-0"}`}>
+      <div
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+          open ? "md:pl-64" : "md:pl-0"
+        }`}
+      >
         <header className="flex items-center justify-between bg-white shadow px-4 sm:px-6 lg:px-8 h-12">
           <div className="flex items-center">
             <button
@@ -203,7 +267,10 @@ const DashboardLayout: React.FC = () => {
               {getCurrentTitle(location.pathname)}
             </h1>
           </div>
-          <NavLink to="/" className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]">
+          <NavLink
+            to="/"
+            className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]"
+          >
             Home
           </NavLink>
         </header>
