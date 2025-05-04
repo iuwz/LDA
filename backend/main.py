@@ -50,6 +50,7 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Content-Disposition"],  # <-- expose this header for downloads
     )
 
     # Mount routers
@@ -59,7 +60,6 @@ def create_app() -> FastAPI:
     app.include_router(rephrase_router, prefix="/rephrase", tags=["Rephrase"])
     app.include_router(translate_router, prefix="/translate", tags=["Translation"])
     app.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
-    # Ensure admin routes are under /admin
     app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 
     # -------------------------------------------------------------------
