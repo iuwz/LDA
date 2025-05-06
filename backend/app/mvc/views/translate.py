@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 from urllib.parse import quote
-
+from bson import ObjectId
+from fastapi import HTTPException
 from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File, Form
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
@@ -87,33 +88,45 @@ async def list_translation_history(
     return {"history": items}
 
 
-# ───────────────────────  GET one report  ───────────────────────
+
+# ...
+
+# ───────────── GET one report ─────────────
 @router.get("/{report_id}")
 async def fetch_translation_report(
     report_id: str,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(400, "Invalid report_id")
+
     db = request.app.state.db
     doc = await db.translation_reports.find_one(
-        {"_id": report_id, "user_id": current_user.email}
+        {"_id": oid, "user_id": current_user.email}
     )
     if not doc:
         raise HTTPException(404, "Not found")
     doc["_id"] = str(doc["_id"])
     return {"translation_report": doc}
 
-
-# ─────────────────────────  DELETE  ─────────────────────────
+# ───────────── DELETE ─────────────
 @router.delete("/{report_id}")
 async def delete_translation_report(
     report_id: str,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(400, "Invalid report_id")
+
     db = request.app.state.db
     res = await db.translation_reports.delete_one(
-        {"_id": report_id, "user_id": current_user.email}
+        {"_id": oid, "user_id": current_user.email}
     )
     if res.deleted_count == 0:
         raise HTTPException(404, "Not found or not yours")

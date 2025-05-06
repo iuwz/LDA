@@ -240,12 +240,6 @@ const TranslationTool: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => openReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
-                  >
-                    <FaSearch /> View
-                  </button>
                   {h.result_doc_id && h.translated_filename && (
                     <button
                       onClick={() =>
