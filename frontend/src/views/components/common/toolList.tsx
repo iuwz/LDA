@@ -1,7 +1,9 @@
+// src/components/common/toolList.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import { Button } from "./button";
 
 export interface ToolCard {
   icon: React.ComponentType<{ size?: number }>;
@@ -14,8 +16,8 @@ const fadeContainer = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
-const fadeItem = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
-const SHADOW_GLOW = "0 12px 20px -5px rgba(0,0,0,.08)";
+
+const fadeItem = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
 const ToolList: React.FC<{
   tools: ToolCard[];
@@ -29,36 +31,82 @@ const ToolList: React.FC<{
       initial="hidden"
       animate="show"
     >
-      {tools.map((t, i) => (
-        <motion.div key={t.title} variants={fadeItem}>
+      {tools.map((tool, i) => (
+        <motion.div key={tool.title} variants={fadeItem}>
           <Link
-            to={t.link}
+            to={tool.link}
             onMouseEnter={() => setHoverIdx(i)}
             onMouseLeave={() => setHoverIdx(null)}
           >
             <motion.div
-              whileHover={{ y: -8, boxShadow: SHADOW_GLOW }}
-              className="relative overflow-hidden rounded-xl border bg-white shadow-sm"
+              whileHover={{ y: -4, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="
+                group
+                relative
+                flex flex-col
+                overflow-hidden
+                rounded-2xl
+                bg-white
+                border border-gray-200
+                shadow-sm
+                hover:shadow-lg
+                transition-shadow duration-300
+              "
             >
-              <div className="h-2 bg-gradient-to-r from-accent-dark to-accent-light" />
+              {/* Top-right gradient shard */}
+              <div
+                className="
+                  pointer-events-none
+                  absolute top-0 right-0
+                  h-12 w-1/2
+                  rounded-bl-2xl
+                  bg-gradient-to-l from-[var(--accent-light)] to-transparent
+                  group-hover:h-16
+                  transition-all duration-300
+                "
+              />
 
-              <div className="p-6">
-                <div className="mb-4 flex items-center">
-                  <span className="rounded-full p-3 bg-gradient-to-tr from-accent-dark to-accent-light text-white">
-                    <t.icon size={20} />
-                  </span>
-                  <h3 className="ml-3 font-serif text-lg font-semibold text-brand-dark">
-                    {t.title}
+              <div className="p-6 flex flex-col flex-grow">
+                {/* Icon + title */}
+                <div className="mb-4 flex items-center space-x-3">
+                  <div
+                    className="
+                      p-3 rounded-full
+                      bg-gradient-to-tr from-[var(--accent-dark)] to-[var(--accent-light)]
+                      text-white
+                      group-hover:scale-110
+                      transition-transform duration-300
+                    "
+                  >
+                    <tool.icon size={20} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {tool.title}
                   </h3>
                 </div>
-                <p className="mb-6 text-gray-600">{t.desc}</p>
-                <motion.button
-                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 bg-gradient-to-tr from-accent-dark to-accent-light text-white"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+
+                {/* Description */}
+                <p className="text-gray-600 flex-grow">{tool.desc}</p>
+
+                {/* Full-width gradient pill using your Button */}
+                <Button
+                  size="md"
+                  variant="primary"
+                  className="
+                    mt-6
+                    w-full
+                    py-2
+                    rounded-full
+                    bg-gradient-to-r from-[#C17829] to-[#D48F41]
+                    text-white
+                    flex items-center justify-center gap-2
+                    hover:from-[#D48F41] hover:to-[#C17829]
+                    transition-colors duration-200
+                  "
                 >
                   Try now <FaExternalLinkAlt size={12} />
-                </motion.button>
+                </Button>
               </div>
             </motion.div>
           </Link>

@@ -1,12 +1,13 @@
 // src/views/pages/Dashboard/DashboardHome.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
-  FaFileAlt,
-  FaClipboardCheck,
-  FaShieldAlt,
-  FaLanguage,
   FaRobot,
+  FaEdit,
+  FaShieldAlt,
+  FaClipboardCheck,
+  FaLanguage,
   FaArrowRight,
   FaCloudUploadAlt,
   FaDownload,
@@ -21,7 +22,6 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const toDate = (id: string) =>
   new Date(parseInt(id.substring(0, 8), 16) * 1000).toLocaleString();
 
-/* ─── Types ─── */
 interface Doc {
   _id: string;
   filename: string;
@@ -29,16 +29,15 @@ interface Doc {
   file_id: string;
 }
 
-/* ─── Dashboard tools ─── */
 const tools: ToolCard[] = [
   {
     icon: FaRobot,
     title: "Chatbot",
-    desc: "Ask legal‑doc questions.",
+    desc: "Ask legal-doc questions.",
     link: "/dashboard/chatbot",
   },
   {
-    icon: FaFileAlt,
+    icon: FaEdit,
     title: "Rephrasing",
     desc: "Improve clarity & tone.",
     link: "/dashboard/rephrasing",
@@ -63,15 +62,17 @@ const tools: ToolCard[] = [
   },
 ];
 
-/* ─── Single‑button uploader with “×” clear option ─── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
   const click = () => (!file ? fileRef.current?.click() : upload());
-
-  const clearFile = () => setFile(null);
+  const clearFile = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const upload = async () => {
     if (!file) return;
@@ -79,20 +80,18 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
     try {
       const form = new FormData();
       form.append("file", file);
-
       const res = await fetch(`${API_BASE}/documents/upload`, {
         method: "POST",
         credentials: "include",
         body: form,
       });
-
       if (!res.ok) {
         const { detail = "Upload failed" } = await res.json().catch(() => ({}));
         throw new Error(detail);
       }
-
-      await onDone(); // wait until the parent refreshes the list
+      await onDone();
       setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
     } catch (e: any) {
       alert(e.message ?? "Upload failed");
     } finally {
@@ -111,6 +110,7 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
       />
       <Button
         size="sm"
+        variant="primary"
         onClick={click}
         disabled={busy}
         className="w-40 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
@@ -120,29 +120,32 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
       {file && !busy && (
         <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
           {file.name}
-          <button
+          <Button
+            size="xs"
+            variant="outline"
             onClick={clearFile}
-            className="ml-1 text-gray-500 hover:text-gray-800"
+            className="ml-1 px-1"
             title="Remove file"
+            aria-label="Remove selected file"
           >
             <FaTimes />
-          </button>
+          </Button>
         </span>
       )}
     </div>
   );
 }
 
-/* ─── Main component ─── */
 export default function DashboardHome() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  /* async fetch docs (returns Promise so InlineUpload can await) */
   const refresh = async () => {
+    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -150,6 +153,7 @@ export default function DashboardHome() {
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail ?? "Could not load documents");
       setDocs(data);
+      setErr(null);
     } catch (e: any) {
       setErr(e.message);
     } finally {
@@ -160,9 +164,9 @@ export default function DashboardHome() {
     refresh();
   }, []);
 
-  /* delete */
   const confirmDelete = async () => {
     if (!pendingDel) return;
+    setIsDeleting(true);
     try {
       await fetch(`${API_BASE}/documents/${pendingDel._id}`, {
         method: "DELETE",
@@ -173,10 +177,10 @@ export default function DashboardHome() {
       alert("Delete failed");
     } finally {
       setPendingDel(null);
+      setIsDeleting(false);
     }
   };
 
-  /* row */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -189,30 +193,29 @@ export default function DashboardHome() {
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
-
-      <Button
-        size="xs"
-        variant="outline"
-        className="w-24 h-9 flex items-center justify-center gap-1"
+      <a
+        href={`${API_BASE}/documents/download/${d._id}`}
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        <a
-          href={`${API_BASE}/documents/download/${d._id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1"
+        <Button
+          size="xs"
+          variant="outline"
+          className="w-24 h-9 flex items-center justify-center"
         >
-          <FaDownload /> Download
-        </a>
-      </Button>
-
+          <FaDownload className="mr-2" />
+          Download
+        </Button>
+      </a>
       <Button
         size="xs"
         variant="outline"
-        className="w-24 h-9 flex items-center justify-center gap-1 border-red-500
-                   text-red-500 hover:bg-red-500 hover:text-white"
+        className="w-24 h-9 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
         onClick={() => setPendingDel(d)}
+        disabled={isDeleting}
       >
-        <FaTrashAlt /> Remove
+        <FaTrashAlt className="mr-2" />
+        Remove
       </Button>
     </motion.div>
   );
@@ -238,16 +241,26 @@ export default function DashboardHome() {
         </section>
 
         {/* uploads */}
-        <section className="rounded-2xl bg-white shadow border p-8 flex flex-col gap-6">
+        <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 className="text-xl font-semibold">Recent uploads</h3>
             <InlineUpload onDone={refresh} />
           </div>
 
-          {loading ? (
-            <p className="text-gray-600">Loading…</p>
+          {loading && docs.length === 0 ? (
+            <p className="text-gray-600">Loading documents…</p>
           ) : err ? (
-            <p className="text-red-600">{err}</p>
+            <p className="text-red-600 py-4">
+              Error: {err}.{" "}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={refresh}
+                className="text-indigo-600 hover:underline"
+              >
+                Try again
+              </Button>
+            </p>
           ) : docs.length === 0 ? (
             <p className="text-gray-600">No documents uploaded yet.</p>
           ) : (
@@ -259,12 +272,14 @@ export default function DashboardHome() {
           )}
 
           {docs.length > 5 && (
-            <a
-              href="/dashboard/uploads"
-              className="self-end text-sm text-indigo-600 flex items-center gap-1 hover:underline"
-            >
-              View all <FaArrowRight size={12} />
-            </a>
+            <div className="self-end">
+              <Link
+                to="/dashboard/uploads"
+                className="inline-flex items-center gap-1 text-indigo-600 hover:underline rounded-md font-medium"
+              >
+                View all <FaArrowRight size={12} />
+              </Link>
+            </div>
           )}
         </section>
       </div>
@@ -278,6 +293,7 @@ export default function DashboardHome() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setPendingDel(null)}
             />
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -288,21 +304,25 @@ export default function DashboardHome() {
               <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
                 <h4 className="text-lg font-semibold">Remove document</h4>
                 <p className="text-sm text-gray-700">
-                  Delete&nbsp;
+                  Are you sure you want to delete{" "}
                   <span className="font-medium">{pendingDel.filename}</span>?
+                  This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="outline"
                     onClick={() => setPendingDel(null)}
+                    disabled={isDeleting}
                   >
                     Cancel
                   </Button>
                   <Button
-                    size="xs"
-                    className="bg-red-600 text-white hover:bg-red-700"
+                    size="sm"
+                    variant="outline"
                     onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
                   >
                     Delete
                   </Button>
