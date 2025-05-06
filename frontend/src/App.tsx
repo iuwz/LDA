@@ -36,7 +36,6 @@ import AdminPage from "./views/pages/Admin/AdminPage";
 import Navbar from "./views/components/layout/navbar";
 import Footer from "./views/components/layout/footer";
 import DashboardLayout from "./views/components/layout/DashboardLayout";
-import ChatbotWidget from "./views/components/common/ChatbotWidget";
 import LoadingScreen from "./views/components/common/LoadingScreen";
 
 /* ── RoleChecker (optional) ─────────── */
@@ -129,7 +128,7 @@ export default function App() {
               <Navbar />
               <Home />
               <Footer />
-              <ChatbotWidget />
+             
             </>
           }
         />
@@ -145,7 +144,7 @@ export default function App() {
               <Navbar />
               <About />
               <Footer />
-              <ChatbotWidget />
+              
             </>
           }
         />
@@ -156,7 +155,7 @@ export default function App() {
               <Navbar />
               <Contact />
               <Footer />
-              <ChatbotWidget />
+              
             </>
           }
         />
@@ -167,7 +166,6 @@ export default function App() {
               <Navbar />
               <Auth />
               <Footer />
-              <ChatbotWidget />
             </>
           }
         />
