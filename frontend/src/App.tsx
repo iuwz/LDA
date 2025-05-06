@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -38,48 +39,34 @@ import DashboardLayout from "./views/components/layout/DashboardLayout";
 import ChatbotWidget from "./views/components/common/ChatbotWidget";
 import LoadingScreen from "./views/components/common/LoadingScreen";
 
-/* ── RoleChecker ────────────────────── */
-// Component to check user role and redirect accordingly
+/* ── RoleChecker (optional) ─────────── */
+// If you still want an automatic redirect based on role,
+// mount it at "/redirect" instead of "/".
 const RoleChecker = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkRole = async () => {
+    (async () => {
       try {
         const res = await fetch(`${API_BASE}/auth/me`, {
           credentials: "include",
         });
-
         if (!res.ok) {
           navigate("/auth");
           return;
         }
-
-        const userData = await res.json();
-
-        // If user is admin, redirect to admin page
-        if (userData.role === "admin") {
-          navigate("/admin");
-        } else {
-          // Otherwise, redirect to user dashboard
-          navigate("/dashboard");
-        }
-      } catch (error) {
-        console.error("Error checking role:", error);
+        const { role } = await res.json();
+        navigate(role === "admin" ? "/admin" : "/dashboard");
+      } catch {
         navigate("/auth");
       } finally {
         setLoading(false);
       }
-    };
-
-    checkRole();
+    })();
   }, [navigate]);
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
+  if (loading) return <LoadingScreen />;
   return null;
 };
 
@@ -100,7 +87,7 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
   return children;
 }
 
-/* ── AdminRoute HOC ────────────────── */
+/* ── AdminRoute HOC ─────────────────── */
 function AdminRoute() {
   const [status, setStatus] = useState<"loading" | "ok" | "fail" | "forbidden">(
     "loading"
@@ -108,25 +95,24 @@ function AdminRoute() {
   const location = useLocation();
 
   useEffect(() => {
-    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
-      .then(async (r) => {
-        if (!r.ok) return Promise.reject();
-        const data = await r.json();
-        if (data.role !== "admin") {
-          setStatus("forbidden");
-        } else {
-          setStatus("ok");
-        }
-      })
-      .catch(() => setStatus("fail"));
+    (async () => {
+      try {
+        const r = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
+        if (!r.ok) throw new Error();
+        const { role } = await r.json();
+        setStatus(role === "admin" ? "ok" : "forbidden");
+      } catch {
+        setStatus("fail");
+      }
+    })();
   }, []);
 
   if (status === "loading") return <LoadingScreen />;
   if (status === "fail")
     return <Navigate to="/auth" replace state={{ from: location }} />;
   if (status === "forbidden") return <Navigate to="/dashboard" replace />;
-
-  // If we get here, the user is an admin
   return <AdminPage />;
 }
 
@@ -135,10 +121,23 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Home route with role checker */}
-        <Route path="/" element={<RoleChecker />} />
+        {/* Public Home page */}
+        <Route
+          path="/"
+          element={
+            <>
+              <Navbar />
+              <Home />
+              <Footer />
+              <ChatbotWidget />
+            </>
+          }
+        />
 
-        {/* Public */}
+        {/* Optional: role‐based redirect */}
+        <Route path="/redirect" element={<RoleChecker />} />
+
+        {/* Public pages */}
         <Route
           path="/about"
           element={
@@ -193,7 +192,7 @@ export default function App() {
           <Route path="chatbot" element={<DashboardChatbot />} />
         </Route>
 
-        {/* Admin page (protected + admin role check) */}
+        {/* Admin page (protected + admin role) */}
         <Route path="/admin" element={<AdminRoute />} />
 
         {/* Fallback */}
