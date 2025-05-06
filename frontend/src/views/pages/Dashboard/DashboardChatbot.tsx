@@ -1,5 +1,6 @@
 // src/views/pages/Dashboard/DashboardChatbot.tsx
 import React, { useState, useRef, useEffect } from "react";
+import { chat as askBackend } from "../../../api";   // NEW
 import {
   FaRobot,
   FaPaperPlane,
@@ -37,22 +38,11 @@ const DashboardChatbot: React.FC = () => {
       messages: [
         {
           id: 1,
-          text: "Hello! I'm your LDA assistant. How can I help you with your legal documents today?",
+          text: "Hello! I'm your LDA assistant. How can I help you with your legal concerns today?",
           sender: "bot",
           timestamp: new Date(Date.now() - 3600 * 1000 * 24),
         },
-        {
-          id: 2,
-          text: "I need help with force majeure clauses in my contract. Can you provide guidance?",
-          sender: "user",
-          timestamp: new Date(Date.now() - 3600 * 1000 * 24),
-        },
-        {
-          id: 3,
-          text: "Certainly! Force majeure clauses address unforeseen events that prevent parties from fulfilling contractual obligations. Here are some key considerations: 1) Define specific events, 2) Specify trigger impact, 3) Include notification requirements, 4) Outline consequences. Would you like a sample clause?",
-          sender: "bot",
-          timestamp: new Date(Date.now() - 3600 * 1000 * 24),
-        },
+
       ],
     },
     {
@@ -114,7 +104,7 @@ const DashboardChatbot: React.FC = () => {
     );
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!inputValue.trim() || !activeChat) return;
 
     const userMsg: Message = {
@@ -128,25 +118,29 @@ const DashboardChatbot: React.FC = () => {
     setInputValue("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      let botText = "Could you give me more details?";
-      const txt = userMsg.text.toLowerCase();
-      if (txt.includes("privacy")) {
-        botText =
-          "A privacy policy should cover: data collected, purpose, storage, sharing, rights, and contact info.";
-      } else if (txt.includes("contract")) {
-        botText =
-          "Key contract elements: offer & acceptance, consideration, intent, capacity, legality.";
-      }
+    try {
+      // 🔗 real backend request
+      const res = await askBackend(userMsg.text);
+
       const botMsg: Message = {
         id: withUser.length + 1,
-        text: botText,
+        text: res.bot_response,
         sender: "bot",
         timestamp: new Date(),
       };
       updateActiveChat([...withUser, botMsg]);
+    } catch (err: any) {
+      // show error in‑chat
+      const botMsg: Message = {
+        id: withUser.length + 1,
+        text: `⚠️ ${err.message || "Error contacting server"}`,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      updateActiveChat([...withUser, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   const startNewChat = () => {
@@ -194,11 +188,10 @@ const DashboardChatbot: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                activeTab === tab
-                  ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
-                  : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
-              }`}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${activeTab === tab
+                ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
+                : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
+                }`}
             >
               {tab === "chat" ? "Chat" : "History"}
             </button>
@@ -235,22 +228,19 @@ const DashboardChatbot: React.FC = () => {
                   msgs.map((m) => (
                     <div
                       key={m.id}
-                      className={`mb-4 flex ${
-                        m.sender === "user" ? "justify-end" : "justify-start"
-                      }`}
+                      className={`mb-4 flex ${m.sender === "user" ? "justify-end" : "justify-start"
+                        }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          m.sender === "user"
-                            ? "bg-[color:var(--accent-dark)] text-white"
-                            : "bg-white border border-[#DDD0C8] text-[#3E2723]"
-                        }`}
+                        className={`max-w-[80%] rounded-lg p-3 ${m.sender === "user"
+                          ? "bg-[color:var(--accent-dark)] text-white"
+                          : "bg-white border border-[#DDD0C8] text-[#3E2723]"
+                          }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{m.text}</p>
                         <p
-                          className={`text-xs mt-1 ${
-                            m.sender === "user" ? "text-white/70" : "text-gray-500"
-                          }`}
+                          className={`text-xs mt-1 ${m.sender === "user" ? "text-white/70" : "text-gray-500"
+                            }`}
                         >
                           {formatTime(m.timestamp)}
                         </p>
@@ -319,11 +309,10 @@ const DashboardChatbot: React.FC = () => {
                   <button
                     onClick={sendMessage}
                     disabled={!inputValue.trim() || isTyping}
-                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${
-                      inputValue.trim() && !isTyping
-                        ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-                        : "bg-gray-300 cursor-not-allowed"
-                    }`}
+                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${inputValue.trim() && !isTyping
+                      ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                      : "bg-gray-300 cursor-not-allowed"
+                      }`}
                   >
                     <FaPaperPlane size={18} />
                   </button>
@@ -371,11 +360,10 @@ const DashboardChatbot: React.FC = () => {
                         setActiveChat(chat);
                         setActiveTab("chat");
                       }}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        activeChat?.id === chat.id
-                          ? "border-2 border-[color:var(--accent-dark)]"
-                          : "border border-gray-200 hover:bg-gray-100"
-                      }`}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${activeChat?.id === chat.id
+                        ? "border-2 border-[color:var(--accent-dark)]"
+                        : "border border-gray-200 hover:bg-gray-100"
+                        }`}
                     >
                       <div className="flex justify-between items-center">
                         <h3 className="font-medium text-gray-800">{chat.title}</h3>
