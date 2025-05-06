@@ -1,8 +1,9 @@
 import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
-from typing import Optional, Union, Dict, Any
-
+from typing import Optional, Union, Dict
+from bson import ObjectId
+from datetime import datetime
 from app.mvc.controllers.rephrase import run_rephrase_tool
 from app.utils.security import get_current_user
 from app.mvc.models.user import UserInDB
@@ -56,3 +57,51 @@ async def rephrase_handler(
     except Exception as e:
         logger.error("Rephrase handler error", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+ 
+ # ───────────────────────────────────────────────────────────────
+ # NEW:   GET  /rephrase/history    – list only **this** user’s reports
+ #        DELETE /rephrase/{id}     – delete a report   GridFS doc (if any)
+ # ───────────────────────────────────────────────────────────────
+ 
+@router.get("/history")
+async def get_history(
+     request: Request,
+     current_user: UserInDB = Depends(get_current_user),
+ ):
+     db = request.app.state.db
+     cursor = db.rephrase_reports.find(
+         {"user_id": current_user.email}
+     ).sort("created_at", -1)
+     items = []
+     async for r in cursor:
+         items.append({
+             "id": str(r["_id"]),
+             "style": r["style"],
+             "created_at": r.get("created_at", datetime.utcnow()),
+             "type": "doc" if r["rephrased_doc_id"] else "text",
+             "filename": r.get("rephrased_output_summary", ""),
+             "result_doc_id": r.get("rephrased_doc_id"),
+             "result_text": (
+                 r["rephrased_output_summary"] if not r["rephrased_doc_id"] else None
+             ),
+         })
+     return {"history": items}
+ 
+ 
+@router.delete("/{report_id}")
+async def delete_report(
+     report_id: str,
+     request: Request,
+     current_user: UserInDB = Depends(get_current_user),
+ ):
+     db = request.app.state.db
+     row = await db.rephrase_reports.find_one({"_id": ObjectId(report_id)})
+     if not row or row["user_id"] != current_user.email:
+         raise HTTPException(status_code=404, detail="Not found")
+ 
+     # if the result is a DOCX stored in GridFS, delete it, too
+     if row.get("rephrased_doc_id"):
+         await db.fs.files.delete_one({"_id": ObjectId(row["rephrased_doc_id"])})
+ 
+     await db.rephrase_reports.delete_one({"_id": ObjectId(report_id)})
+     return {"ok": True}

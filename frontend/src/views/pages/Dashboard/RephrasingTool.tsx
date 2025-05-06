@@ -20,6 +20,9 @@ import {
   DocumentRecord,
   RephraseTextResponse,
   RephraseDocumentResponse,
+  listRephraseHistory,
+  deleteRephraseReport,
+  RephraseHistoryItem,
 } from "../../../api";
 
 export interface Change {
@@ -40,7 +43,7 @@ const RephrasingTool: React.FC = () => {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
-
+  const [history, setHistory] = useState<RephraseHistoryItem[]>([]);
   const [originalText, setOriginalText] = useState("");
   const [rephrasedText, setRephrasedText] = useState("");
   const [rephrasedDocDetails, setRephrasedDocDetails] = useState<{
@@ -58,6 +61,7 @@ const RephrasingTool: React.FC = () => {
 
   useEffect(() => {
     fetchUploadedDocuments();
+    loadHistory();
   }, []);
 
   useEffect(() => {
@@ -80,7 +84,15 @@ const RephrasingTool: React.FC = () => {
       setFetchingDocs(false);
     }
   };
-
+  /* ─────────────────────────────────────── */
+  async function loadHistory() {
+    try {
+      const h = await listRephraseHistory();
+      setHistory(h);
+    } catch (e) {
+      console.error("History load failed", e);
+    }
+  }
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
     setError(null);
@@ -93,6 +105,7 @@ const RephrasingTool: React.FC = () => {
       setError("Failed to upload document.");
     } finally {
       setIsLoading(false);
+      await loadHistory();
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -101,9 +114,8 @@ const RephrasingTool: React.FC = () => {
     setSelectedDocId(docId);
     setOriginalText(
       docId
-        ? `Document selected: ${
-            uploadedDocs.find((d) => d._id === docId)?.filename
-          }`
+        ? `Document selected: ${uploadedDocs.find((d) => d._id === docId)?.filename
+        }`
         : ""
     );
     setRephrasedText("");
@@ -159,6 +171,7 @@ const RephrasingTool: React.FC = () => {
       setError(err.message || "Rephrase failed");
     } finally {
       setIsLoading(false);
+      await loadHistory();
     }
   };
 
@@ -220,7 +233,16 @@ const RephrasingTool: React.FC = () => {
       Your rephrased text will appear here…
     </p>
   );
-
+  /* helper to delete a history row */
+  async function handleDeleteHistory(id: string) {
+    if (!window.confirm("Delete this rephrased result?")) return;
+    try {
+      await deleteRephraseReport(id);
+      setHistory(h => h.filter(r => r.id !== id));
+    } catch (e: any) {
+      alert(e.message || "Failed to delete");
+    }
+  }
   return (
     <div className="space-y-8 p-6">
       {/* Header */}
@@ -247,11 +269,10 @@ const RephrasingTool: React.FC = () => {
           <button
             key={id}
             onClick={() => setActiveStyle(id)}
-            className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
-              activeStyle === id
-                ? "bg-[color:var(--accent-dark)] text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+            className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${activeStyle === id
+              ? "bg-[color:var(--accent-dark)] text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
           >
             {label}
           </button>
@@ -275,9 +296,8 @@ const RephrasingTool: React.FC = () => {
                 <FaSpinner className="animate-spin ml-2" />
               ) : (
                 <FaChevronDown
-                  className={`ml-2 transition-transform ${
-                    docSelectOpen ? "rotate-180" : ""
-                  }`}
+                  className={`ml-2 transition-transform ${docSelectOpen ? "rotate-180" : ""
+                    }`}
                 />
               )}
             </button>
@@ -342,7 +362,64 @@ const RephrasingTool: React.FC = () => {
         </div>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
+      {/* ────────────── NEW: HISTORY ────────────── */}
+      <section className="rounded-xl border bg-white shadow-sm p-6">
+        <h2 className="font-medium text-[color:var(--brand-dark)] mb-4">
+          Previous Rephrasings
+        </h2>
+        {history.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No history yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {history.map(h => (
+              <li
+                key={h.id}
+                className="border rounded-lg p-4 flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-semibold">
+                    {h.type === "doc" ? h.filename : "Text snippet"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(h.created_at).toLocaleString()} • {h.style}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  {h.type === "doc" ? (
+                    <button
+                      onClick={() =>
+                        downloadDocumentById(h.result_doc_id!, h.filename!)
+                      }
+                      className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
+                    >
+                      <FaDownload /> Download
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setOriginalText(h.result_text!);
+                        setRephrasedText(h.result_text!);
+                        setSelectedDocId(null);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
+                    >
+                      <FaFileAlt /> View
+                    </button>
+                  )}
 
+                  <button
+                    onClick={() => handleDeleteHistory(h.id)}
+                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       {/* Content Area */}
       <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
         <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
@@ -440,8 +517,8 @@ const RephrasingTool: React.FC = () => {
             {isLoading
               ? "Processing..."
               : selectedDocId
-              ? "Rephrase Document"
-              : "Rephrase Text"}
+                ? "Rephrase Document"
+                : "Rephrase Text"}
           </motion.button>
         </div>
       </section>

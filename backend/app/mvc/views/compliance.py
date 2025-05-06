@@ -1,12 +1,15 @@
 # backend/app/mvc/views/compliance.py
+from __future__ import annotations
 
+import datetime as _dt
 import logging
-from fastapi import APIRouter, HTTPException, Request, Depends
-from pydantic import BaseModel, Field
-from typing import Optional
-from fastapi.responses import StreamingResponse, Response
 from io import BytesIO
+from typing import Optional
 from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response, StreamingResponse
+from pydantic import BaseModel, Field
 
 from app.mvc.controllers.compliance import (
     run_compliance_check,
@@ -16,101 +19,132 @@ from app.mvc.controllers.compliance import (
 )
 from app.utils.security import get_current_user
 from app.mvc.models.user import UserInDB
-from app.mvc.models.compliance import ComplianceReportResponse, ComplianceReport
+from app.mvc.models.compliance import ComplianceReportResponse
 
 router = APIRouter(tags=["Compliance"])
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
+# ─────────────────────────  Schemas  ─────────────────────────
 class ComplianceRequest(BaseModel):
     document_text: Optional[str] = Field(
-        None, description="Text to check (if no doc_id provided)"
+        None, description="Raw text of the document"
     )
     doc_id: Optional[str] = Field(
-        None, description="ID of uploaded document to check"
+        None, description="Existing uploaded document‑id"
     )
 
 
+# ───────────────────────  /check  (POST)  ─────────────────────
 @router.post("/check", response_model=ComplianceReportResponse)
 async def check_compliance(
-    request_body: ComplianceRequest,
+    body: ComplianceRequest,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    Run compliance check by text or existing document. Returns report_id + issues.
-    """
     db = request.app.state.db
+    if body.document_text is None and body.doc_id is None:
+        raise HTTPException(400, "Either document_text or doc_id must be provided.")
     try:
-        if request_body.document_text is not None:
-            result = await run_compliance_check(
-                db=db, user_id=current_user.email, document_text=request_body.document_text
+        if body.document_text is not None:
+            return await run_compliance_check(
+                db, current_user.email, document_text=body.document_text
             )
-        elif request_body.doc_id is not None:
-            result = await run_compliance_check(
-                db=db, user_id=current_user.email, doc_id=request_body.doc_id
-            )
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Either document_text or doc_id must be provided."
-            )
-        return result
+        return await run_compliance_check(db, current_user.email, doc_id=body.doc_id)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in /compliance/check: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        log.error("/compliance/check failed", exc_info=True)
+        raise HTTPException(500, str(e))
 
 
-@router.get("/report/download/{report_id}", response_class=Response)
-async def download_compliance_report_docx(
+# ──────────────────────────  HISTORY  ─────────────────────────
+@router.get("/history")
+async def list_my_compliance_reports(
+    request: Request,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    items = []
+    async for row in (
+        db.compliance_reports.find({"user_id": current_user.email}).sort("_id", -1)
+    ):
+        items.append(
+            {
+                "id": str(row["_id"]),
+                "created_at": row.get("timestamp", _dt.datetime.utcnow()),
+                "num_issues": len(row.get("issues", [])),
+                "report_filename": row.get("report_filename"),
+                "report_doc_id": row.get("report_doc_id"),
+            }
+        )
+    return {"history": items}
+
+
+# ───────────────────────────  GET ONE  ────────────────────────
+@router.get("/{report_id}")
+async def fetch_compliance_report(
     report_id: str,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    Stream back a DOCX compliance report.
-    """
     db = request.app.state.db
-    report = await get_compliance_report(db=db, report_id=report_id, user_id=current_user.email)
+    doc = await get_compliance_report(db, report_id, current_user.email)
+    return {"compliance_report": doc}
 
-    docx_buf = generate_compliance_report_docx(report)
-    if docx_buf is None:
-        raise HTTPException(status_code=500, detail="Failed to generate DOCX.")
 
-    filename = f"compliance_report_{report_id}.docx"
-    headers = {
-        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
-        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+# ───────────────────────────  DELETE  ─────────────────────────
+@router.delete("/{report_id}")
+async def delete_compliance_report(
+    report_id: str,
+    request: Request,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    doc = await get_compliance_report(db, report_id, current_user.email)
+    await db.compliance_reports.delete_one({"_id": doc["_id"]})
+    return {"ok": True}
+
+
+# ──────────────────────  DOCX download  ───────────────────────
+@router.get("/report/download/{report_id}", response_class=Response)
+async def download_docx(
+    report_id: str,
+    request: Request,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    rpt = await get_compliance_report(db, report_id, current_user.email)
+    buf = generate_compliance_report_docx(rpt)
+    fn = f"compliance_report_{report_id}.docx"
+    hdrs = {
+        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(fn)}",
+        "Content-Type": (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ),
     }
 
-    async def iter_docx():
-        docx_buf.seek(0)
-        yield docx_buf.getvalue()
+    async def _iter():
+        buf.seek(0)
+        yield buf.getvalue()
 
-    return StreamingResponse(iter_docx(), headers=headers, media_type=headers["Content-Type"])
+    return StreamingResponse(_iter(), headers=hdrs, media_type=hdrs["Content-Type"])
 
 
+# ───────────────────────  PDF download  ───────────────────────
 @router.get("/report/pdf/{report_id}", response_class=StreamingResponse)
-async def download_compliance_report_pdf(
+async def download_pdf(
     report_id: str,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    Stream back a PDF compliance report.
-    """
     db = request.app.state.db
-    report = await get_compliance_report(db=db, report_id=report_id, user_id=current_user.email)
-
-    pdf_buf = generate_compliance_report_pdf(report)
-
-    filename = f"compliance_report_{report_id}.pdf"
-    headers = {
-        "Content-Disposition": f"attachment; filename=\"{filename}\"",
+    rpt = await get_compliance_report(db, report_id, current_user.email)
+    buf = generate_compliance_report_pdf(rpt)
+    fn = f"compliance_report_{report_id}.pdf"
+    hdrs = {
+        "Content-Disposition": f"attachment; filename=\"{fn}\"",
         "Content-Type": "application/pdf",
     }
-
-    pdf_buf.seek(0)
-    return StreamingResponse(pdf_buf, headers=headers, media_type="application/pdf")
+    buf.seek(0)
+    return StreamingResponse(buf, headers=hdrs, media_type="application/pdf")
