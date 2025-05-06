@@ -16,7 +16,6 @@ interface Message {
   sender: "user" | "bot";
   timestamp: Date;
 }
-
 interface Chat {
   id: number;
   title: string;
@@ -65,7 +64,8 @@ const DashboardChatbot: React.FC = () => {
     },
   ]);
 
-  const [activeChat, setActiveChat] = useState<Chat>(conversations[0]);
+  // allow activeChat to be null briefly
+  const [activeChat, setActiveChat] = useState<Chat | null>(conversations[0] || null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,12 +76,14 @@ const DashboardChatbot: React.FC = () => {
     "What are the key elements of a valid contract?",
   ];
 
-  // Scroll to bottom on new messages
+  // scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeChat.messages]);
+    if (activeChat?.messages) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [activeChat?.messages]);
 
-  // Focus input when chat opens
+  // focus input on chat tab
   useEffect(() => {
     if (activeTab === "chat") inputRef.current?.focus();
   }, [activeTab]);
@@ -98,8 +100,10 @@ const DashboardChatbot: React.FC = () => {
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
 
+  // helper to update both activeChat and conversations array
   const updateActiveChat = (messages: Message[]) => {
-    const updated = {
+    if (!activeChat) return;
+    const updated: Chat = {
       ...activeChat,
       messages,
       preview: messages[messages.length - 1]?.text.slice(0, 40) + "...",
@@ -111,7 +115,8 @@ const DashboardChatbot: React.FC = () => {
   };
 
   const sendMessage = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !activeChat) return;
+
     const userMsg: Message = {
       id: activeChat.messages.length + 1,
       text: inputValue.trim(),
@@ -125,11 +130,11 @@ const DashboardChatbot: React.FC = () => {
 
     setTimeout(() => {
       let botText = "Could you give me more details?";
-      const text = userMsg.text.toLowerCase();
-      if (text.includes("privacy")) {
+      const txt = userMsg.text.toLowerCase();
+      if (txt.includes("privacy")) {
         botText =
           "A privacy policy should cover: data collected, purpose, storage, sharing, rights, and contact info.";
-      } else if (text.includes("contract")) {
+      } else if (txt.includes("contract")) {
         botText =
           "Key contract elements: offer & acceptance, consideration, intent, capacity, legality.";
       }
@@ -168,16 +173,18 @@ const DashboardChatbot: React.FC = () => {
     e.stopPropagation();
     const filtered = conversations.filter((c) => c.id !== id);
     setConversations(filtered);
-    if (activeChat.id === id) {
-      if (filtered.length) setActiveChat(filtered[0]);
-      else startNewChat();
+    if (activeChat?.id === id) {
+      filtered.length ? setActiveChat(filtered[0]) : startNewChat();
     }
   };
+
+  // temporarily fallback to empty array if no activeChat
+  const msgs = activeChat?.messages || [];
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] bg-[#F8F9FA] rounded-lg shadow-md overflow-hidden font-sans">
       {/* Header */}
-      <div className="bg-[#C18241] text-white p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+      <div className="bg-[color:var(--accent-dark)] text-white p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FaRobot className="text-2xl" />
           <h1 className="text-xl font-semibold">Legal Assistant</h1>
@@ -189,8 +196,8 @@ const DashboardChatbot: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-1 rounded-md text-sm font-medium ${
                 activeTab === tab
-                  ? "bg-white text-[#C18241] border border-[#C18241]"
-                  : "bg-[#C18241] text-white hover:bg-[#A96C34]"
+                  ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
+                  : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
               }`}
             >
               {tab === "chat" ? "Chat" : "History"}
@@ -213,7 +220,7 @@ const DashboardChatbot: React.FC = () => {
             >
               {/* Messages */}
               <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-gray-50">
-                {activeChat.messages.length === 0 ? (
+                {msgs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full">
                     <FaRegLightbulb className="text-4xl text-gray-300 mb-3" />
                     <h3 className="text-lg font-medium text-gray-700 mb-2">
@@ -225,7 +232,7 @@ const DashboardChatbot: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  activeChat.messages.map((m) => (
+                  msgs.map((m) => (
                     <div
                       key={m.id}
                       className={`mb-4 flex ${
@@ -235,7 +242,7 @@ const DashboardChatbot: React.FC = () => {
                       <div
                         className={`max-w-[80%] rounded-lg p-3 ${
                           m.sender === "user"
-                            ? "bg-[#C18241] text-white"
+                            ? "bg-[color:var(--accent-dark)] text-white"
                             : "bg-white border border-[#DDD0C8] text-[#3E2723]"
                         }`}
                       >
@@ -277,11 +284,9 @@ const DashboardChatbot: React.FC = () => {
               </div>
 
               {/* Suggestions */}
-              {activeChat.messages.length < 2 && (
+              {msgs.length < 2 && (
                 <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 mb-2">
-                    Suggested questions:
-                  </p>
+                  <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
                   <div className="flex flex-wrap gap-2">
                     {suggestedPrompts.map((p, i) => (
                       <button
@@ -309,14 +314,14 @@ const DashboardChatbot: React.FC = () => {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                     placeholder="Type your message..."
-                    className="w-full sm:flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C18241] focus:border-[#C18241]"
+                    className="w-full sm:flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[color:var(--accent-dark)] focus:border-[color:var(--accent-dark)]"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!inputValue.trim() || isTyping}
                     className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${
                       inputValue.trim() && !isTyping
-                        ? "bg-[#C18241] hover:bg-[#A96C34]"
+                        ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
                         : "bg-gray-300 cursor-not-allowed"
                     }`}
                   >
@@ -336,12 +341,10 @@ const DashboardChatbot: React.FC = () => {
             >
               {/* History List */}
               <div className="p-3 sm:p-4 bg-gray-50 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-800">
-                  Your Conversations
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-800">Your Conversations</h2>
                 <button
                   onClick={startNewChat}
-                  className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md bg-[#C18241] text-white hover:bg-[#A96C34]"
+                  className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
                 >
                   <FaPlus size={12} />
                   <span>New Chat</span>
@@ -355,7 +358,7 @@ const DashboardChatbot: React.FC = () => {
                     <p className="text-gray-500">No conversation history yet</p>
                     <button
                       onClick={startNewChat}
-                      className="mt-4 text-[#C18241] underline hover:text-[#A96C34]"
+                      className="mt-4 text-[color:var(--accent-dark)] underline hover:text-[color:var(--accent-light)]"
                     >
                       Start a new conversation
                     </button>
@@ -369,19 +372,15 @@ const DashboardChatbot: React.FC = () => {
                         setActiveTab("chat");
                       }}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        activeChat.id === chat.id
-                          ? "border-2 border-[#C18241]"
+                        activeChat?.id === chat.id
+                          ? "border-2 border-[color:var(--accent-dark)]"
                           : "border border-gray-200 hover:bg-gray-100"
                       }`}
                     >
                       <div className="flex justify-between items-center">
-                        <h3 className="font-medium text-gray-800">
-                          {chat.title}
-                        </h3>
+                        <h3 className="font-medium text-gray-800">{chat.title}</h3>
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-gray-500">
-                            {formatDate(chat.date)}
-                          </span>
+                          <span className="text-xs text-gray-500">{formatDate(chat.date)}</span>
                           <button
                             onClick={(e) => deleteChat(chat.id, e)}
                             className="p-1 text-gray-400 hover:text-red-500"
@@ -390,9 +389,7 @@ const DashboardChatbot: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 truncate mt-1">
-                        {chat.preview}
-                      </p>
+                      <p className="text-sm text-gray-600 truncate mt-1">{chat.preview}</p>
                     </div>
                   ))
                 )}
