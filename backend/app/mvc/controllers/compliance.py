@@ -10,16 +10,17 @@ Responsibilities
 
 • get_compliance_report – fetches one stored report (enforces ownership).
 
-• generate_compliance_report_docx / _pdf – unchanged from your original
-  implementation, just slightly refactored for clarity.
+• generate_compliance_report_docx / _pdf – produce a portable report file.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
-import json, logging, re
+import json
+import logging
+import re
 from io import BytesIO
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from fastapi import HTTPException
@@ -31,9 +32,9 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import (
     SimpleDocTemplate,
+    Paragraph,
     Table,
     TableStyle,
-    Paragraph,
     Spacer,
 )
 from reportlab.lib.styles import getSampleStyleSheet
@@ -51,18 +52,31 @@ from app.mvc.models.compliance import ComplianceIssue
 logger = logging.getLogger(__name__)
 
 # ───────────────────────────  DEMO fallback rules  ───────────────────────────
+
 MOCK_RULES = [
-    {"rule_id": "R1",  "pattern": "Confidential",        "description": "Document marked confidential requires an NDA clause"},
-    {"rule_id": "R2",  "pattern": "Penalty",             "description": "Check if penalty exceeds legal limit"},
-    {"rule_id": "R3",  "pattern": "Jurisdiction",        "description": "Ensure governing law and jurisdiction clauses are present"},
-    {"rule_id": "R4",  "pattern": "indefinitely",        "description": "Data retention period must be finite and clearly defined."},
-    {"rule_id": "R5",  "pattern": "sub[- ]processors",   "description": "Usage of Sub‑processors must be limited and disclosed."},
-    {"rule_id": "R6",  "pattern": "legitimate interests","description": "Legitimate interests as lawful basis requires balancing test."},
-    {"rule_id": "R7",  "pattern": "any country",         "description": "International transfers need safeguards (e.g., SCCs)."},
-    {"rule_id": "R8",  "pattern": "Data Subjects",       "description": "Processor must assist with Data‑Subject rights by law."},
-    {"rule_id": "R9",  "pattern": "indirect",            "description": "Unlimited exclusion of liability is unenforceable."},
-    {"rule_id": "R10", "pattern": "arbitration",         "description": "Arbitration location must be specified and fair."},
+    {"rule_id": "R1",  "pattern": "Confidential",
+     "description": "Document marked confidential requires an NDA clause"},
+    {"rule_id": "R2",  "pattern": "Penalty",
+     "description": "Check if penalty exceeds legal limit"},
+    {"rule_id": "R3",  "pattern": "Jurisdiction",
+     "description": "Ensure governing law and jurisdiction clauses are present"},
+    {"rule_id": "R4",  "pattern": "indefinitely",
+     "description": "Data retention period must be finite and clearly defined."},
+    {"rule_id": "R5",  "pattern": r"sub[ -]processors",
+     "description": "Usage of Sub‑processors must be limited and disclosed."},
+    {"rule_id": "R6",  "pattern": "legitimate interests",
+     "description": "Legitimate interests as lawful basis requires balancing test."},
+    {"rule_id": "R7",  "pattern": "any country",
+     "description": "International transfers need safeguards (e.g., SCCs)."},
+    {"rule_id": "R8",  "pattern": "Data Subjects",
+     "description": "Processor must assist with Data‑Subject rights by law."},
+    {"rule_id": "R9",  "pattern": "indirect",
+     "description": "Unlimited exclusion of liability is unenforceable."},
+    {"rule_id": "R10", "pattern": "arbitration",
+     "description": "Arbitration location must be specified and fair."},
 ]
+
+# ─────────────────────────────── Helpers ────────────────────────────────
 
 
 def _extract_snippet(text: str, pattern: str, win: int = 100) -> str:
@@ -74,7 +88,21 @@ def _extract_snippet(text: str, pattern: str, win: int = 100) -> str:
     return ("…" if s else "") + text[s:e] + ("…" if e < len(text) else "")
 
 
-# ═════════════════════════  INTERNAL  ═════════════════════════
+def _heuristic_score(issues: List[Dict[str, Any]]) -> int:
+    """Deduct 20/10/5 pts for non‑compliant / warning / unknown findings."""
+    bad = warn = unk = 0
+    for i in issues:
+        st = i["status"].lower()
+        if st == "issue found":
+            bad += 1
+        elif st == "warning":
+            warn += 1
+        elif st != "ok":
+            unk += 1
+    penalty = bad * 20 + warn * 10 + unk * 5
+    return max(0, 100 - penalty)
+
+
 async def _store_pdf(
     db: AsyncIOMotorDatabase,
     user_id: str,
@@ -87,7 +115,8 @@ async def _store_pdf(
     return await store_document_record(db, user_id, filename, grid_id)
 
 
-# ═════════════════════════  PUBLIC  ═════════════════════════
+# ═════════════════════════════════ PUBLIC API ══════════════════════════════
+
 async def run_compliance_check(
     db: AsyncIOMotorDatabase,
     user_id: str,
@@ -97,14 +126,14 @@ async def run_compliance_check(
 ) -> Dict[str, Any]:
     """
     Analyse compliance, create PDF, upload it – return:
-        { report_id, issues, report_doc_id, report_filename }
+    { report_id, issues, compliance_score, report_doc_id, report_filename }
     """
     if not (document_text or doc_id):
         raise HTTPException(400, "Either document_text or doc_id must be provided.")
     if document_text and doc_id:
         raise HTTPException(400, "Provide only one of document_text or doc_id.")
 
-    # ── if doc_id given ⇒ extract text ─────────────────────────────
+    # ── if doc_id given ⇒ extract the text ────────────────────────────────
     if doc_id:
         rec = await get_document_record(db, doc_id)
         stream, fname = await open_gridfs_file(db, rec["file_id"])
@@ -112,7 +141,7 @@ async def run_compliance_check(
         if document_text.startswith("Error"):
             raise HTTPException(422, document_text)
 
-    # ── GPT scan (best‑effort) ─────────────────────────────────────
+    # ── GPT extraction of issues (best‑effort) ────────────────────────────
     gpt_issues: List[Dict[str, Any]] = []
     try:
         sys_msg = (
@@ -128,13 +157,13 @@ async def run_compliance_check(
                 except Exception:
                     continue
     except Exception:
-        pass
+        logger.info("GPT issue extraction failed, using fallback rules.")
 
-    # ── fallback manual rules if GPT returned nothing ──────────────
-    issues: List[Dict[str, Any]] = gpt_issues.copy()
+    # ── fallback rule‑based scan ──────────────────────────────────────────
+    issues = gpt_issues.copy()
     if not issues:
         for rule in MOCK_RULES:
-            if rule["pattern"].lower() in document_text.lower():
+            if re.search(rule["pattern"], document_text, re.IGNORECASE):
                 issues.append(
                     {
                         "rule_id": rule["rule_id"],
@@ -155,26 +184,45 @@ async def run_compliance_check(
                 }
             )
 
-    # ── persist JSON row first ─────────────────────────────────────
+    # ── ask GPT for overall score (optional) ──────────────────────────────
+    gpt_score: Optional[int] = None
+    try:
+        score_msg = (
+            "Rate the overall compliance of the document with Saudi data‑protection "
+            "law on a 0‑100 scale (100 = perfectly compliant). Respond ONLY with "
+            "the number."
+        )
+        score_resp = call_gpt(
+            prompt=document_text, system_message=score_msg, temperature=0
+        )
+        gpt_score = int(re.search(r"\d+", score_resp).group())
+    except Exception:
+        logger.info("GPT scoring failed, reverting to heuristic.")
+
+    heuristic_score = _heuristic_score(issues)
+    compliance_score = gpt_score if gpt_score is not None else heuristic_score
+
+    # ── persist primary document row ──────────────────────────────────────
     preview = document_text[:500] + ("…" if len(document_text) > 500 else "")
     row = {
         "user_id": user_id,
         "document_text_preview": preview,
         "original_doc_id": doc_id,
         "issues": issues,
+        "compliance_score": compliance_score,
         "timestamp": _dt.datetime.utcnow(),
     }
     ins = await db.compliance_reports.insert_one(row)
     report_id = str(ins.inserted_id)
 
-    # ── generate PDF in threadpool (ReportLab is blocking) ─────────
+    # ── generate PDF in threadpool (ReportLab is blocking) ────────────────
     pdf_buf: BytesIO = await run_in_threadpool(
         generate_compliance_report_pdf, {**row, "_id": report_id}
     )
     pdf_name = f"compliance_report_{report_id}.pdf"
     report_doc_id = await _store_pdf(db, user_id, pdf_buf, pdf_name)
 
-    # ── update row with PDF metadata ───────────────────────────────
+    # ── update row with PDF metadata ──────────────────────────────────────
     await db.compliance_reports.update_one(
         {"_id": ins.inserted_id},
         {"$set": {"report_doc_id": report_doc_id, "report_filename": pdf_name}},
@@ -183,6 +231,7 @@ async def run_compliance_check(
     return {
         "report_id": report_id,
         "issues": issues,
+        "compliance_score": compliance_score,
         "report_doc_id": report_doc_id,
         "report_filename": pdf_name,
     }
@@ -204,9 +253,8 @@ async def get_compliance_report(
     doc["_id"] = str(doc["_id"])
     return doc
 
-
 # ═════════════════════ DOCX / PDF generators ═════════════════════
-# (identical to your earlier code – reproduced in full)
+
 
 def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
     buf = BytesIO()
@@ -214,15 +262,24 @@ def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
 
     # Cover page ----------------------------------------------------
     document.add_heading("Compliance Report", level=0)
-    meta = document.add_table(rows=4, cols=2, style="Light List Accent 1")
-    meta.cell(0, 0).text, meta.cell(0, 1).text = "Report ID:", report_data.get("_id", "N/A")
+    meta = document.add_table(rows=5, cols=2, style="Light List Accent 1")
+    meta.cell(0, 0).text, meta.cell(0, 1).text = (
+        "Report ID:", report_data.get("_id", "N/A")
+    )
     ts = report_data.get("timestamp")
     meta.cell(1, 0).text, meta.cell(1, 1).text = (
         "Generated At:",
         ts.strftime("%Y‑%m‑%d %H:%M:%S UTC") if ts else "N/A",
     )
-    meta.cell(2, 0).text, meta.cell(2, 1).text = "User:", report_data.get("user_id", "N/A")
-    meta.cell(3, 0).text, meta.cell(3, 1).text = "Document:", report_data.get("original_doc_id", "N/A")
+    meta.cell(2, 0).text, meta.cell(2, 1).text = (
+        "User:", report_data.get("user_id", "N/A")
+    )
+    meta.cell(3, 0).text, meta.cell(3, 1).text = (
+        "Document:", report_data.get("original_doc_id", "N/A")
+    )
+    meta.cell(4, 0).text, meta.cell(4, 1).text = (
+        "Compliance Score:", str(report_data.get("compliance_score", "N/A"))
+    )
     document.add_page_break()
 
     # Summary -------------------------------------------------------
@@ -240,11 +297,21 @@ def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
             counts["Unknown"] += 1
 
     tbl = document.add_table(rows=2, cols=5, style="Light Grid Accent 2")
-    tbl.rows[0].cells[0].text, tbl.rows[1].cells[0].text = "Total Issues", str(len(report_data["issues"]))
-    tbl.rows[0].cells[1].text, tbl.rows[1].cells[1].text = "Compliant", str(counts["Compliant"])
-    tbl.rows[0].cells[2].text, tbl.rows[1].cells[2].text = "Non‑Compliant", str(counts["Non-Compliant"])
-    tbl.rows[0].cells[3].text, tbl.rows[1].cells[3].text = "Warning", str(counts["Warning"])
-    tbl.rows[0].cells[4].text, tbl.rows[1].cells[4].text = "Unknown", str(counts["Unknown"])
+    tbl.rows[0].cells[0].text, tbl.rows[1].cells[0].text = (
+        "Total Issues", str(len(report_data["issues"]))
+    )
+    tbl.rows[0].cells[1].text, tbl.rows[1].cells[1].text = (
+        "Compliant", str(counts["Compliant"])
+    )
+    tbl.rows[0].cells[2].text, tbl.rows[1].cells[2].text = (
+        "Non‑Compliant", str(counts["Non-Compliant"])
+    )
+    tbl.rows[0].cells[3].text, tbl.rows[1].cells[3].text = (
+        "Warning", str(counts["Warning"])
+    )
+    tbl.rows[0].cells[4].text, tbl.rows[1].cells[4].text = (
+        "Unknown", str(counts["Unknown"])
+    )
     document.add_page_break()
 
     # Detailed issues ----------------------------------------------
@@ -254,13 +321,19 @@ def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
         t = document.add_table(rows=4, cols=2, style="Light List Accent 1")
         t.cell(0, 0).text, t.cell(0, 1).text = "Rule ID", issue.get("rule_id", "")
         t.cell(1, 0).text, t.cell(1, 1).text = "Status", issue.get("status", "")
-        t.cell(2, 0).text, t.cell(2, 1).text = "Description", issue.get("description", "")
-        t.cell(3, 0).text, t.cell(3, 1).text = "Relevant Snippet", issue.get("extracted_text_snippet") or "–"
+        t.cell(2, 0).text, t.cell(2, 1).text = (
+            "Description", issue.get("description", "")
+        )
+        t.cell(3, 0).text, t.cell(3, 1).text = (
+            "Relevant Snippet", issue.get("extracted_text_snippet") or "–"
+        )
         document.add_paragraph("")
 
     # Footer --------------------------------------------------------
     footer = document.sections[-1].footer
-    footer.paragraphs[0].text = f"Generated on {_dt.datetime.utcnow():%Y‑%m‑%d %H:%M:%S UTC}"
+    footer.paragraphs[0].text = (
+        f"Generated on {_dt.datetime.utcnow():%Y‑%m‑%d %H:%M:%S UTC}"
+    )
     footer.paragraphs[0].alignment = 1
 
     document.save(buf)
@@ -281,11 +354,15 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
     meta_tbl = Table(
         [
             ["Report ID:", report_data.get("_id", "N/A")],
-            ["Generated At:", ts.strftime("%Y‑%m‑%d %H:%M:%S UTC") if ts else "N/A"],
+            [
+                "Generated At:",
+                ts.strftime("%Y‑%m‑%d %H:%M:%S UTC") if ts else "N/A",
+            ],
             ["User:", report_data.get("user_id", "N/A")],
             ["Document:", report_data.get("original_doc_id", "N/A")],
+            ["Compliance Score:", str(report_data.get("compliance_score", "N/A"))],
         ],
-        colWidths=[100, 350],
+        colWidths=[120, 330],
     )
     meta_tbl.setStyle(
         TableStyle(
@@ -323,7 +400,7 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
                 str(counts["Unknown"]),
             ],
         ],
-        colWidths=[80] * 5,
+        colWidths=[90] * 5,
     )
     sum_tbl.setStyle(
         TableStyle(
@@ -340,15 +417,20 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
     # Detailed issues ----------------------------------------------
     elems.append(Paragraph("2. Detailed Issues", styles["Heading2"]))
     for idx, issue in enumerate(report_data["issues"], 1):
-        elems.append(Paragraph(f"Issue {idx}: {issue.get('description')}", styles["Heading3"]))
+        elems.append(
+            Paragraph(f"Issue {idx}: {issue.get('description')}", styles["Heading3"])
+        )
         det_tbl = Table(
             [
                 ["Rule ID", issue.get("rule_id", "")],
                 ["Status", issue.get("status", "")],
                 ["Description", issue.get("description", "")],
-                ["Relevant Snippet", issue.get("extracted_text_snippet") or "–"],
+                [
+                    "Relevant Snippet",
+                    issue.get("extracted_text_snippet") or "–",
+                ],
             ],
-            colWidths=[100, 350],
+            colWidths=[120, 330],
         )
         det_tbl.setStyle(
             TableStyle(
