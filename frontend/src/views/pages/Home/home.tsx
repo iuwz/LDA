@@ -415,7 +415,7 @@ export default function Home() {
           >
             Empowering Legal Precision
             <br className="hidden sm:block" />
-            <span className="text-[#C17829]">with AI</span>
+            <span className="block mt-6 text-[#C17829]">with AI</span>
           </motion.h1>
           <motion.p
             className="text-gray-700 text-lg sm:text-xl mb-8 max-w-2xl mx-auto"
