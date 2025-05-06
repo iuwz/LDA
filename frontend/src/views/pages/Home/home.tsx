@@ -1,4 +1,3 @@
-// src/views/pages/Home/home.tsx
 import React, { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -14,7 +13,6 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 
-// PNG assets for team/testimonial photos
 import team1 from "../../../assets/images/icon.jpg";
 import team2 from "../../../assets/images/icon.jpg";
 import team3 from "../../../assets/images/icon.jpg";
@@ -22,9 +20,6 @@ import team4 from "../../../assets/images/icon.jpg";
 import team5 from "../../../assets/images/icon.jpg";
 import team6 from "../../../assets/images/icon.jpg";
 
-/* ---------------------------
-   1) SERVICES DATA & COMPONENT
-----------------------------*/
 const SERVICES = [
   {
     icon: FaBalanceScale,
@@ -136,10 +131,7 @@ function ServicesSection() {
   );
 }
 
-/* ---------------------------
-   2) BUBBLE GENERATOR COMPONENT
-----------------------------*/
-const BubbleGenerator = () => {
+export const BubbleGenerator = () => {
   const bubbles = Array.from({ length: 40 }).map((_, i) => {
     const size = Math.random() * 120 + 30;
     const top = Math.random() * 100;
@@ -195,9 +187,6 @@ const BubbleGenerator = () => {
   );
 };
 
-/* ---------------------------
-   3) WHY CHOOSE US COMPONENT
-----------------------------*/
 const whyFeatures = [
   {
     icon: FaBrain,
@@ -271,9 +260,6 @@ function WhyChooseUs() {
   );
 }
 
-/* ---------------------------
-   4) TESTIMONIALS COMPONENT
-----------------------------*/
 const TESTIMONIALS = [
   {
     name: "Adam Wilson",
@@ -399,13 +385,9 @@ function Testimonials() {
   );
 }
 
-/* ---------------------------
-   5) THE HOME COMPONENT
-----------------------------*/
 export default function Home() {
   return (
     <main className="bg-white min-h-screen flex flex-col">
-      {/* HERO */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
         <motion.div
@@ -426,7 +408,7 @@ export default function Home() {
           transition={{ duration: 0.8 }}
         >
           <motion.h1
-            className="text-5xl sm:text-6xl font-extrabold text-[#2C2C4A] mb-6 leading-tight"
+            className="font-serif       text-5xl sm:text-6xl font-extrabold text-[#2C2C4A] mb-6 leading-tight"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -456,13 +438,8 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* SERVICES */}
       <ServicesSection />
-
-      {/* WHY CHOOSE US */}
       <WhyChooseUs />
-
-      {/* TESTIMONIALS */}
       <Testimonials />
     </main>
   );

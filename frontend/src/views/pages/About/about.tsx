@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FaUserTie, FaLightbulb, FaHandshake, FaGlobe } from "react-icons/fa";
-
 import Hero from "../../components/common/Hero";
 import aboutHero from "../../../assets/images/about-hero.jpeg";
 import teamPlaceholder from "../../../assets/images/icon.jpg";
+import { BubbleGenerator } from "../Home/home";
 
 const teamMembers = [
   {
@@ -33,7 +33,6 @@ const teamMembers = [
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      {/* Hero */}
       <Hero
         title="About Us"
         subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
@@ -42,7 +41,6 @@ export default function About() {
         bgImage={aboutHero}
       />
 
-      {/* Wave Divider */}
       <div className="overflow-hidden leading-[0]">
         <svg
           className="-mt-1 w-full h-12"
@@ -53,7 +51,6 @@ export default function About() {
         </svg>
       </div>
 
-      {/* Our Story */}
       <section
         id="our-story"
         className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
@@ -77,16 +74,16 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* Our Mission */}
-      <section className="bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+      <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
+        <BubbleGenerator />
         <motion.div
-          className="max-w-7xl mx-auto text-center"
+          className="max-w-7xl mx-auto text-center relative z-10"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2C2C4A] mb-4">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#C17829] mb-4">
             Our Mission
           </h2>
           <p className="text-base sm:text-lg leading-relaxed max-w-prose mx-auto mb-12">
@@ -95,7 +92,6 @@ export default function About() {
             legal ecosystem.
           </p>
 
-          {/* Mission Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { icon: FaLightbulb, title: "Innovation" },
@@ -111,7 +107,6 @@ export default function About() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
               >
-                {/* Top gradient accent */}
                 <div
                   className="absolute top-0 left-0 w-full h-1"
                   style={{
@@ -133,7 +128,6 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* Team Section */}
       <section className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <motion.div
           className="max-w-7xl mx-auto text-center mb-12"
@@ -161,7 +155,6 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              {/* Left accent bar */}
               <div className="absolute top-0 left-0 h-full w-1 bg-[#C17829] group-hover:w-2 transition-all"></div>
 
               <div className="flex flex-col items-center">
