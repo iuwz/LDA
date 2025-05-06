@@ -1,3 +1,5 @@
+# backend/app/mvc/controllers/rephrase.py
+
 import logging
 import json
 import difflib
@@ -6,8 +8,9 @@ from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from io import BytesIO
 from typing import Optional, Dict, Any
-
 from bson import ObjectId
+from datetime import datetime
+
 from app.mvc.controllers.documents import (
     get_document_record,
     open_gridfs_file,
@@ -40,7 +43,7 @@ def compute_changes(original: str, revised: str) -> list[Dict[str, str]]:
         if tag == "replace":
             changes.append({
                 "original": " ".join(orig_tokens[i1:i2]),
-                "revised": " ".join(rev_tokens[j1:j2]),
+                "revised":  " ".join(rev_tokens[j1:j2]),
             })
     return changes
 
@@ -48,16 +51,19 @@ def compute_changes(original: str, revised: str) -> list[Dict[str, str]]:
 async def extract_full_text_from_stream(stream, filename: str) -> str:
     content = await stream.read()
     ext = filename.rsplit(".", 1)[-1].lower()
+
     # DOCX
     if ext == "docx" and DocxDocument:
         doc = DocxDocument(BytesIO(content))
         return "\n".join(p.text for p in doc.paragraphs)
+
     # PDF
     if ext == "pdf" and PdfReader:
         reader = PdfReader(BytesIO(content))
         if reader.is_encrypted:
             raise HTTPException(status_code=422, detail="Encrypted PDF")
         return "".join(page.extract_text() or "" for page in reader.pages)
+
     # fallback
     try:
         return content.decode("utf-8")
@@ -84,87 +90,89 @@ async def run_rephrase_tool(
     document_text: Optional[str] = None,
     doc_id: Optional[str] = None,
 ) -> Dict[str, Any]:
+
     if (document_text is None) == (doc_id is None):
         raise HTTPException(status_code=400, detail="Provide either text or doc_id")
 
-    report_record = {
+    # ── Build the base report record with a proper created_at ─────────
+    report_record: Dict[str, Any] = {
         "user_id": user_id,
-        "style": style,
+        "style":   style,
+        "created_at": datetime.utcnow(),
     }
 
-    # ── Document Mode ─────────────────────────────────────────────
+    # ── Document Mode ────────────────────────────────────────────────
     if doc_id:
         rec = await get_document_record(db, doc_id)
         grid_out, orig_fn = await open_gridfs_file(db, rec["file_id"])
         original = await extract_full_text_from_stream(grid_out, orig_fn)
 
         # AI call
-        sys = (
+        system_msg = (
             f"You are a legal rewriting AI. Rephrase the following "
             f"to a {style} style, preserving meaning. Return only plain text."
         )
-        prompt = original
-        ai = call_gpt(prompt=prompt, system_message=sys, temperature=0.4)
-        revised = ai.strip() if ai else original
+        revised = call_gpt(
+            prompt=original, system_message=system_msg, temperature=0.4
+        ).strip() or original
 
-        # build new docx
+        # build and store new .docx
         new_bytes = create_simple_docx_from_text(revised)
         base, _ = os.path.splitext(orig_fn)
         new_fn = f"{base}_rephrased.docx"
 
-        # store gridfs + record
-        file_id = await upload_file_to_gridfs(db, new_bytes, new_fn)
+        file_id    = await upload_file_to_gridfs(db, new_bytes, new_fn)
         new_doc_id = await store_document_record(db, user_id, new_fn, file_id)
 
         changes = compute_changes(original, revised)
 
-        # store report meta
         report_record.update({
-            "original_content_info": f"{orig_fn}",
-            "rephrased_output_summary": new_fn,
-            "original_doc_id": doc_id,
-            "rephrased_doc_id": new_doc_id,
-            "changes": changes,
+            "original_content_info":        orig_fn,
+            "rephrased_output_summary":     new_fn,
+            "original_doc_id":              doc_id,
+            "rephrased_doc_id":             new_doc_id,
+            "changes":                      changes,
         })
+
         res = await db.rephrase_reports.insert_one(report_record)
         rid = str(res.inserted_id)
 
         return {
-            "report_id": rid,
-            "rephrased_doc_id": new_doc_id,
+            "report_id":           rid,
+            "rephrased_doc_id":    new_doc_id,
             "rephrased_doc_filename": new_fn,
-            "changes": changes,
+            "changes":             changes,
         }
 
-    # ── Text Mode ─────────────────────────────────────────────────
+    # ── Text Mode ───────────────────────────────────────────────────
     original = document_text or ""
-    sys = (
+    system_msg = (
         f"You are a legal rewriting AI. Rephrase the following "
         f"to a {style} style, preserving meaning. Return JSON:"
         '{"rephrased_text":"..."}'
     )
-    prompt = original
-    ai = call_gpt(prompt=prompt, system_message=sys, temperature=0.4)
+    ai = call_gpt(prompt=original, system_message=system_msg, temperature=0.4)
     try:
         parsed = json.loads(ai)
         revised = parsed.get("rephrased_text", original).strip()
     except:
-        revised = ai.strip() if ai else original
+        revised = ai.strip() or original
 
     changes = compute_changes(original, revised)
 
     report_record.update({
-        "original_content_info": original,
+        "original_content_info":    original,
         "rephrased_output_summary": revised,
-        "original_doc_id": None,
-        "rephrased_doc_id": None,
-        "changes": changes,
+        "original_doc_id":          None,
+        "rephrased_doc_id":         None,
+        "changes":                  changes,
     })
+
     res = await db.rephrase_reports.insert_one(report_record)
     rid = str(res.inserted_id)
 
     return {
-        "report_id": rid,
+        "report_id":   rid,
         "rephrased_text": revised,
-        "changes": changes,
+        "changes":     changes,
     }
