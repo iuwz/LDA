@@ -444,3 +444,29 @@ export function deleteRephraseReport(id: string) {
         if (!r.ok) throw new Error("Delete failed");
     });
 }
+/* ═════════ TRANSLATION HISTORY ════════ */
+export interface TranslationHistoryItem {
+    id: string;
+    created_at: string;
+    target_lang: string;
+    type: "text" | "doc";
+    translated_filename?: string | null;
+    result_doc_id?: string | null;
+}
+
+export function listTranslationHistory() {
+    return fetch(`${API_BASE}/translate/history`, { ...common, method: "GET" })
+        .then(r => handleResponse<{ history: TranslationHistoryItem[] }>(r))
+        .then(d => d.history);
+}
+
+export function deleteTranslationReport(id: string) {
+    return fetch(`${API_BASE}/translate/${id}`, { ...common, method: "DELETE" })
+        .then(r => { if (!r.ok) throw new Error("Delete failed"); });
+}
+
+export function getTranslationReport(id: string) {
+    return fetch(`${API_BASE}/translate/${id}`, { ...common, method: "GET" })
+        .then(r => handleResponse<{ translation_report: any }>(r))
+        .then(d => d.translation_report);
+}
