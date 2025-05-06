@@ -245,8 +245,8 @@ const Navbar: React.FC = () => {
                 <button
                   onClick={() => changeLanguage("EN")}
                   className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${currentLanguage === "EN"
-                      ? "bg-gray-100 text-[#C17829] font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-gray-100 text-[#C17829] font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
                     }`}
                 >
                   English
@@ -254,8 +254,8 @@ const Navbar: React.FC = () => {
                 <button
                   onClick={() => changeLanguage("AR")}
                   className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${currentLanguage === "AR"
-                      ? "bg-gray-100 text-[#C17829] font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-gray-100 text-[#C17829] font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
                     }`}
                 >
                   العربية
@@ -269,7 +269,7 @@ const Navbar: React.FC = () => {
             <div
               onClick={() => navigate("/dashboard/profile")}
               title="Profile"
-              className="h-8 w-8 rounded-full bg-[#C17829] text-white flex items-center justify-center font-semibold cursor-pointer"
+              className="h-8 w-8 rounded-full bg-[#2c2c4a] text-white flex items-center justify-center font-semibold cursor-pointer"
             >
               {initials}
             </div>
@@ -449,8 +449,8 @@ const Navbar: React.FC = () => {
               <button
                 onClick={() => changeLanguage("EN")}
                 className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${currentLanguage === "EN"
-                    ? "bg-[#C17829] text-white"
-                    : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
+                  ? "bg-[#C17829] text-white"
+                  : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
                   }`}
               >
                 English
@@ -458,8 +458,8 @@ const Navbar: React.FC = () => {
               <button
                 onClick={() => changeLanguage("AR")}
                 className={`px-2 xs:px-3 py-1 rounded-md text-xs xs:text-sm transition-colors ${currentLanguage === "AR"
-                    ? "bg-[#C17829] text-white"
-                    : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
+                  ? "bg-[#C17829] text-white"
+                  : "bg-gray-100 text-[#2C2C4A] hover:bg-gray-200"
                   }`}
               >
                 العربية
