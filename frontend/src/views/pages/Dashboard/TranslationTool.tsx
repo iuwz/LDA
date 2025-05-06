@@ -88,6 +88,7 @@ const TranslationTool: React.FC = () => {
         setDocUrl(url);
         /* viewer */
         setResult(null);
+        await loadHistory();
       } catch (e) {
         console.error(e);
       }
@@ -276,8 +277,8 @@ const TranslationTool: React.FC = () => {
         <button
           onClick={() => setFromEnglish(true)}
           className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${fromEnglish
-              ? "bg-[color:var(--accent-dark)] text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            ? "bg-[color:var(--accent-dark)] text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
         >
           English → Arabic
@@ -285,8 +286,8 @@ const TranslationTool: React.FC = () => {
         <button
           onClick={() => setFromEnglish(false)}
           className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${!fromEnglish
-              ? "bg-[color:var(--accent-dark)] text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            ? "bg-[color:var(--accent-dark)] text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
         >
           Arabic → English
@@ -413,8 +414,8 @@ const TranslationTool: React.FC = () => {
               onClick={handleTranslate}
               disabled={translateDisabled}
               className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${translateDisabled
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
                 }`}
               whileHover={{
                 scale: translateDisabled ? 1 : 1.05,
