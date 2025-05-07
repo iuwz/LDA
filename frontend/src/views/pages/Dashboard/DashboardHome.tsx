@@ -113,9 +113,9 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         variant="primary"
         onClick={click}
         disabled={busy}
-        className="w-40 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        className="w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
       >
-        {busy ? "Uploading…" : file ? "Upload" : "Choose File"}
+        {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
       </Button>
       {file && !busy && (
         <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
