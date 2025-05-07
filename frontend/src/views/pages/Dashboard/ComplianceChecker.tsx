@@ -328,6 +328,37 @@ const ComplianceChecker: React.FC = () => {
         </div>
       </header>
 
+      {/* main panel */}
+      <section className="rounded-xl border bg-white shadow-sm">
+        {!results ? (
+          <SelectArea
+            isAnalyzeDisabled={isAnalyzeDisabled}
+            isFileInputDisabled={isFileInputDisabled}
+            analyzing={analyzing}
+            fetchingDocs={fetchingDocs}
+            uploadedDocs={uploadedDocs}
+            selectedDocId={selectedDocId}
+            handleDocSelection={handleDocSelection}
+            docSelectOpen={docSelectOpen}
+            setDocSelectOpen={setDocSelectOpen}
+            getFileIcon={getFileIcon}
+            fileToUpload={fileToUpload}
+            fileInputRef={fileInputRef}
+            onFileChange={onFileChange}
+            handleAnalyze={handleAnalyze}
+            error={error}
+          />
+        ) : (
+          <ResultView
+            results={results}
+            resultCounts={resultCounts}
+            ComplianceStatus={ComplianceStatus}
+            getFileIcon={getFileIcon}
+            handleDownloadReport={handleDownloadReport}
+            reset={reset}
+          />
+        )}
+      </section>
       {/* history */}
       <section className="rounded-xl border bg-white shadow-sm p-6 mb-8">
         <h2 className="font-medium text-[color:var(--brand-dark)] mb-4">
@@ -376,38 +407,6 @@ const ComplianceChecker: React.FC = () => {
               </li>
             ))}
           </ul>
-        )}
-      </section>
-
-      {/* main panel */}
-      <section className="rounded-xl border bg-white shadow-sm">
-        {!results ? (
-          <SelectArea
-            isAnalyzeDisabled={isAnalyzeDisabled}
-            isFileInputDisabled={isFileInputDisabled}
-            analyzing={analyzing}
-            fetchingDocs={fetchingDocs}
-            uploadedDocs={uploadedDocs}
-            selectedDocId={selectedDocId}
-            handleDocSelection={handleDocSelection}
-            docSelectOpen={docSelectOpen}
-            setDocSelectOpen={setDocSelectOpen}
-            getFileIcon={getFileIcon}
-            fileToUpload={fileToUpload}
-            fileInputRef={fileInputRef}
-            onFileChange={onFileChange}
-            handleAnalyze={handleAnalyze}
-            error={error}
-          />
-        ) : (
-          <ResultView
-            results={results}
-            resultCounts={resultCounts}
-            ComplianceStatus={ComplianceStatus}
-            getFileIcon={getFileIcon}
-            handleDownloadReport={handleDownloadReport}
-            reset={reset}
-          />
         )}
       </section>
     </div>

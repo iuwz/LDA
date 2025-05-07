@@ -217,55 +217,6 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* ───── History */}
-      <section className="rounded-xl border bg-white shadow-sm p-6">
-        <h2 className="font-medium text-[color:var(--brand-dark)] mb-4">
-          Previous Translations
-        </h2>
-        {history.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No history yet.</p>
-        ) : (
-          <ul className="space-y-3">
-            {history.map(h => (
-              <li
-                key={h.id}
-                className="border rounded-lg p-4 flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-semibold">
-                    {h.translated_filename || `Text → ${h.target_lang}`}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(h.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  {h.result_doc_id && h.translated_filename && (
-                    <button
-                      onClick={() =>
-                        downloadDocumentById(
-                          h.result_doc_id!,
-                          h.translated_filename!,
-                        )
-                      }
-                      className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
-                    >
-                      <FaDownload /> DOCX
-                    </button>
-                  )}
-                  <button
-                    onClick={() => removeReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       {/* ───── Direction menu */}
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
@@ -435,6 +386,54 @@ const TranslationTool: React.FC = () => {
           </p>
         </div>
       </div>
+      {/* ───── History */}
+      <section className="rounded-xl border bg-white shadow-sm p-6">
+        <h2 className="font-medium text-[color:var(--brand-dark)] mb-4">
+          Previous Translations
+        </h2>
+        {history.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No history yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {history.map(h => (
+              <li
+                key={h.id}
+                className="border rounded-lg p-4 flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-semibold">
+                    {h.translated_filename || `Text → ${h.target_lang}`}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(h.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  {h.result_doc_id && h.translated_filename && (
+                    <button
+                      onClick={() =>
+                        downloadDocumentById(
+                          h.result_doc_id!,
+                          h.translated_filename!,
+                        )
+                      }
+                      className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
+                    >
+                      <FaDownload /> DOCX
+                    </button>
+                  )}
+                  <button
+                    onClick={() => removeReport(h.id)}
+                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 };
