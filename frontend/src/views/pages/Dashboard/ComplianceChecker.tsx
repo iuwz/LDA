@@ -1,4 +1,4 @@
-/*  src/views/pages/Dashboard/ComplianceChecker.tsx  */
+// src/views/pages/Dashboard/ComplianceChecker.tsx
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
@@ -99,6 +99,10 @@ function ComplianceChecker() {
   /* history */
   const [history, setHistory] = useState<ComplianceHistoryItem[]>([]);
 
+  /* delete modal state */
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   /* init load */
   useEffect(() => {
     fetchUploadedDocuments();
@@ -187,14 +191,24 @@ function ComplianceChecker() {
     }
   }
 
-  async function removeReport(id: string) {
-    if (!window.confirm("Delete this compliance report?")) return;
+  /* queue delete modal */
+  function removeReport(id: string) {
+    setPendingDeleteId(id);
+  }
+
+  /* confirm deletion */
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    setIsDeleting(true);
     try {
-      await deleteComplianceReport(id);
-      setHistory((h) => h.filter((r) => r.id !== id));
-      if (results?.report_id === id) setResults(null);
+      await deleteComplianceReport(pendingDeleteId);
+      setHistory((h) => h.filter((r) => r.id !== pendingDeleteId));
+      if (results?.report_id === pendingDeleteId) setResults(null);
     } catch (e: any) {
       alert(e.message || "Delete failed");
+    } finally {
+      setIsDeleting(false);
+      setPendingDeleteId(null);
     }
   }
 
@@ -261,7 +275,7 @@ function ComplianceChecker() {
   const handleDocSelection = (id: string | null) => {
     setSelectedDocId(id);
     setFileToUpload(null);
-    fileInputRef.current && (fileInputRef.current.value = "");
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setResults(null);
     setError(null);
   };
@@ -281,7 +295,7 @@ function ComplianceChecker() {
   const reset = () => {
     setSelectedDocId(null);
     setFileToUpload(null);
-    fileInputRef.current && (fileInputRef.current.value = "");
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setResults(null);
     setError(null);
   };
@@ -362,7 +376,7 @@ function ComplianceChecker() {
       </section>
 
       {/* history */}
-      <section className="mb-8 rounded-xl border bg-white p-6 shadow-sm">
+      <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Compliance Reports
         </h2>
@@ -373,35 +387,35 @@ function ComplianceChecker() {
             {history.map((h) => (
               <li
                 key={h.id}
-                className="flex items-center justify-between rounded-lg border p-4"
+                className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="font-semibold">
+                <div className="mb-3 sm:mb-0">
+                  <p className="flex items-center text-sm font-semibold text-gray-800">
+                    <FaFileAlt className="mr-2 text-[#c17829]" />
                     {h.report_filename || "Compliance report"}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(h.created_at).toLocaleString("en-GB")} •{" "}
-                    {h.num_issues} issues
+                  <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                    {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 self-end sm:self-center">
                   <button
                     onClick={() => openReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-[rgb(193,120,41)] hover:underline"
+                    className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                   >
                     <FaSearch /> View
                   </button>
                   {h.report_doc_id && (
                     <button
                       onClick={() => downloadComplianceReportPdf(h.id)}
-                      className="flex items-center gap-1 text-sm text-[rgb(193,120,41)] hover:underline"
+                      className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                     >
                       <FaDownload /> PDF
                     </button>
                   )}
                   <button
                     onClick={() => removeReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                   >
                     <FaTrash /> Delete
                   </button>
@@ -411,6 +425,56 @@ function ComplianceChecker() {
           </ul>
         )}
       </section>
+
+      {/* delete confirmation modal */}
+      <AnimatePresence>
+        {pendingDeleteId && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setPendingDeleteId(null)}
+            />
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
+                  Delete Compliance Report
+                </h4>
+                <p className="text-sm text-gray-700">
+                  Are you sure you want to delete this compliance report? This
+                  action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setPendingDeleteId(null)}
+                    disabled={isDeleting}
+                    className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <FaSpinner className="mr-2 inline-block animate-spin" />
+                    ) : null}
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -691,7 +755,7 @@ function UploadDropZone(props: {
   );
 }
 
-/* ───────── ResultView subcomponent ────────── (unchanged) */
+/* ───────── ResultView subcomponent ────────── */
 interface ResultProps {
   results: DisplayAnalysisResult;
   resultCounts: Record<
