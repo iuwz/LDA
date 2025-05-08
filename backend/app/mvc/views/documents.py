@@ -146,10 +146,9 @@ async def list_documents(
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """Admin sees all docs; regular users see only their own."""
+    
     db = request.app.state.db
-    if current_user.role == "admin":
-        return await list_all_documents(db)
+    
     return await list_user_documents(db, current_user.email)
 
 # ───────────────────────── get content ────────────────────
@@ -163,7 +162,7 @@ async def get_document_content(
     db = request.app.state.db
 
     record = await get_document_record(db, doc_id)
-    if record["owner_id"] != current_user.email and current_user.role != "admin":
+    if record["owner_id"] != current_user.email:
         raise HTTPException(status_code=403, detail="You do not own this document.")
 
     # Open the GridFS file stream
@@ -186,7 +185,7 @@ async def download_document(
     db = request.app.state.db
 
     record = await get_document_record(db, doc_id)
-    if record["owner_id"] != current_user.email and current_user.role != "admin":
+    if record["owner_id"] != current_user.email:
         raise HTTPException(status_code=403, detail="You do not own this document.")
 
     grid_out, filename = await open_gridfs_file(db, record["file_id"])
@@ -215,7 +214,7 @@ async def delete_document(
     db = request.app.state.db
 
     record = await get_document_record(db, doc_id)
-    if record["owner_id"] != current_user.email and current_user.role != "admin":
+    if record["owner_id"] != current_user.email:
         raise HTTPException(status_code=403, detail="You do not own this document.")
 
     # 1) delete GridFS file
