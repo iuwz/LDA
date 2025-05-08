@@ -734,10 +734,6 @@ function ResultView({
 
         <div className="flex flex-wrap items-center gap-6">
           <div className="text-center">
-            <p className="text-xs text-gray-500">Overall Status</p>
-            <ComplianceStatus status={results.overallStatus} />
-          </div>
-          <div className="text-center">
             <p className="text-xs text-gray-500">Score</p>
             <p className="text-lg font-bold text-gray-800">
               {results.complianceScore}/100
