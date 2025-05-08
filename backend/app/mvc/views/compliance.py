@@ -1,4 +1,5 @@
 # backend/app/mvc/views/compliance.py
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -7,6 +8,7 @@ from io import BytesIO
 from typing import Optional
 from urllib.parse import quote
 
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
@@ -31,7 +33,7 @@ class ComplianceRequest(BaseModel):
         None, description="Raw text of the document"
     )
     doc_id: Optional[str] = Field(
-        None, description="Existing uploaded document‑id"
+        None, description="Existing uploaded document-id"
     )
 
 
@@ -65,7 +67,7 @@ async def list_my_compliance_reports(
     current_user: UserInDB = Depends(get_current_user),
 ):
     db = request.app.state.db
-    items = []
+    items: list[dict] = []
     async for row in (
         db.compliance_reports.find({"user_id": current_user.email}).sort("_id", -1)
     ):
@@ -101,8 +103,10 @@ async def delete_compliance_report(
     current_user: UserInDB = Depends(get_current_user),
 ):
     db = request.app.state.db
-    doc = await get_compliance_report(db, report_id, current_user.email)
-    await db.compliance_reports.delete_one({"_id": doc["_id"]})
+    # verify existence and ownership
+    await get_compliance_report(db, report_id, current_user.email)
+    # delete by ObjectId so MongoDB will match correctly
+    await db.compliance_reports.delete_one({"_id": ObjectId(report_id)})
     return {"ok": True}
 
 

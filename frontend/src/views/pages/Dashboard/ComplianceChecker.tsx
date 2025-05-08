@@ -410,7 +410,7 @@ function ComplianceChecker() {
                       onClick={() => downloadComplianceReportPdf(h.id)}
                       className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                     >
-                      <FaDownload /> PDF
+                      <FaDownload /> Download
                     </button>
                   )}
                   <button
@@ -748,7 +748,7 @@ function UploadDropZone(props: {
         <>
           <FaCloudUploadAlt className="text-5xl text-gray-400" />
           <p className="mt-2">Drag & drop or click to upload</p>
-          <p className="text-xs text-gray-400">Accepted: PDF, DOCX, DOC, TXT</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX</p>
         </>
       )}
     </div>
