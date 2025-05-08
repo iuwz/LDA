@@ -37,16 +37,34 @@ const DashboardChatbot: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* ───────── helpers */
+  // Format a timestamp to HH:MM in AST (Asia/Riyadh)
   const fmtTime = (t: string) =>
-    new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    new Date(t).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Riyadh",
+    });
+
+  // Format a timestamp to "Today", "Yesterday", or "MMM DD" in AST
   const fmtDate = (t: string) => {
-    const d = new Date(t);
-    const now = new Date();
-    const yest = new Date();
-    yest.setDate(now.getDate() - 1);
-    if (d.toDateString() === now.toDateString()) return "Today";
-    if (d.toDateString() === yest.toDateString()) return "Yesterday";
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    // Convert both message and now to AST dates
+    const msgLocal = new Date(
+      new Date(t).toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
+    );
+    const nowLocal = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })
+    );
+    const yestLocal = new Date(nowLocal);
+    yestLocal.setDate(nowLocal.getDate() - 1);
+
+    if (msgLocal.toDateString() === nowLocal.toDateString()) return "Today";
+    if (msgLocal.toDateString() === yestLocal.toDateString())
+      return "Yesterday";
+    return msgLocal.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      timeZone: "Asia/Riyadh",
+    });
   };
 
   /* ───────── initial load */
@@ -116,7 +134,9 @@ const DashboardChatbot: React.FC = () => {
     };
     const optimistic = { ...active, messages: [...active.messages, userMsg] };
     setActive(optimistic);
-    setChats((prev) => prev.map((c) => (c.id === optimistic.id ? optimistic : c)));
+    setChats((prev) =>
+      prev.map((c) => (c.id === optimistic.id ? optimistic : c))
+    );
     setInput("");
     setTyping(true);
 
@@ -135,15 +155,20 @@ const DashboardChatbot: React.FC = () => {
 
       const updated: Chat = {
         ...optimistic,
-        id: res.session_id, // may replace draft-id
-        title: optimistic.title === "New Conversation" ? userMsg.text.slice(0, 50) : optimistic.title,
+        id: res.session_id,
+        title:
+          optimistic.title === "New Conversation"
+            ? userMsg.text.slice(0, 50)
+            : optimistic.title,
         preview: botMsg.text.slice(0, 60) + "...",
         updated_at: botMsg.timestamp,
         messages: [...optimistic.messages, botMsg],
       };
 
       setChats((prev) => {
-        const filtered = prev.filter((c) => c.id !== optimistic.id && c.id !== updated.id);
+        const filtered = prev.filter(
+          (c) => c.id !== optimistic.id && c.id !== updated.id
+        );
         return [updated, ...filtered];
       });
       setActive(updated);
@@ -154,9 +179,14 @@ const DashboardChatbot: React.FC = () => {
         text: `⚠️ ${e.message || "Server error"}`,
         timestamp: new Date().toISOString(),
       };
-      const fallback = { ...optimistic, messages: [...optimistic.messages, botMsg] };
+      const fallback = {
+        ...optimistic,
+        messages: [...optimistic.messages, botMsg],
+      };
       setActive(fallback);
-      setChats((prev) => prev.map((c) => (c.id === fallback.id ? fallback : c)));
+      setChats((prev) =>
+        prev.map((c) => (c.id === fallback.id ? fallback : c))
+      );
     } finally {
       setTyping(false);
     }
@@ -166,17 +196,20 @@ const DashboardChatbot: React.FC = () => {
     e.stopPropagation();
     const left = chats.filter((c) => c.id !== id);
     setChats(left);
-    if (active?.id === id) left.length ? loadSession(left[0].id) : createDraft();
+    if (active?.id === id)
+      left.length ? loadSession(left[0].id) : createDraft();
   };
+
+  /* Always create a new draft when loading */
   useEffect(() => {
     (async () => {
       const history = await listChatHistory();
       const mapped: Chat[] = history.map((h) => ({ ...h, messages: [] }));
       setChats(mapped);
-      // Always create a new draft when loading the component
       createDraft();
     })();
   }, []);
+
   /* ───────── render */
   const msgs = active?.messages ?? [];
   const prompts = [
@@ -199,10 +232,11 @@ const DashboardChatbot: React.FC = () => {
             <button
               key={t}
               onClick={() => setView(t)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${view === t
-                ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
-                : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
-                }`}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${
+                view === t
+                  ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
+                  : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
+              }`}
             >
               {t === "chat" ? "Chat" : "History"}
             </button>
@@ -232,26 +266,32 @@ const DashboardChatbot: React.FC = () => {
                       How can I assist you today?
                     </h3>
                     <p className="text-gray-500 text-center max-w-md mb-6">
-                      Ask any questions about legal documents, contract terms or compliance
-                      requirements.
+                      Ask any questions about legal documents, contract terms or
+                      compliance requirements.
                     </p>
                   </div>
                 ) : (
                   msgs.map((m) => (
                     <div
                       key={m.id}
-                      className={`mb-4 flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+                      className={`mb-4 flex ${
+                        m.sender === "user" ? "justify-end" : "justify-start"
+                      }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${m.sender === "user"
-                          ? "bg-[color:var(--accent-dark)] text-white"
-                          : "bg-white border border-[#DDD0C8] text-[#3E2723]"
-                          }`}
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          m.sender === "user"
+                            ? "bg-[color:var(--accent-dark)] text-white"
+                            : "bg-white border border-[#DDD0C8] text-[#3E2723]"
+                        }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{m.text}</p>
                         <p
-                          className={`text-xs mt-1 ${m.sender === "user" ? "text-white/70" : "text-gray-500"
-                            }`}
+                          className={`text-xs mt-1 ${
+                            m.sender === "user"
+                              ? "text-white/70"
+                              : "text-gray-500"
+                          }`}
                         >
                           {fmtTime(m.timestamp)}
                         </p>
@@ -269,7 +309,11 @@ const DashboardChatbot: React.FC = () => {
                             key={i}
                             className="w-2 h-2 bg-gray-400 rounded-full"
                             animate={{ y: [0, -5, 0] }}
-                            transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
+                            transition={{
+                              repeat: Infinity,
+                              duration: 0.8,
+                              delay: i * 0.2,
+                            }}
                           />
                         ))}
                       </div>
@@ -315,10 +359,11 @@ const DashboardChatbot: React.FC = () => {
                   <button
                     onClick={send}
                     disabled={!input.trim() || isTyping}
-                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${input.trim() && !isTyping
-                      ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-                      : "bg-gray-300 cursor-not-allowed"
-                      }`}
+                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${
+                      input.trim() && !isTyping
+                        ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                        : "bg-gray-300 cursor-not-allowed"
+                    }`}
                   >
                     <FaPaperPlane size={18} />
                   </button>
@@ -336,7 +381,9 @@ const DashboardChatbot: React.FC = () => {
               transition={{ duration: 0.2 }}
             >
               <div className="p-3 sm:p-4 bg-gray-50 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-800">Your Conversations</h2>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Your Conversations
+                </h2>
                 <button
                   onClick={createDraft}
                   className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
@@ -363,15 +410,18 @@ const DashboardChatbot: React.FC = () => {
                     <div
                       key={c.id}
                       onClick={() => loadSession(c.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${active?.id === c.id
-                        ? "border-2 border-[color:var(--accent-dark)]"
-                        : "border border-gray-200 hover:bg-gray-100"
-                        }`}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        active?.id === c.id
+                          ? "border-2 border-[color:var(--accent-dark)]"
+                          : "border border-gray-200 hover:bg-gray-100"
+                      }`}
                     >
                       <div className="flex justify-between items-center">
                         <h3 className="font-medium text-gray-800">{c.title}</h3>
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-gray-500">{fmtDate(c.updated_at)}</span>
+                          <span className="text-xs text-gray-500">
+                            {fmtDate(c.updated_at)}
+                          </span>
                           <button
                             onClick={(e) => removeChat(c.id, e)}
                             className="p-1 text-gray-400 hover:text-red-500"
@@ -380,7 +430,9 @@ const DashboardChatbot: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 truncate mt-1">{c.preview}</p>
+                      <p className="text-sm text-gray-600 truncate mt-1">
+                        {c.preview}
+                      </p>
                     </div>
                   ))
                 )}
