@@ -633,7 +633,7 @@ function RiskAssessmentTool() {
             <FaShieldAlt size={22} />
           </span>
           <h1 className="font-serif text-2xl font-bold text-[var(--brand-dark)]">
-            Risk Assessment Tool
+            Risk Assessment 
           </h1>
         </div>
       </header>

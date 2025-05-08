@@ -306,7 +306,7 @@ const RephrasingTool: React.FC = () => {
           </span>
           <div>
             <h1 className="font-serif text-2xl font-bold text-[var(--brand-dark)]">
-              Rephrasing Tool
+              Rephrasing 
             </h1>
             <p className="text-gray-600">
               {selectedDocId ? "Document Mode" : "Text Mode"} — choose a style

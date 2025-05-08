@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../api";
+import { HiHome } from "react-icons/hi";
 
 // Base URL for back-end
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -221,13 +222,7 @@ const DashboardLayout: React.FC = () => {
               >
                 <FaUser className="mr-2" /> Profile
               </NavLink>
-              <NavLink
-                to="/dashboard/settings"
-                className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-                onClick={handleNavClick}
-              >
-                <FaCog className="mr-2" /> Settings
-              </NavLink>
+              
               {/* Admin link in menu too */}
               {isAdmin && (
                 <NavLink
@@ -261,18 +256,19 @@ const DashboardLayout: React.FC = () => {
               onClick={() => setOpen((v) => !v)}
               aria-label="Toggle menu"
             >
-              {open ? <FaTimes size={20} /> : <FaBars size={20} />}
+              {open ? <FaTimes size={2} /> : <FaBars size={20} />}
             </button>
             <h1 className="text-lg sm:text-xl font-semibold text-[#2C2C4A] truncate">
               {getCurrentTitle(location.pathname)}
             </h1>
           </div>
           <NavLink
-            to="/"
-            className="hidden sm:inline-block text-sm text-gray-600 hover:text-[#C17829]"
-          >
-            Home
-          </NavLink>
+  to="/"
+  className="hidden sm:flex items-center justify-center text-gray-600 hover:text-[#C17829] p-2"
+>
+  <HiHome className="w-5 h-5" />
+</NavLink>
+
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">

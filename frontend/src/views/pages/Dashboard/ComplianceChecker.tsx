@@ -321,7 +321,7 @@ function ComplianceChecker() {
           </span>
           <div>
             <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
-              Compliance Checker
+              Compliance 
             </h1>
             <p className="text-gray-600">International Law — Saudi Arabia</p>
           </div>

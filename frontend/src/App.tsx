@@ -177,7 +177,7 @@ export default function App() {
             <>
               <Navbar />
               <ForgotPassword />
-              <Footer />
+              
             </>
           }
         />
@@ -187,7 +187,7 @@ export default function App() {
             <>
               <Navbar />
               <ResetPassword />
-              <Footer />
+              
             </>
           }
         />
@@ -203,7 +203,6 @@ export default function App() {
           <Route index element={<DashboardHome />} />
           <Route path="uploads" element={<AllUploads />} />
           <Route path="profile" element={<EditProfile />} />
-          <Route path="settings" element={<Settings />} />
           <Route path="rephrasing" element={<RephrasingTool />} />
           <Route path="risk-assessment" element={<RiskAssessmentTool />} />
           <Route path="compliance" element={<ComplianceChecker />} />

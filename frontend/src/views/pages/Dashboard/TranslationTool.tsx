@@ -208,7 +208,7 @@ const TranslationTool: React.FC = () => {
               className="font-serif text-2xl font-bold"
               style={{ color: BRAND.dark }}
             >
-              Translation Tool
+              Translation 
             </h1>
             <p className="text-gray-600">
               {srcLangLabel} ↔ {tgtLangLabel}
