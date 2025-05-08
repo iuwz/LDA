@@ -168,7 +168,15 @@ const DashboardChatbot: React.FC = () => {
     setChats(left);
     if (active?.id === id) left.length ? loadSession(left[0].id) : createDraft();
   };
-
+  useEffect(() => {
+    (async () => {
+      const history = await listChatHistory();
+      const mapped: Chat[] = history.map((h) => ({ ...h, messages: [] }));
+      setChats(mapped);
+      // Always create a new draft when loading the component
+      createDraft();
+    })();
+  }, []);
   /* ───────── render */
   const msgs = active?.messages ?? [];
   const prompts = [
