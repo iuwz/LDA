@@ -116,13 +116,14 @@ const DashboardLayout: React.FC = () => {
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg flex flex-col
+          fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:relative md:translate-x-0
         `}
       >
-        <div className="flex items-center justify-between p-4 border-b">
+        {/* Sidebar brand */}
+        <div className="flex items-center justify-between h-12 px-4 border-b">
           <NavLink
             to="/dashboard"
             className="flex items-center space-x-2"
@@ -163,7 +164,6 @@ const DashboardLayout: React.FC = () => {
             </NavLink>
           ))}
 
-          {/* Admin Panel Link - only visible for admin users */}
           {isAdmin && (
             <NavLink
               to="/admin"
@@ -222,8 +222,7 @@ const DashboardLayout: React.FC = () => {
               >
                 <FaUser className="mr-2" /> Profile
               </NavLink>
-              
-              {/* Admin link in menu too */}
+
               {isAdmin && (
                 <NavLink
                   to="/admin"
@@ -249,26 +248,26 @@ const DashboardLayout: React.FC = () => {
           open ? "md:pl-64" : "md:pl-0"
         }`}
       >
-        <header className="flex items-center justify-between bg-white shadow px-4 sm:px-6 lg:px-8 h-12">
+        <header className="flex items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 h-12">
           <div className="flex items-center">
             <button
-              className="md:hidden mr-3 p-1 text-[#C17829] hover:bg-gray-100 rounded"
+              className="md:hidden mr-3 p-1 text-[#2C2C4A] hover:bg-gray-100 rounded"
               onClick={() => setOpen((v) => !v)}
               aria-label="Toggle menu"
             >
-              {open ? <FaTimes size={2} /> : <FaBars size={20} />}
+              {open ? <FaTimes size={20} /> : <FaBars size={20} />}
             </button>
             <h1 className="text-lg sm:text-xl font-semibold text-[#2C2C4A] truncate">
               {getCurrentTitle(location.pathname)}
             </h1>
           </div>
-          <NavLink
-  to="/"
-  className="hidden sm:flex items-center justify-center text-gray-600 hover:text-[#C17829] p-2"
->
-  <HiHome className="w-5 h-5" />
-</NavLink>
 
+          <NavLink
+            to="/"
+            className="hidden sm:flex items-center justify-center text-[#2C2C4A] hover:text-[#C17829] p-2"
+          >
+            <HiHome className="w-5 h-5" />
+          </NavLink>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
