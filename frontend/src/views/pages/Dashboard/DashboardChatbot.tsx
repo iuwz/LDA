@@ -1,6 +1,12 @@
 // src/views/pages/Dashboard/DashboardChatbot.tsx
-import React, { useState, useRef, useEffect } from "react";
-import { chat as askBackend } from "../../../api";   // NEW
+import React, { useEffect, useRef, useState } from "react";
+import {
+  chat as askGPT,
+  listChatHistory,
+  getChatSession,
+  ChatMessage,
+  ChatSessionSummary,
+} from "../../../api";
 import {
   FaRobot,
   FaPaperPlane,
@@ -11,198 +17,196 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface Message {
+/* ───────── local types */
+interface Message extends ChatMessage {
   id: number;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
 }
-interface Chat {
-  id: number;
-  title: string;
-  preview: string;
-  date: Date;
+interface Chat extends ChatSessionSummary {
   messages: Message[];
 }
 
+/* ───────── main component */
 const DashboardChatbot: React.FC = () => {
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "history">("chat");
-  const [conversations, setConversations] = useState<Chat[]>([
-    {
-      id: 1,
-      title: "Contract Review Question",
-      preview: "Help with force majeure clauses",
-      date: new Date(Date.now() - 3600 * 1000 * 24),
+  const [input, setInput] = useState("");
+  const [isTyping, setTyping] = useState(false);
+  const [view, setView] = useState<"chat" | "history">("chat");
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [active, setActive] = useState<Chat | null>(null);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* ───────── helpers */
+  const fmtTime = (t: string) =>
+    new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const fmtDate = (t: string) => {
+    const d = new Date(t);
+    const now = new Date();
+    const yest = new Date();
+    yest.setDate(now.getDate() - 1);
+    if (d.toDateString() === now.toDateString()) return "Today";
+    if (d.toDateString() === yest.toDateString()) return "Yesterday";
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+
+  /* ───────── initial load */
+  useEffect(() => {
+    (async () => {
+      const history = await listChatHistory();
+      const mapped: Chat[] = history.map((h) => ({ ...h, messages: [] }));
+      setChats(mapped);
+      if (mapped.length) loadSession(mapped[0].id);
+      else createDraft();
+    })();
+  }, []);
+
+  /* ───────── utilities */
+  const loadSession = async (sid: string) => {
+    const summary = chats.find((c) => c.id === sid);
+    if (!summary) return;
+    const res = await getChatSession(sid);
+    const msgs: Message[] = res.messages.map((m, i) => ({ ...m, id: i + 1 }));
+    const chat = { ...summary, messages: msgs };
+    setActive(chat);
+    setChats((prev) => prev.map((c) => (c.id === chat.id ? chat : c)));
+    setView("chat");
+  };
+
+  const createDraft = () => {
+    const now = new Date().toISOString();
+    const draft: Chat = {
+      id: `draft-${Date.now()}`,
+      title: "New Conversation",
+      preview: "",
+      created_at: now,
+      updated_at: now,
       messages: [
         {
           id: 1,
-          text: "Hello! I'm your LDA assistant. How can I help you with your legal concerns today?",
           sender: "bot",
-          timestamp: new Date(Date.now() - 3600 * 1000 * 24),
+          text: "Hello – I’m your LDA assistant. How can I help?",
+          timestamp: now,
         },
-
       ],
-    },
-    {
-      id: 2,
-      title: "Privacy Policy Questions",
-      preview: "GDPR compliance requirements",
-      date: new Date(Date.now() - 3600 * 1000 * 72),
-      messages: [],
-    },
-  ]);
-
-  // allow activeChat to be null briefly
-  const [activeChat, setActiveChat] = useState<Chat | null>(conversations[0] || null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const suggestedPrompts = [
-    "How do I structure a privacy policy?",
-    "What should I include in a non-disclosure agreement?",
-    "Can you explain 'consideration' in contract law?",
-    "What are the key elements of a valid contract?",
-  ];
-
-  // scroll to bottom when messages change
-  useEffect(() => {
-    if (activeChat?.messages) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [activeChat?.messages]);
-
-  // focus input on chat tab
-  useEffect(() => {
-    if (activeTab === "chat") inputRef.current?.focus();
-  }, [activeTab]);
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    if (date.toDateString() === now.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  };
-
-  // helper to update both activeChat and conversations array
-  const updateActiveChat = (messages: Message[]) => {
-    if (!activeChat) return;
-    const updated: Chat = {
-      ...activeChat,
-      messages,
-      preview: messages[messages.length - 1]?.text.slice(0, 40) + "...",
     };
-    setActiveChat(updated);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
+    setChats((prev) => [draft, ...prev]);
+    setActive(draft);
+    setView("chat");
   };
 
-  const sendMessage = async () => {
-    if (!inputValue.trim() || !activeChat) return;
+  /* scroll on message append */
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [active?.messages]);
 
+  /* focus when returning to chat */
+  useEffect(() => {
+    if (view === "chat") inputRef.current?.focus();
+  }, [view]);
+
+  /* ───────── sending message */
+  const send = async () => {
+    if (!input.trim() || !active) return;
+    const now = new Date().toISOString();
     const userMsg: Message = {
-      id: activeChat.messages.length + 1,
-      text: inputValue.trim(),
+      id: active.messages.length + 1,
       sender: "user",
-      timestamp: new Date(),
+      text: input.trim(),
+      timestamp: now,
     };
-    const withUser = [...activeChat.messages, userMsg];
-    updateActiveChat(withUser);
-    setInputValue("");
-    setIsTyping(true);
+    const optimistic = { ...active, messages: [...active.messages, userMsg] };
+    setActive(optimistic);
+    setChats((prev) => prev.map((c) => (c.id === optimistic.id ? optimistic : c)));
+    setInput("");
+    setTyping(true);
 
     try {
-      // 🔗 real backend request
-      const res = await askBackend(userMsg.text);
+      const res = await askGPT({
+        query: userMsg.text,
+        session_id: active.id.startsWith("draft-") ? undefined : active.id,
+      });
 
       const botMsg: Message = {
-        id: withUser.length + 1,
+        id: optimistic.messages.length + 1,
+        sender: "bot",
         text: res.bot_response,
-        sender: "bot",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
-      updateActiveChat([...withUser, botMsg]);
-    } catch (err: any) {
-      // show error in‑chat
+
+      const updated: Chat = {
+        ...optimistic,
+        id: res.session_id, // may replace draft-id
+        title: optimistic.title === "New Conversation" ? userMsg.text.slice(0, 50) : optimistic.title,
+        preview: botMsg.text.slice(0, 60) + "...",
+        updated_at: botMsg.timestamp,
+        messages: [...optimistic.messages, botMsg],
+      };
+
+      setChats((prev) => {
+        const filtered = prev.filter((c) => c.id !== optimistic.id && c.id !== updated.id);
+        return [updated, ...filtered];
+      });
+      setActive(updated);
+    } catch (e: any) {
       const botMsg: Message = {
-        id: withUser.length + 1,
-        text: `⚠️ ${err.message || "Error contacting server"}`,
+        id: optimistic.messages.length + 1,
         sender: "bot",
-        timestamp: new Date(),
+        text: `⚠️ ${e.message || "Server error"}`,
+        timestamp: new Date().toISOString(),
       };
-      updateActiveChat([...withUser, botMsg]);
+      const fallback = { ...optimistic, messages: [...optimistic.messages, botMsg] };
+      setActive(fallback);
+      setChats((prev) => prev.map((c) => (c.id === fallback.id ? fallback : c)));
     } finally {
-      setIsTyping(false);
+      setTyping(false);
     }
   };
 
-  const startNewChat = () => {
-    const fresh: Chat = {
-      id: Date.now(),
-      title: "New Conversation",
-      preview: "No messages yet",
-      date: new Date(),
-      messages: [
-        {
-          id: 1,
-          text: "Hello! I'm your LDA assistant. How can I help?",
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ],
-    };
-    setConversations((prev) => [fresh, ...prev]);
-    setActiveChat(fresh);
-    setActiveTab("chat");
-  };
-
-  const deleteChat = (id: number, e: React.MouseEvent) => {
+  const removeChat = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const filtered = conversations.filter((c) => c.id !== id);
-    setConversations(filtered);
-    if (activeChat?.id === id) {
-      filtered.length ? setActiveChat(filtered[0]) : startNewChat();
-    }
+    const left = chats.filter((c) => c.id !== id);
+    setChats(left);
+    if (active?.id === id) left.length ? loadSession(left[0].id) : createDraft();
   };
 
-  // temporarily fallback to empty array if no activeChat
-  const msgs = activeChat?.messages || [];
+  /* ───────── render */
+  const msgs = active?.messages ?? [];
+  const prompts = [
+    "How do I structure a privacy policy?",
+    "What clauses belong in an NDA?",
+    "Explain 'consideration' in contract law.",
+    "Key elements of a valid contract?",
+  ];
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] bg-[#F8F9FA] rounded-lg shadow-md overflow-hidden font-sans">
-      {/* Header */}
+      {/* header */}
       <div className="bg-[color:var(--accent-dark)] text-white p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FaRobot className="text-2xl" />
           <h1 className="text-xl font-semibold">Legal Assistant</h1>
         </div>
         <div className="flex space-x-1">
-          {(["chat", "history"] as const).map((tab) => (
+          {(["chat", "history"] as const).map((t) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${activeTab === tab
-                ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
-                : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
+              key={t}
+              onClick={() => setView(t)}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${view === t
+                  ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
+                  : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
                 }`}
             >
-              {tab === "chat" ? "Chat" : "History"}
+              {t === "chat" ? "Chat" : "History"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
+      {/* body */}
       <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          {activeTab === "chat" ? (
+          {view === "chat" ? (
+            /* chat view */
             <motion.div
               key="chat"
               className="flex-1 flex flex-col"
@@ -211,7 +215,7 @@ const DashboardChatbot: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Messages */}
+              {/* messages */}
               <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-gray-50">
                 {msgs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full">
@@ -220,21 +224,20 @@ const DashboardChatbot: React.FC = () => {
                       How can I assist you today?
                     </h3>
                     <p className="text-gray-500 text-center max-w-md mb-6">
-                      Ask any questions about legal documents, contract terms,
-                      or compliance requirements.
+                      Ask any questions about legal documents, contract terms or compliance
+                      requirements.
                     </p>
                   </div>
                 ) : (
                   msgs.map((m) => (
                     <div
                       key={m.id}
-                      className={`mb-4 flex ${m.sender === "user" ? "justify-end" : "justify-start"
-                        }`}
+                      className={`mb-4 flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[80%] rounded-lg p-3 ${m.sender === "user"
-                          ? "bg-[color:var(--accent-dark)] text-white"
-                          : "bg-white border border-[#DDD0C8] text-[#3E2723]"
+                            ? "bg-[color:var(--accent-dark)] text-white"
+                            : "bg-white border border-[#DDD0C8] text-[#3E2723]"
                           }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{m.text}</p>
@@ -242,7 +245,7 @@ const DashboardChatbot: React.FC = () => {
                           className={`text-xs mt-1 ${m.sender === "user" ? "text-white/70" : "text-gray-500"
                             }`}
                         >
-                          {formatTime(m.timestamp)}
+                          {fmtTime(m.timestamp)}
                         </p>
                       </div>
                     </div>
@@ -258,11 +261,7 @@ const DashboardChatbot: React.FC = () => {
                             key={i}
                             className="w-2 h-2 bg-gray-400 rounded-full"
                             animate={{ y: [0, -5, 0] }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 0.8,
-                              delay: i * 0.2,
-                            }}
+                            transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
                           />
                         ))}
                       </div>
@@ -270,19 +269,19 @@ const DashboardChatbot: React.FC = () => {
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
+                <div ref={scrollRef} />
               </div>
 
-              {/* Suggestions */}
+              {/* suggestions */}
               {msgs.length < 2 && (
                 <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
+                  <p className="text-xs text-gray-500 mb-2">Suggested:</p>
                   <div className="flex flex-wrap gap-2">
-                    {suggestedPrompts.map((p, i) => (
+                    {prompts.map((p, i) => (
                       <button
                         key={i}
                         onClick={() => {
-                          setInputValue(p);
+                          setInput(p);
                           inputRef.current?.focus();
                         }}
                         className="bg-white text-gray-700 text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors"
@@ -294,24 +293,23 @@ const DashboardChatbot: React.FC = () => {
                 </div>
               )}
 
-              {/* Input */}
+              {/* input */}
               <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
                 <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     ref={inputRef}
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && send()}
                     placeholder="Type your message..."
                     className="w-full sm:flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[color:var(--accent-dark)] focus:border-[color:var(--accent-dark)]"
                   />
                   <button
-                    onClick={sendMessage}
-                    disabled={!inputValue.trim() || isTyping}
-                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${inputValue.trim() && !isTyping
-                      ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-                      : "bg-gray-300 cursor-not-allowed"
+                    onClick={send}
+                    disabled={!input.trim() || isTyping}
+                    className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${input.trim() && !isTyping
+                        ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                        : "bg-gray-300 cursor-not-allowed"
                       }`}
                   >
                     <FaPaperPlane size={18} />
@@ -320,6 +318,7 @@ const DashboardChatbot: React.FC = () => {
               </div>
             </motion.div>
           ) : (
+            /* history view */
             <motion.div
               key="history"
               className="flex-1 flex flex-col"
@@ -328,11 +327,10 @@ const DashboardChatbot: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* History List */}
               <div className="p-3 sm:p-4 bg-gray-50 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-800">Your Conversations</h2>
                 <button
-                  onClick={startNewChat}
+                  onClick={createDraft}
                   className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
                 >
                   <FaPlus size={12} />
@@ -341,43 +339,40 @@ const DashboardChatbot: React.FC = () => {
               </div>
 
               <div className="p-3 sm:p-4 flex-1 overflow-y-auto space-y-2">
-                {conversations.length === 0 ? (
+                {chats.length === 0 ? (
                   <div className="text-center py-12">
                     <FaHistory className="mx-auto text-4xl text-gray-300 mb-3" />
-                    <p className="text-gray-500">No conversation history yet</p>
+                    <p className="text-gray-500">No history yet</p>
                     <button
-                      onClick={startNewChat}
+                      onClick={createDraft}
                       className="mt-4 text-[color:var(--accent-dark)] underline hover:text-[color:var(--accent-light)]"
                     >
-                      Start a new conversation
+                      Start a conversation
                     </button>
                   </div>
                 ) : (
-                  conversations.map((chat) => (
+                  chats.map((c) => (
                     <div
-                      key={chat.id}
-                      onClick={() => {
-                        setActiveChat(chat);
-                        setActiveTab("chat");
-                      }}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${activeChat?.id === chat.id
-                        ? "border-2 border-[color:var(--accent-dark)]"
-                        : "border border-gray-200 hover:bg-gray-100"
+                      key={c.id}
+                      onClick={() => loadSession(c.id)}
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${active?.id === c.id
+                          ? "border-2 border-[color:var(--accent-dark)]"
+                          : "border border-gray-200 hover:bg-gray-100"
                         }`}
                     >
                       <div className="flex justify-between items-center">
-                        <h3 className="font-medium text-gray-800">{chat.title}</h3>
+                        <h3 className="font-medium text-gray-800">{c.title}</h3>
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-gray-500">{formatDate(chat.date)}</span>
+                          <span className="text-xs text-gray-500">{fmtDate(c.updated_at)}</span>
                           <button
-                            onClick={(e) => deleteChat(chat.id, e)}
+                            onClick={(e) => removeChat(c.id, e)}
                             className="p-1 text-gray-400 hover:text-red-500"
                           >
                             <FaRegTrashAlt size={14} />
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 truncate mt-1">{chat.preview}</p>
+                      <p className="text-sm text-gray-600 truncate mt-1">{c.preview}</p>
                     </div>
                   ))
                 )}

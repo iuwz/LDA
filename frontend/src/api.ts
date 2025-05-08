@@ -178,17 +178,41 @@ export function downloadRiskReport(docId: string, filename: string) {
 }
 
 /* ═══════════════════════════ CHATBOT ══════════════════════════ */
-
+export interface ChatMessage {
+    sender: "user" | "bot";
+    text: string;
+    timestamp: string;
+}
+export interface ChatSessionSummary {
+    id: string;
+    title: string;
+    preview: string;
+    created_at: string;
+    updated_at: string;
+}
 export interface ChatResponse {
     session_id: string;
     bot_response: string;
 }
-export function chat(query: string) {
+
+export function chat(body: { query: string; session_id?: string | null }) {
     return fetch(`${API_BASE}/chatbot`, {
         ...common,
         method: "POST",
-        body: JSON.stringify({ query }),
+        body: JSON.stringify(body),
     }).then(r => handleResponse<ChatResponse>(r));
+}
+
+export function listChatHistory() {
+    return fetch(`${API_BASE}/chatbot/history`, { ...common, method: "GET" }).then(r =>
+        handleResponse<ChatSessionSummary[]>(r),
+    );
+}
+
+export function getChatSession(id: string) {
+    return fetch(`${API_BASE}/chatbot/session/${id}`, { ...common, method: "GET" }).then(r =>
+        handleResponse<{ messages: ChatMessage[] }>(r),
+    );
 }
 
 /* ═════════════════════ DOCUMENT UPLOADS (GridFS) ══════════════ */
