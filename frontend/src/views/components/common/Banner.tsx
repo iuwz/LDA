@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaUser, FaChartLine, FaBell } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 
 // Base URL for your FastAPI backend
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -15,7 +15,8 @@ interface UserMe {
 }
 
 const Banner: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>("");
+  // Use null to indicate “not loaded yet”
+  const [firstName, setFirstName] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, {
@@ -26,10 +27,19 @@ const Banner: React.FC = () => {
         return res.json();
       })
       .then((data: UserMe) => {
-        if (data.first_name) setFirstName(data.first_name);
+        // default back to "User" if API gives no first_name
+        setFirstName(data.first_name || "User");
       })
-      .catch((err) => console.error("Auth/me failed:", err));
+      .catch(() => {
+        // on error also show "User"
+        setFirstName("User");
+      });
   }, []);
+
+  // Delay rendering until we've loaded the name
+  if (firstName === null) {
+    return null;
+  }
 
   return (
     <div className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
@@ -42,7 +52,7 @@ const Banner: React.FC = () => {
           </div>
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[color:var(--brand-dark)] leading-tight">
-              Welcome back, {firstName || "User"}
+              Welcome back, {firstName}
             </h1>
             <p className="mt-1 text-sm sm:text-base text-gray-600">
               Here’s today’s overview of your legal-doc activity.

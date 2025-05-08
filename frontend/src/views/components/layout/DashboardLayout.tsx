@@ -58,9 +58,12 @@ interface UserMe {
 const DashboardLayout: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [accMenu, setAccMenu] = useState(false);
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [role, setRole] = useState<string>("");
+
+  // Delay-render these until loaded
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -79,11 +82,17 @@ const DashboardLayout: React.FC = () => {
         return res.json();
       })
       .then((data: UserMe) => {
-        if (data.first_name) setFirstName(data.first_name);
-        if (data.last_name) setLastName(data.last_name);
-        if (data.role) setRole(data.role);
+        setFirstName(data.first_name || "");
+        setLastName(data.last_name || "");
+        setRole(data.role || "");
       })
-      .catch((err) => console.error("Failed to fetch user info:", err));
+      .catch((err) => {
+        console.error("Failed to fetch user info:", err);
+        // Still mark as loaded, even on error
+        setFirstName("");
+        setLastName("");
+        setRole("");
+      });
   }, []);
 
   const handleNavClick = () => setOpen(false);
@@ -102,8 +111,8 @@ const DashboardLayout: React.FC = () => {
   // Check if user is admin
   const isAdmin = role === "admin";
 
-  // Compute user initials
-  const initials = (firstName.charAt(0) || "") + (lastName.charAt(0) || "");
+  // Compute user initials (won't run until loaded)
+  const initials = (firstName?.charAt(0) || "") + (lastName?.charAt(0) || "");
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -190,57 +199,60 @@ const DashboardLayout: React.FC = () => {
           </button>
         </div>
 
-        <div className="border-t p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
-                {initials || <FaCog />}
+        {/* Profile section: only render after user info has loaded */}
+        {firstName !== null && lastName !== null && role !== null && (
+          <div className="border-t p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
+                  {initials || <FaCog />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {firstName} {lastName}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {role || "User"}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {firstName} {lastName}
-                </p>
-                <p className="text-xs text-gray-500 capitalize">
-                  {role || "User"}
-                </p>
-              </div>
-            </div>
-            <button
-              className="p-1 hover:bg-gray-100 rounded"
-              onClick={() => setAccMenu((v) => !v)}
-              aria-label="Account menu"
-            >
-              <FaCog />
-            </button>
-          </div>
-          {accMenu && (
-            <div className="mt-2 space-y-1">
-              <NavLink
-                to="/dashboard/profile"
-                className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-                onClick={handleNavClick}
+              <button
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => setAccMenu((v) => !v)}
+                aria-label="Account menu"
               >
-                <FaUser className="mr-2" /> Profile
-              </NavLink>
-
-              {isAdmin && (
+                <FaCog />
+              </button>
+            </div>
+            {accMenu && (
+              <div className="mt-2 space-y-1">
                 <NavLink
-                  to="/admin"
+                  to="/dashboard/profile"
                   className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                   onClick={handleNavClick}
                 >
-                  <FaUserShield className="mr-2" /> Admin Panel
+                  <FaUser className="mr-2" /> Profile
                 </NavLink>
-              )}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
-              >
-                <FaSignOutAlt className="mr-2" /> Logout
-              </button>
-            </div>
-          )}
-        </div>
+
+                {isAdmin && (
+                  <NavLink
+                    to="/admin"
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                    onClick={handleNavClick}
+                  >
+                    <FaUserShield className="mr-2" /> Admin Panel
+                  </NavLink>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
+                >
+                  <FaSignOutAlt className="mr-2" /> Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </aside>
 
       <div
