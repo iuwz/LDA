@@ -316,10 +316,10 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
         elems.append(Paragraph(f"Issue {idx}: {issue['rule_id']}", styles["Heading3"]))
         det_tbl = Table(
             [
-                ["Status", issue["status"]],
-                ["Description", issue["description"]],
-                ["Snippet", issue.get("extracted_text_snippet") or "–"],
-                ["Rule ID", issue["rule_id"]],
+                ["Status", Paragraph(issue["status"], styles["Normal"])],
+                ["Description", Paragraph(issue["description"], styles["Normal"])],
+                ["Snippet", Paragraph(issue.get("extracted_text_snippet") or "–", styles["Normal"])],
+                ["Rule ID", Paragraph(issue["rule_id"], styles["Normal"])],
             ],
             colWidths=[120, 330],
         )
@@ -329,6 +329,7 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
                     ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                     ("BOX", (0, 0), (-1, -1), 1, colors.black),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ]
             )
         )
