@@ -94,8 +94,7 @@ const AllUploads: React.FC = () => {
       <Button
         size="xs"
         variant="outline"
-        className="w-24 h-9 flex items-center justify-center gap-1 border-red-500
-                   text-red-500 hover:bg-red-500 hover:text-white"
+        className="w-24 h-9 flex items-center justify-center gap-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
         onClick={() => setPendingDel(d)}
       >
         <FaTrashAlt /> Remove
@@ -108,7 +107,7 @@ const AllUploads: React.FC = () => {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <a
           href="/dashboard"
-          className="text-indigo-600 flex items-center gap-1 hover:underline"
+          className="text-[#C17829] flex items-center gap-1 hover:underline"
         >
           <FaArrowLeft /> Back to dashboard
         </a>
