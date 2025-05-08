@@ -494,3 +494,18 @@ export function getTranslationReport(id: string) {
         .then(r => handleResponse<{ translation_report: any }>(r))
         .then(d => d.translation_report);
 }
+export function forgotPassword(email: string) {
+    return fetch(`${API_BASE}/auth/forgot-password`, {
+        ...common,
+        method: "POST",
+        body: JSON.stringify({ email }),
+    }).then(r => handleResponse<{ message: string }>(r));
+}
+
+export function resetPassword(token: string, new_password: string) {
+    return fetch(`${API_BASE}/auth/reset-password`, {
+        ...common,
+        method: "POST",
+        body: JSON.stringify({ token, new_password }),
+    }).then(r => handleResponse<{ message: string }>(r));
+}

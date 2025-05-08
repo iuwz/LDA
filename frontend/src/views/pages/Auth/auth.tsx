@@ -61,7 +61,7 @@ function SignInForm({
           <div className="flex justify-between mb-2">
             <label className="block text-gray-700 font-medium">Password</label>
             <a
-              href="#"
+              href="/forgot-password"
               className="text-sm text-[#C17829] hover:text-[#ad6823] transition-colors"
             >
               Forgot Password?

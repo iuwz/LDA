@@ -17,6 +17,8 @@ import Home from "./views/pages/Home/home";
 import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
 import Auth from "./views/pages/Auth/auth";
+import ForgotPassword from "./views/pages/Auth/ForgotPassword";
+import ResetPassword from "./views/pages/Auth/ResetPassword";
 
 /* ── Dashboard pages ─────────────────── */
 import DashboardHome from "./views/pages/Dashboard/DashboardHome";
@@ -128,7 +130,7 @@ export default function App() {
               <Navbar />
               <Home />
               <Footer />
-             
+
             </>
           }
         />
@@ -144,7 +146,7 @@ export default function App() {
               <Navbar />
               <About />
               <Footer />
-              
+
             </>
           }
         />
@@ -155,7 +157,7 @@ export default function App() {
               <Navbar />
               <Contact />
               <Footer />
-              
+
             </>
           }
         />
@@ -169,7 +171,26 @@ export default function App() {
             </>
           }
         />
-
+        <Route
+          path="/forgot-password"
+          element={
+            <>
+              <Navbar />
+              <ForgotPassword />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <>
+              <Navbar />
+              <ResetPassword />
+              <Footer />
+            </>
+          }
+        />
         {/* Dashboard (protected) */}
         <Route
           path="/dashboard/*"
