@@ -32,19 +32,19 @@ import {
 
 /* ───────────── local types ───────────── */
 interface DisplayAnalysisResult extends ComplianceReportResponse {
-  overallStatus: "compliant" | "non-compliant" | "warning" | "unknown";
   complianceScore: number;
   analyzedFilename?: string;
 }
 
 /* ───────────── status badge ───────────── */
 const ComplianceStatus: React.FC<{ status: string }> = ({ status }) => {
-  const displayStatus: DisplayAnalysisResult["overallStatus"] =
-    status.toLowerCase() === "ok"
+  const s = status.toLowerCase();
+  const displayStatus =
+    s === "ok"
       ? "compliant"
-      : status.toLowerCase() === "issue found"
+      : s === "issue found"
       ? "non-compliant"
-      : status.toLowerCase() === "warning"
+      : s === "warning"
       ? "warning"
       : "unknown";
 
@@ -98,6 +98,7 @@ function ComplianceChecker() {
 
   /* history */
   const [history, setHistory] = useState<ComplianceHistoryItem[]>([]);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   /* delete modal state */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -140,9 +141,10 @@ function ComplianceChecker() {
 
   async function loadHistory() {
     try {
-      setHistory(await listComplianceHistory());
+      const h = await listComplianceHistory();
+      setHistory(h);
     } catch {
-      /* ignore */
+      // ignore
     }
   }
 
@@ -156,35 +158,27 @@ function ComplianceChecker() {
       else tally.unk++;
     });
 
-    let overall: DisplayAnalysisResult["overallStatus"] = "compliant";
-    if (tally.bad) overall = "non-compliant";
-    else if (tally.warn) overall = "warning";
-    else if (tally.unk) overall = "unknown";
+    let overall: DisplayAnalysisResult["complianceScore"] = 100;
+    if (tally.bad) overall = 100 - tally.bad * 20;
+    else if (tally.warn) overall = 100 - tally.warn * 10;
+    else if (tally.unk) overall = 100 - tally.unk * 5;
 
-    const score = Math.max(
-      0,
-      100 - (tally.bad * 20 + tally.warn * 10 + tally.unk * 5)
-    );
-    return { overallStatus: overall, complianceScore: score };
+    return overall;
   }
 
   /* open stored report */
   async function openReport(id: string) {
     try {
       const rep = await getComplianceReport(id);
-      const backendScore =
+      const score =
         typeof (rep as any).compliance_score === "number"
           ? (rep as any).compliance_score
-          : null;
-      const { overallStatus, complianceScore } = deriveStatusAndScore(
-        rep.issues
-      );
+          : deriveStatusAndScore(rep.issues);
       setResults({
         ...rep,
-        overallStatus,
-        complianceScore: backendScore ?? complianceScore,
+        complianceScore: score,
         analyzedFilename: rep.report_filename || rep.report_id,
-      } as DisplayAnalysisResult);
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       alert(e.message || "Failed to open report");
@@ -247,20 +241,16 @@ function ComplianceChecker() {
       }
 
       const report = await checkCompliance({ doc_id: docId });
-      const backendScore =
+      const score =
         typeof (report as any).compliance_score === "number"
           ? (report as any).compliance_score
-          : null;
-      const { overallStatus, complianceScore } = deriveStatusAndScore(
-        report.issues
-      );
+          : deriveStatusAndScore(report.issues);
 
       setResults({
         ...report,
-        overallStatus,
-        complianceScore: backendScore ?? complianceScore,
+        complianceScore: score,
         analyzedFilename: filename,
-      } as DisplayAnalysisResult);
+      });
       loadHistory();
     } catch (e: any) {
       setError(`Compliance check failed: ${e.message || "Unknown error"}`);
@@ -304,25 +294,6 @@ function ComplianceChecker() {
     (!selectedDocId && !fileToUpload) || analyzing || fetchingDocs;
   const isFileInputDisabled = analyzing || fetchingDocs;
 
-  /* count buckets */
-  const resultCounts = results
-    ? results.issues.reduce(
-        (acc, { status }) => {
-          const k =
-            status.toLowerCase() === "ok"
-              ? "compliant"
-              : status.toLowerCase() === "issue found"
-              ? "non-compliant"
-              : status.toLowerCase() === "warning"
-              ? "warning"
-              : "unknown";
-          (acc as any)[k]++;
-          return acc;
-        },
-        { compliant: 0, "non-compliant": 0, warning: 0, unknown: 0 }
-      )
-    : { compliant: 0, "non-compliant": 0, warning: 0, unknown: 0 };
-
   /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
@@ -335,7 +306,7 @@ function ComplianceChecker() {
           </span>
           <div>
             <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
-              Compliance 
+              Compliance
             </h1>
             <p className="text-gray-600">International Law — Saudi Arabia</p>
           </div>
@@ -366,7 +337,6 @@ function ComplianceChecker() {
         ) : (
           <ResultView
             results={results}
-            resultCounts={resultCounts}
             ComplianceStatus={ComplianceStatus}
             getFileIcon={getFileIcon}
             handleDownloadReport={handleDownloadReport}
@@ -383,46 +353,58 @@ function ComplianceChecker() {
         {history.length === 0 ? (
           <p className="text-sm italic text-gray-500">No history yet.</p>
         ) : (
-          <ul className="space-y-3">
-            {history.map((h) => (
-              <li
-                key={h.id}
-                className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="mb-3 sm:mb-0">
-                  <p className="flex items-center text-sm font-semibold text-gray-800">
-                    <FaFileAlt className="mr-2 text-[#c17829]" />
-                    {h.report_filename || "Compliance report"}
-                  </p>
-                  <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
-                    {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <div className="flex gap-3 self-end sm:self-center">
-                  <button
-                    onClick={() => openReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                  >
-                    <FaSearch /> View
-                  </button>
-                  {h.report_doc_id && (
+          <>
+            <ul className="space-y-3">
+              {(showAllHistory ? history : history.slice(0, 5)).map((h) => (
+                <li
+                  key={h.id}
+                  className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="mb-3 sm:mb-0">
+                    <p className="flex items-center text-sm font-semibold text-gray-800">
+                      <FaFileAlt className="mr-2 text-[#c17829]" />
+                      {h.report_filename || "Compliance report"}
+                    </p>
+                    <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                      {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-3 self-end sm:self-center">
                     <button
-                      onClick={() => downloadComplianceReportPdf(h.id)}
+                      onClick={() => openReport(h.id)}
                       className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                     >
-                      <FaDownload /> Download
+                      <FaSearch /> View
                     </button>
-                  )}
-                  <button
-                    onClick={() => removeReport(h.id)}
-                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    {h.report_doc_id && (
+                      <button
+                        onClick={() => downloadComplianceReportPdf(h.id)}
+                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                      >
+                        <FaDownload /> Download
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeReport(h.id)}
+                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                    >
+                      <FaTrash /> Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {history.length > 5 && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setShowAllHistory(!showAllHistory)}
+                  className="text-sm text-[#c17829] hover:underline"
+                >
+                  {showAllHistory ? "Show less" : "Show more"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -758,10 +740,6 @@ function UploadDropZone(props: {
 /* ───────── ResultView subcomponent ────────── */
 interface ResultProps {
   results: DisplayAnalysisResult;
-  resultCounts: Record<
-    "compliant" | "non-compliant" | "warning" | "unknown",
-    number
-  >;
   ComplianceStatus: React.FC<{ status: string }>;
   getFileIcon: (f: string) => JSX.Element;
   handleDownloadReport: () => void;
@@ -770,7 +748,6 @@ interface ResultProps {
 
 function ResultView({
   results,
-  resultCounts,
   ComplianceStatus,
   getFileIcon,
   handleDownloadReport,
@@ -820,23 +797,6 @@ function ResultView({
             Analyze Another
           </motion.button>
         </div>
-      </div>
-
-      {/* summary cards */}
-      <div className="grid gap-4 p-6 md:grid-cols-3">
-        {(["compliant", "non-compliant", "warning"] as const).map((k) => (
-          <div
-            key={k}
-            className="rounded-lg border bg-gray-50 p-4 text-center shadow-sm"
-          >
-            <p className="mb-1 text-xs text-gray-500">
-              {k.charAt(0).toUpperCase() + k.slice(1)} Items
-            </p>
-            <p className="text-2xl font-bold text-gray-800">
-              {resultCounts[k]}
-            </p>
-          </div>
-        ))}
       </div>
 
       {/* detailed list */}
