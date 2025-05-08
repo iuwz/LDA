@@ -1,11 +1,6 @@
 /*  src/views/pages/Dashboard/ComplianceChecker.tsx  */
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  ChangeEvent,
-} from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
   FaClipboardCheck,
   FaCloudUploadAlt,
@@ -42,53 +37,50 @@ interface DisplayAnalysisResult extends ComplianceReportResponse {
   analyzedFilename?: string;
 }
 
-/* ───────────── constants ───────────── */
-const BRAND = { dark: "#1a202c" };
-const ACCENT = { dark: "#c17829", light: "#ffe9d1" };
-const SHADOW = "0 12px 20px -5px rgba(0,0,0,.08)";
-
 /* ───────────── status badge ───────────── */
 const ComplianceStatus: React.FC<{ status: string }> = ({ status }) => {
   const displayStatus: DisplayAnalysisResult["overallStatus"] =
     status.toLowerCase() === "ok"
       ? "compliant"
       : status.toLowerCase() === "issue found"
-        ? "non-compliant"
-        : status.toLowerCase() === "warning"
-          ? "warning"
-          : "unknown";
+      ? "non-compliant"
+      : status.toLowerCase() === "warning"
+      ? "warning"
+      : "unknown";
 
-  const palette: Record<DisplayAnalysisResult["overallStatus"], string> = {
+  const palette = {
     compliant: "bg-green-100 text-green-800 border-green-200",
     "non-compliant": "bg-red-100 text-red-800 border-red-200",
     warning: "bg-yellow-100 text-yellow-800 border-yellow-200",
     unknown: "bg-gray-100 text-gray-800 border-gray-200",
-  };
+  } as const;
+
   const icons = {
     compliant: <FaClipboardCheck className="mr-1" />,
     "non-compliant": <FaExclamationCircle className="mr-1" />,
     warning: <FaInfoCircle className="mr-1" />,
     unknown: <FaInfoCircle className="mr-1" />,
   };
+
   const labels = {
     compliant: "Compliant",
-    "non-compliant": "Non‑Compliant",
+    "non-compliant": "Non-Compliant",
     warning: "Warning",
     unknown: "Unknown",
   };
 
   return (
     <span
-      className={`flex items-center px-2 py-1 text-xs font-medium rounded border ${palette[displayStatus]}`}
+      className={`flex items-center rounded border px-2 py-1 text-xs font-medium ${palette[displayStatus]}`}
     >
-      {icons[displayStatus as keyof typeof icons]}
-      {labels[displayStatus as keyof typeof labels]}
+      {icons[displayStatus]}
+      {labels[displayStatus]}
     </span>
   );
 };
 
 /* ═════════════════════════ COMPONENT ═════════════════════════ */
-const ComplianceChecker: React.FC = () => {
+function ComplianceChecker() {
   /* uploaded docs */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -117,7 +109,7 @@ const ComplianceChecker: React.FC = () => {
   useEffect(() => {
     if (results) {
       if (selectedDocId) {
-        const doc = uploadedDocs.find(d => d._id === selectedDocId);
+        const doc = uploadedDocs.find((d) => d._id === selectedDocId);
         setResults({ ...results, analyzedFilename: doc?.filename });
       } else if (fileToUpload) {
         setResults({ ...results, analyzedFilename: fileToUpload.name });
@@ -125,17 +117,17 @@ const ComplianceChecker: React.FC = () => {
     }
   }, [selectedDocId, fileToUpload, uploadedDocs]);
 
-  /* ───────────────── helpers ───────────────── */
+  /* ───────────────────────── helpers ───────────────────────── */
 
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
     try {
       const docs = await listDocuments();
       setUploadedDocs(docs);
-      if (selectedDocId && !docs.find(d => d._id === selectedDocId)) {
+      if (selectedDocId && !docs.find((d) => d._id === selectedDocId)) {
         setSelectedDocId(null);
       }
-    } catch (e) {
+    } catch {
       setError("Failed to load uploaded documents.");
     } finally {
       setFetchingDocs(false);
@@ -199,7 +191,7 @@ const ComplianceChecker: React.FC = () => {
     if (!window.confirm("Delete this compliance report?")) return;
     try {
       await deleteComplianceReport(id);
-      setHistory(h => h.filter(r => r.id !== id));
+      setHistory((h) => h.filter((r) => r.id !== id));
       if (results?.report_id === id) setResults(null);
     } catch (e: any) {
       alert(e.message || "Delete failed");
@@ -208,11 +200,13 @@ const ComplianceChecker: React.FC = () => {
 
   const getFileIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
-    return ext === "pdf"
-      ? <FaFilePdf className="text-red-600" />
-      : ext === "doc" || ext === "docx"
-        ? <FaFileWord className="text-blue-600" />
-        : <FaFileAlt className="text-gray-500" />;
+    return ext === "pdf" ? (
+      <FaFilePdf className="text-red-600" />
+    ) : ext === "doc" || ext === "docx" ? (
+      <FaFileWord className="text-blue-600" />
+    ) : (
+      <FaFileAlt className="text-gray-500" />
+    );
   };
 
   /* fresh analysis */
@@ -231,7 +225,8 @@ const ComplianceChecker: React.FC = () => {
         fetchUploadedDocuments();
       } else if (selectedDocId) {
         docId = selectedDocId;
-        filename = uploadedDocs.find(d => d._id === selectedDocId)?.filename;
+        filename =
+          uploadedDocs.find((d) => d._id === selectedDocId)?.filename || "";
       } else {
         setError("Please select or upload a document.");
         return;
@@ -271,11 +266,16 @@ const ComplianceChecker: React.FC = () => {
     setError(null);
   };
 
-  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileDrop = (file: File | null) => {
+    if (!file) return;
     setError(null);
-    setFileToUpload(e.target.files?.[0] || null);
+    setFileToUpload(file);
     setSelectedDocId(null);
     setResults(null);
+  };
+
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    handleFileDrop(e.target.files?.[0] || null);
   };
 
   const reset = () => {
@@ -293,23 +293,23 @@ const ComplianceChecker: React.FC = () => {
   /* count buckets */
   const resultCounts = results
     ? results.issues.reduce(
-      (acc, { status }) => {
-        const k =
-          status.toLowerCase() === "ok"
-            ? "compliant"
-            : status.toLowerCase() === "issue found"
+        (acc, { status }) => {
+          const k =
+            status.toLowerCase() === "ok"
+              ? "compliant"
+              : status.toLowerCase() === "issue found"
               ? "non-compliant"
               : status.toLowerCase() === "warning"
-                ? "warning"
-                : "unknown";
-        (acc as any)[k]++;
-        return acc;
-      },
-      { compliant: 0, "non-compliant": 0, warning: 0, unknown: 0 }
-    )
+              ? "warning"
+              : "unknown";
+          (acc as any)[k]++;
+          return acc;
+        },
+        { compliant: 0, "non-compliant": 0, warning: 0, unknown: 0 }
+      )
     : { compliant: 0, "non-compliant": 0, warning: 0, unknown: 0 };
 
-  /* ───────────────── render ───────────────── */
+  /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
       {/* header */}
@@ -345,6 +345,7 @@ const ComplianceChecker: React.FC = () => {
             fileToUpload={fileToUpload}
             fileInputRef={fileInputRef}
             onFileChange={onFileChange}
+            handleFileDrop={handleFileDrop}
             handleAnalyze={handleAnalyze}
             error={error}
           />
@@ -359,19 +360,20 @@ const ComplianceChecker: React.FC = () => {
           />
         )}
       </section>
+
       {/* history */}
-      <section className="rounded-xl border bg-white shadow-sm p-6 mb-8">
-        <h2 className="font-medium text-[color:var(--brand-dark)] mb-4">
+      <section className="mb-8 rounded-xl border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Compliance Reports
         </h2>
         {history.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No history yet.</p>
+          <p className="text-sm italic text-gray-500">No history yet.</p>
         ) : (
           <ul className="space-y-3">
-            {history.map(h => (
+            {history.map((h) => (
               <li
                 key={h.id}
-                className="border rounded-lg p-4 flex justify-between items-center"
+                className="flex items-center justify-between rounded-lg border p-4"
               >
                 <div>
                   <p className="font-semibold">
@@ -411,9 +413,9 @@ const ComplianceChecker: React.FC = () => {
       </section>
     </div>
   );
-};
+}
 
-/* ───── SelectArea subcomponent ───── */
+/* ───────── SelectArea subcomponent ───────── */
 interface SelectProps {
   isAnalyzeDisabled: boolean;
   isFileInputDisabled: boolean;
@@ -428,11 +430,12 @@ interface SelectProps {
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleFileDrop: (f: File | null) => void;
   handleAnalyze: () => void;
   error: string | null;
 }
 
-const SelectArea: React.FC<SelectProps> = ({
+function SelectArea({
   isAnalyzeDisabled,
   isFileInputDisabled,
   analyzing,
@@ -446,156 +449,249 @@ const SelectArea: React.FC<SelectProps> = ({
   fileToUpload,
   fileInputRef,
   onFileChange,
+  handleFileDrop,
   handleAnalyze,
   error,
-}) => {
-  /* loading spinner */
+}: SelectProps) {
   if (analyzing || fetchingDocs) {
-    return (
-      <div className="mt-8 text-center text-gray-700">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
-        <p className="mt-2">
-          {analyzing ? "Analyzing…" : "Loading documents…"}
-        </p>
-      </div>
-    );
+    return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* existing docs */}
-        <div className="bg-gray-50 rounded-lg border p-6 flex flex-col items-center gap-4">
-          <p className="text-gray-700">
-            Analyze a previously uploaded document:
-          </p>
-          <div className="relative w-full">
-            <button
-              className="flex justify-between items-center w-full px-4 py-2 text-sm bg-white border rounded-md shadow-sm hover:bg-gray-50 disabled:opacity-50"
-              onClick={() => setDocSelectOpen(!docSelectOpen)}
-              disabled={fetchingDocs}
-            >
-              {selectedDocId
-                ? uploadedDocs.find(d => d._id === selectedDocId)?.filename
-                : "Choose Document"}
-              <FaChevronDown
-                className={`ml-2 transition-transform ${docSelectOpen ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-            <AnimatePresence>
-              {docSelectOpen && (
-                <motion.ul
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute z-10 mt-2 w-full bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 overflow-auto"
-                >
-                  {selectedDocId && (
-                    <li
-                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => handleDocSelection(null)}
-                    >
-                      Clear Selection
-                    </li>
-                  )}
-                  {uploadedDocs.length ? (
-                    uploadedDocs.map(doc => (
-                      <li
-                        key={doc._id}
-                        className={`px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 cursor-pointer ${selectedDocId === doc._id ? "bg-gray-100" : ""
-                          }`}
-                        onClick={() => handleDocSelection(doc._id)}
-                      >
-                        {getFileIcon(doc.filename)}
-                        {doc.filename}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-4 py-2 text-sm text-gray-500 italic">
-                      No documents uploaded yet.
-                    </li>
-                  )}
-                </motion.ul>
-              )}
-            </AnimatePresence>
-          </div>
-          {selectedDocId && (
-            <motion.button
-              onClick={handleAnalyze}
-              disabled={isAnalyzeDisabled}
-              className="mt-4 flex items-center gap-2 px-6 py-2 rounded-md text-white bg-[rgb(193,120,41)] disabled:opacity-50 hover:bg-[rgb(173,108,37)]"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {analyzing ? <FaSpinner className="animate-spin" /> : <FaSearch />}
-              {analyzing ? "Analyzing…" : "Analyze Selected"}
-            </motion.button>
-          )}
-        </div>
+    <div className="space-y-8 p-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <ExistingDocPicker
+          uploadedDocs={uploadedDocs}
+          selectedDocId={selectedDocId}
+          handleDocSelection={handleDocSelection}
+          docSelectOpen={docSelectOpen}
+          setDocSelectOpen={setDocSelectOpen}
+          getFileIcon={getFileIcon}
+          handleAnalyze={handleAnalyze}
+          isAnalyzeDisabled={isAnalyzeDisabled}
+          analyzing={analyzing}
+        />
 
-        {/* upload new */}
-        <div
-          className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-10 text-center cursor-pointer hover:border-[color:var(--accent-dark)]"
-          onClick={() => fileInputRef.current?.click()}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => {
-            e.preventDefault();
-            onFileChange(e as any);
-          }}
-          aria-disabled={isFileInputDisabled}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.txt"
-            className="hidden"
-            onChange={onFileChange}
-            disabled={isFileInputDisabled}
-          />
-          {fileToUpload ? (
-            <>
-              {getFileIcon(fileToUpload.name)}
-              <p className="mt-2">{fileToUpload.name}</p>
-              <p className="text-xs text-gray-500">
-                {(fileToUpload.size / 1048576).toFixed(2)} MB
-              </p>
-            </>
-          ) : (
-            <>
-              <FaCloudUploadAlt className="text-5xl text-gray-400" />
-              <p className="mt-2">Drag & drop or click to upload</p>
-              <p className="text-xs text-gray-400">
-                Accepted: PDF, DOCX, DOC, TXT
-              </p>
-            </>
-          )}
-        </div>
+        <UploadDropZone
+          fileToUpload={fileToUpload}
+          fileInputRef={fileInputRef}
+          isDisabled={isFileInputDisabled}
+          onFileChange={onFileChange}
+          handleFileDrop={handleFileDrop}
+          getFileIcon={getFileIcon}
+        />
       </div>
 
       {fileToUpload && !selectedDocId && (
         <div className="text-center">
-          <motion.button
+          <AnalyzeButton
             onClick={handleAnalyze}
             disabled={isAnalyzeDisabled}
-            className="flex items-center gap-2 px-6 py-2 rounded-md text-white bg-[rgb(193,120,41)] disabled:opacity-50 hover:bg-[rgb(173,108,37)]"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {analyzing ? <FaSpinner className="animate-spin" /> : <FaSearch />}
-            {analyzing ? "Analyzing…" : "Analyze Uploaded"}
-          </motion.button>
+            busy={analyzing}
+            label="Analyze Uploaded"
+          />
         </div>
       )}
 
       {error && (
-        <p className="text-center text-sm text-red-600 mt-4">{error}</p>
+        <p className="mt-4 text-center text-sm text-red-600">{error}</p>
       )}
     </div>
   );
-};
+}
 
-/* ───── ResultView subcomponent ───── */
+/* ───────── smaller atoms ───────── */
+
+function Spinner({ label }: { label: string }) {
+  return (
+    <div className="mt-8 text-center text-gray-700">
+      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
+      <p className="mt-2">{label}</p>
+    </div>
+  );
+}
+
+function AnalyzeButton({
+  onClick,
+  disabled,
+  busy,
+  label,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  busy: boolean;
+  label: string;
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)] disabled:opacity-50"
+      whileHover={{ scale: disabled ? 1 : 1.05 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
+    >
+      {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
+      {busy ? "Analyzing…" : label}
+    </motion.button>
+  );
+}
+
+function ExistingDocPicker(props: {
+  uploadedDocs: DocumentRecord[];
+  selectedDocId: string | null;
+  handleDocSelection: (id: string | null) => void;
+  docSelectOpen: boolean;
+  setDocSelectOpen: (v: boolean) => void;
+  getFileIcon: (f: string) => JSX.Element;
+  handleAnalyze: () => void;
+  isAnalyzeDisabled: boolean;
+  analyzing: boolean;
+}) {
+  const {
+    uploadedDocs,
+    selectedDocId,
+    handleDocSelection,
+    docSelectOpen,
+    setDocSelectOpen,
+    getFileIcon,
+    handleAnalyze,
+    isAnalyzeDisabled,
+    analyzing,
+  } = props;
+
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
+      <p className="text-gray-700">Analyze a previously uploaded document:</p>
+      <div className="relative w-full">
+        <button
+          className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
+          onClick={() => setDocSelectOpen(!docSelectOpen)}
+          disabled={analyzing}
+        >
+          {selectedDocId
+            ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
+            : "Choose Document"}
+          <FaChevronDown
+            className={`ml-2 transition-transform ${
+              docSelectOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+        <AnimatePresence>
+          {docSelectOpen && (
+            <motion.ul
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+            >
+              {selectedDocId && (
+                <li
+                  className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => handleDocSelection(null)}
+                >
+                  Clear Selection
+                </li>
+              )}
+              {uploadedDocs.length ? (
+                uploadedDocs.map((doc) => (
+                  <li
+                    key={doc._id}
+                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      selectedDocId === doc._id ? "bg-gray-100" : ""
+                    }`}
+                    onClick={() => handleDocSelection(doc._id)}
+                  >
+                    {getFileIcon(doc.filename)}
+                    {doc.filename}
+                  </li>
+                ))
+              ) : (
+                <li className="px-4 py-2 text-sm italic text-gray-500">
+                  No documents uploaded yet.
+                </li>
+              )}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </div>
+      {selectedDocId && (
+        <AnalyzeButton
+          onClick={handleAnalyze}
+          disabled={isAnalyzeDisabled}
+          busy={analyzing}
+          label="Analyze Selected"
+        />
+      )}
+    </div>
+  );
+}
+
+function UploadDropZone(props: {
+  fileToUpload: File | null;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  isDisabled: boolean;
+  onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleFileDrop: (f: File | null) => void;
+  getFileIcon: (f: string) => JSX.Element;
+}) {
+  const {
+    fileToUpload,
+    fileInputRef,
+    isDisabled,
+    onFileChange,
+    handleFileDrop,
+    getFileIcon,
+  } = props;
+
+  return (
+    <div
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
+        isDisabled
+          ? "cursor-not-allowed opacity-60"
+          : "cursor-pointer hover:border-[color:var(--accent-dark)]"
+      }`}
+      onClick={() => !isDisabled && fileInputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        if (isDisabled) return;
+        const f = e.dataTransfer.files?.[0];
+        if (f) handleFileDrop(f);
+      }}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.txt"
+        className="hidden"
+        disabled={isDisabled}
+        onChange={onFileChange}
+      />
+
+      {fileToUpload ? (
+        <>
+          {getFileIcon(fileToUpload.name)}
+          <p className="mt-2">{fileToUpload.name}</p>
+          <p className="text-xs text-gray-500">
+            {(fileToUpload.size / 1048576).toFixed(2)} MB
+          </p>
+        </>
+      ) : (
+        <>
+          <FaCloudUploadAlt className="text-5xl text-gray-400" />
+          <p className="mt-2">Drag & drop or click to upload</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX, DOC, TXT</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ───────── ResultView subcomponent ────────── (unchanged) */
 interface ResultProps {
   results: DisplayAnalysisResult;
   resultCounts: Record<
@@ -608,113 +704,120 @@ interface ResultProps {
   reset: () => void;
 }
 
-const ResultView: React.FC<ResultProps> = ({
+function ResultView({
   results,
   resultCounts,
   ComplianceStatus,
   getFileIcon,
   handleDownloadReport,
   reset,
-}) => (
-  <>
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b bg-gray-50 p-6">
-      <div className="flex items-center gap-3">
-        {results.analyzedFilename ? (
-          getFileIcon(results.analyzedFilename)
-        ) : (
-          <FaFileAlt className="text-2xl text-gray-500" />
-        )}
-        <div>
-          <h3 className="font-medium text-gray-800">{results.analyzedFilename}</h3>
-          <p className="text-xs text-gray-500">Report ID: {results.report_id}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Overall Status</p>
-          <ComplianceStatus status={results.overallStatus} />
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-gray-500">Score</p>
-          <p className="text-lg font-bold text-gray-800">
-            {results.complianceScore}/100
-          </p>
-        </div>
-        <motion.button
-          onClick={handleDownloadReport}
-          disabled={!results.report_id}
-          className="flex items-center gap-1 px-4 py-2 rounded-md text-sm text-white bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)] disabled:opacity-50"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FaDownload /> PDF
-        </motion.button>
-        <motion.button
-          onClick={reset}
-          className="flex items-center gap-1 px-4 py-2 rounded-md text-sm text-white bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)]"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Analyze Another
-        </motion.button>
-      </div>
-    </div>
-
-    {/* cards */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-      {(["compliant", "non-compliant", "warning"] as const).map(k => (
-        <div
-          key={k}
-          className="rounded-lg border bg-gray-50 p-4 text-center"
-          style={{ boxShadow: SHADOW }}
-        >
-          <p className="text-xs text-gray-500 mb-1">
-            {k.charAt(0).toUpperCase() + k.slice(1)} Items
-          </p>
-          <p className="text-2xl font-bold text-gray-800">{resultCounts[k]}</p>
-        </div>
-      ))}
-    </div>
-
-    {/* list */}
-    <div className="space-y-4 p-6">
-      {results.issues.map((it, i) => (
-        <div
-          key={`${results.report_id}-${it.rule_id}-${i}`}
-          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-            <p className="font-medium text-gray-800">
-              {it.description}
-              <span className="ml-2 bg-gray-100 text-xs text-gray-500 px-2 py-0.5 rounded">
-                Rule ID: {it.rule_id}
-              </span>
-            </p>
-            <ComplianceStatus status={it.status} />
-          </div>
-          {it.status.toLowerCase() !== "ok" && (
-            <div className="flex gap-2 bg-[color:var(--accent-light)]/50 p-3 rounded-md">
-              <FaInfoCircle className="text-[color:var(--accent-dark)] mt-1" />
-              <div className="text-[color:var(--accent-dark)] text-sm space-y-2">
-                <p>{it.description}</p>
-                {it.extracted_text_snippet && (
-                  <p className="bg-white border italic p-2 rounded">
-                    “{it.extracted_text_snippet}”
-                  </p>
-                )}
-              </div>
-            </div>
+}: ResultProps) {
+  return (
+    <>
+      {/* header bar */}
+      <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          {results.analyzedFilename ? (
+            getFileIcon(results.analyzedFilename)
+          ) : (
+            <FaFileAlt className="text-2xl text-gray-500" />
           )}
+          <div>
+            <h3 className="font-medium text-gray-800">
+              {results.analyzedFilename}
+            </h3>
+            <p className="text-xs text-gray-500">
+              Report ID: {results.report_id}
+            </p>
+          </div>
         </div>
-      ))}
-      {results.issues.length === 0 && (
-        <p className="text-center text-gray-600 italic">
-          No compliance issues found.
-        </p>
-      )}
-    </div>
-  </>
-);
+
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="text-center">
+            <p className="text-xs text-gray-500">Overall Status</p>
+            <ComplianceStatus status={results.overallStatus} />
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500">Score</p>
+            <p className="text-lg font-bold text-gray-800">
+              {results.complianceScore}/100
+            </p>
+          </div>
+          <motion.button
+            onClick={handleDownloadReport}
+            className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-2 text-sm text-white hover:bg-[color:var(--accent-light)]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FaDownload /> PDF
+          </motion.button>
+          <motion.button
+            onClick={reset}
+            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Analyze Another
+          </motion.button>
+        </div>
+      </div>
+
+      {/* summary cards */}
+      <div className="grid gap-4 p-6 md:grid-cols-3">
+        {(["compliant", "non-compliant", "warning"] as const).map((k) => (
+          <div
+            key={k}
+            className="rounded-lg border bg-gray-50 p-4 text-center shadow-sm"
+          >
+            <p className="mb-1 text-xs text-gray-500">
+              {k.charAt(0).toUpperCase() + k.slice(1)} Items
+            </p>
+            <p className="text-2xl font-bold text-gray-800">
+              {resultCounts[k]}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* detailed list */}
+      <div className="space-y-4 p-6">
+        {results.issues.map((it, i) => (
+          <div
+            key={`${results.report_id}-${it.rule_id}-${i}`}
+            className="rounded-lg border p-4 transition-shadow hover:shadow-md"
+          >
+            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <p className="font-medium text-gray-800">
+                {it.description}
+                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                  Rule ID: {it.rule_id}
+                </span>
+              </p>
+              <ComplianceStatus status={it.status} />
+            </div>
+            {it.status.toLowerCase() !== "ok" && (
+              <div className="flex gap-2 rounded-md border border-[color:var(--accent-dark)]/50 bg-[color:var(--accent-light)]/50 p-3 text-sm">
+                <FaInfoCircle className="mt-1 text-[color:var(--accent-dark)]" />
+                <div className="space-y-2 text-[color:var(--accent-dark)]">
+                  <p>{it.description}</p>
+                  {it.extracted_text_snippet && (
+                    <p className="rounded border bg-white p-2 italic">
+                      “{it.extracted_text_snippet}”
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        {results.issues.length === 0 && (
+          <p className="text-center italic text-gray-600">
+            No compliance issues found.
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default ComplianceChecker;
