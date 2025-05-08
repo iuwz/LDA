@@ -206,15 +206,17 @@ function ComplianceChecker() {
     }
   }
 
+  const FILE_ICON_SIZE = "text-5xl";
+
   const getFileIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
-    return ext === "pdf" ? (
-      <FaFilePdf className="text-red-600" />
-    ) : ext === "doc" || ext === "docx" ? (
-      <FaFileWord className="text-blue-600" />
-    ) : (
-      <FaFileAlt className="text-gray-500" />
-    );
+    if (ext === "pdf") {
+      return <FaFilePdf className={`${FILE_ICON_SIZE} text-red-600`} />;
+    }
+    if (ext === "doc" || ext === "docx") {
+      return <FaFileWord className={`${FILE_ICON_SIZE} text-blue-600`} />;
+    }
+    return <FaFileAlt className={`${FILE_ICON_SIZE} text-gray-500`} />;
   };
 
   /* fresh analysis */
@@ -377,12 +379,14 @@ function ComplianceChecker() {
                       <FaSearch /> View
                     </button>
                     {h.report_doc_id && (
-                      <button
+                      <motion.button
                         onClick={() => downloadComplianceReportPdf(h.id)}
-                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                        className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaDownload /> Download
-                      </button>
+                      </motion.button>
                     )}
                     <button
                       onClick={() => removeReport(h.id)}
@@ -572,7 +576,7 @@ function AnalyzeButton({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)] disabled:opacity-50"
+      className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)]"
       whileHover={{ scale: disabled ? 1 : 1.05 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
     >
@@ -761,7 +765,7 @@ function ResultView({
           {results.analyzedFilename ? (
             getFileIcon(results.analyzedFilename)
           ) : (
-            <FaFileAlt className="text-2xl text-gray-500" />
+            <FaFileAlt className="text-5xl text-gray-500" />
           )}
           <div>
             <h3 className="font-medium text-gray-800">
