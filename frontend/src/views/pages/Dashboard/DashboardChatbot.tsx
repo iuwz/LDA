@@ -184,7 +184,7 @@ const DashboardChatbot: React.FC = () => {
       <div className="bg-[color:var(--accent-dark)] text-white p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FaRobot className="text-2xl" />
-          <h1 className="text-xl font-semibold">Legal Assistant</h1>
+          <h1 className="text-xl font-semibold">LDA Assistant</h1>
         </div>
         <div className="flex space-x-1">
           {(["chat", "history"] as const).map((t) => (
@@ -192,8 +192,8 @@ const DashboardChatbot: React.FC = () => {
               key={t}
               onClick={() => setView(t)}
               className={`px-3 py-1 rounded-md text-sm font-medium ${view === t
-                  ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
-                  : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
+                ? "bg-white text-[color:var(--accent-dark)] border border-[color:var(--accent-dark)]"
+                : "bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
                 }`}
             >
               {t === "chat" ? "Chat" : "History"}
@@ -236,8 +236,8 @@ const DashboardChatbot: React.FC = () => {
                     >
                       <div
                         className={`max-w-[80%] rounded-lg p-3 ${m.sender === "user"
-                            ? "bg-[color:var(--accent-dark)] text-white"
-                            : "bg-white border border-[#DDD0C8] text-[#3E2723]"
+                          ? "bg-[color:var(--accent-dark)] text-white"
+                          : "bg-white border border-[#DDD0C8] text-[#3E2723]"
                           }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{m.text}</p>
@@ -308,8 +308,8 @@ const DashboardChatbot: React.FC = () => {
                     onClick={send}
                     disabled={!input.trim() || isTyping}
                     className={`w-full sm:w-11 h-10 sm:h-11 flex-shrink-0 flex items-center justify-center text-white rounded-lg transition-colors ${input.trim() && !isTyping
-                        ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-                        : "bg-gray-300 cursor-not-allowed"
+                      ? "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                      : "bg-gray-300 cursor-not-allowed"
                       }`}
                   >
                     <FaPaperPlane size={18} />
@@ -356,8 +356,8 @@ const DashboardChatbot: React.FC = () => {
                       key={c.id}
                       onClick={() => loadSession(c.id)}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${active?.id === c.id
-                          ? "border-2 border-[color:var(--accent-dark)]"
-                          : "border border-gray-200 hover:bg-gray-100"
+                        ? "border-2 border-[color:var(--accent-dark)]"
+                        : "border border-gray-200 hover:bg-gray-100"
                         }`}
                     >
                       <div className="flex justify-between items-center">
