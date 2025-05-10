@@ -1,7 +1,7 @@
 # backend/app/mvc/views/admin.py
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from app.utils.security import require_admin
+from backend.app.utils.security import require_admin
 from backend.app.mvc.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
