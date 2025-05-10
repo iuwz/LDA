@@ -50,26 +50,27 @@ class UpdateMe(BaseModel):
 def create_app() -> FastAPI:
     app = FastAPI(title="Legal Document Analyzer (LDA)")
 
-    @app.on_event("startup")
-    async def on_startup():
-        await init_db(app)
-        logging.info("Database initialized.")
-
-        app.add_middleware(
+    # CORS Middleware
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "http://localhost:5173",
             "https://lda-71x7.onrender.com",
             "https://lda-1-dcto.onrender.com"
         ],
-        allow_credentials=True,  # Ensure cookies are allowed
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["Content-Disposition"],
     )
 
-
+    # JWT Middleware
     app.add_middleware(JWTMiddleware)
+
+    @app.on_event("startup")
+    async def on_startup():
+        await init_db(app)
+        logging.info("Database initialized.")
 
     # Routers
     app.include_router(auth_router, prefix="/auth", tags=["Auth"])
