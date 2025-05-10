@@ -18,11 +18,3 @@ services:
         value: YOUR_SMTP_USER_HERE
       - key: SMTP_PASS
         value: YOUR_SMTP_PASS_HERE
-
-  - name: frontend-service
-    type: static
-    buildCommand: "cd frontend && npm install && npm run build"
-    publishPath: "frontend/dist"
-    envVars:
-      - key: VITE_API_URL
-        value: "https://lda-71x7.onrender.com"
