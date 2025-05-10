@@ -54,7 +54,6 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "http://localhost:5173",
             "https://lda-71x7.onrender.com",
             "https://lda-1-dcto.onrender.com"
         ],
