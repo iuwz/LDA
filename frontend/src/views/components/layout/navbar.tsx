@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
-  // 👇 NEW: keep track of whether we’ve finished checking auth
+  // track auth state
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initials, setInitials] = useState("");
@@ -25,11 +25,7 @@ const Navbar: React.FC = () => {
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
-  /* ──────────────────────────────────────────────────────────
-     1. Fetch current user once, set both isAuthenticated and
-        authChecked.  Until authChecked === true we won’t show
-        auth-dependent buttons, so no flicker.
-  ─────────────────────────────────────────────────────────── */
+  // fetch auth status once
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -40,10 +36,10 @@ const Navbar: React.FC = () => {
         );
       })
       .catch(() => setIsAuthenticated(false))
-      .finally(() => setAuthChecked(true)); // <- done checking
+      .finally(() => setAuthChecked(true));
   }, []);
 
-  /* … (all the other effects stay the same) … */
+  // handle resize
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -53,6 +49,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // close profile dropdown on outside click
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -67,6 +64,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
+  // lock scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -74,6 +72,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  // smooth‐scroll to services
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -82,7 +81,6 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
-  /* ────────────────────────────────────────────────────────── */
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
 
@@ -110,7 +108,6 @@ const Navbar: React.FC = () => {
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
-  /* ────────────────────────────────────────────────────────── */
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
       {/* Desktop Navbar */}
@@ -239,7 +236,7 @@ const Navbar: React.FC = () => {
               </>
             )
           ) : (
-            /* Placeholder while figuring out auth (prevents width jump) */
+            /* Placeholder while figuring out auth */
             <div className="h-8 w-32" />
           )}
         </div>
@@ -259,8 +256,83 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* … mobile menu markup stays unchanged … */}
-      {/* (No need to edit – authChecked logic already prevents flash) */}
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 bg-white pt-20 flex flex-col items-center space-y-6">
+          <NavLink
+            to="/"
+            end
+            className="text-xl"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Home
+          </NavLink>
+
+          {authChecked && isAuthenticated && (
+            <NavLink
+              to="/dashboard"
+              className="text-xl"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Dashboard
+            </NavLink>
+          )}
+
+          <Link
+            to="/#services"
+            className="text-xl"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Services
+          </Link>
+
+          <NavLink
+            to="/about"
+            className="text-xl"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            About
+          </NavLink>
+          <NavLink
+            to="/contact"
+            className="text-xl"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Contact
+          </NavLink>
+
+          {!authChecked ? (
+            <div className="h-8 w-32" />
+          ) : isAuthenticated ? (
+            <>
+              <button
+                className="text-xl"
+                onClick={() => {
+                  navigate("/dashboard/profile");
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Profile
+              </button>
+              <button
+                className="text-xl text-red-600"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="text-xl" onClick={handleLoginClick}>
+                Login
+              </button>
+              <button className="text-xl" onClick={handleRegisterClick}>
+                Register
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
