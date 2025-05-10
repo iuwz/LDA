@@ -1,12 +1,14 @@
 # backend/app/core/openai_client.py
 import os
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 
-# ──────────────────────────────────────────────────────────────
-load_dotenv()  # pulls secrets from .env
-openai.api_key = os.getenv("OPENAI_API_KEY")
-# ──────────────────────────────────────────────────────────────
+# Load environment variables from .env
+load_dotenv()
+
+# Instantiate the OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 def call_gpt(
     prompt: str,
@@ -35,19 +37,20 @@ def call_gpt(
         Assistant’s reply, or ``None`` if an exception occurred.
     """
     try:
-        messages = []
+        messages: list[dict[str, str]] = []
         if system_message:
             messages.append({"role": "system", "content": system_message})
         messages.append({"role": "user", "content": prompt})
 
         # Construct the parameters for chat completion
-        chat_kwargs = {"model": model, "messages": messages}
+        chat_kwargs: dict = {"model": model, "messages": messages}
 
         # Attach temperature only for models that support it
         if model not in {"o4-mini", "o4"} and temperature is not None:
             chat_kwargs["temperature"] = temperature
 
-        response = openai.ChatCompletion.create(**chat_kwargs)
+        # Use the new 1.x client interface
+        response = client.chat.completions.create(**chat_kwargs)
         return response.choices[0].message.content.strip()
 
     except Exception as e:
