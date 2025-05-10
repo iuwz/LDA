@@ -1,13 +1,15 @@
 # backend/app/utils/email_utils.py
-
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "legaldocumentanalyzer@gmail.com"
-SMTP_PASS = "bnprwbibptzleouv"  # No spaces!
+load_dotenv()
+SMTP_USER = os.environ.get("SMTP_USER")
+SMTP_PASS = os.environ.get("SMTP_PASS")
 
 def send_reset_email(to_email: str, reset_link: str):
     subject = "Password Reset Request"

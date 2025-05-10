@@ -29,7 +29,7 @@ import ComplianceChecker from "./views/pages/Dashboard/ComplianceChecker";
 import TranslationTool from "./views/pages/Dashboard/TranslationTool";
 import DashboardChatbot from "./views/pages/Dashboard/DashboardChatbot";
 import EditProfile from "./views/pages/Dashboard/EditProfile";
-import Settings from "./views/pages/Dashboard/Settings";
+
 
 /* ── Admin page ──────────────────────── */
 import AdminPage from "./views/pages/Admin/AdminPage";
