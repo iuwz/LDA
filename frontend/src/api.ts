@@ -6,6 +6,7 @@
 ──────────────────────────────────────────────────────────────── */
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://lda-71x7.onrender.com";
+console.log("API_BASE:", API_BASE);  // Debugging output
 
 const common: RequestInit = {
     credentials: "include",
