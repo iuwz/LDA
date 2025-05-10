@@ -55,18 +55,19 @@ def create_app() -> FastAPI:
         await init_db(app)
         logging.info("Database initialized.")
 
-    app.add_middleware(
+        app.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "http://localhost:5173",
             "https://lda-71x7.onrender.com",
             "https://lda-1-dcto.onrender.com"
         ],
-        allow_credentials=True,
+        allow_credentials=True,  # Ensure cookies are allowed
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["Content-Disposition"],
     )
+
 
     app.add_middleware(JWTMiddleware)
 

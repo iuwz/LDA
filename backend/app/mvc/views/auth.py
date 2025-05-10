@@ -44,7 +44,7 @@ async def login(payload: LoginRequest, req: Request):
             key="access_token",
             value=token,
             httponly=True,
-            secure=False,                      # set True when using HTTPS
+            secure=True,                      # set True when using HTTPS
             samesite="lax",
             max_age=30 * 24 * 60 * 60,         # 30 days in seconds
         )

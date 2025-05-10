@@ -25,6 +25,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
             token = auth_header.split(None, 1)[1].strip()
         else:
             token = request.cookies.get("access_token")
+            print(f"JWT Middleware - Token from cookie: {token}")
 
         if token:
             try:
