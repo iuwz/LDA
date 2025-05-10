@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "./button";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 interface FileUploadProps {
   /** Called with the new document’s ID after a successful upload */

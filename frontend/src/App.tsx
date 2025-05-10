@@ -10,7 +10,7 @@ import {
 } from "react-router-dom";
 
 /* ── ENV ─────────────────────────────── */
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 /* ── Public pages ────────────────────── */
 import Home from "./views/pages/Home/home";
@@ -177,7 +177,7 @@ export default function App() {
             <>
               <Navbar />
               <ForgotPassword />
-              
+
             </>
           }
         />
@@ -187,7 +187,7 @@ export default function App() {
             <>
               <Navbar />
               <ResetPassword />
-              
+
             </>
           }
         />

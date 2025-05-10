@@ -5,7 +5,7 @@ import { FaBalanceScale, FaBars, FaTimes } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
 
 const Navbar: React.FC = () => {

@@ -22,7 +22,7 @@ import { logout } from "../../../api";
 import { HiHome } from "react-icons/hi";
 
 // Base URL for back-end
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
@@ -161,11 +161,10 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${
-                   isActive
-                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                     : "text-gray-700 hover:bg-gray-100"
-                 }`
+                 ${isActive
+                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                  : "text-gray-700 hover:bg-gray-100"
+                }`
               }
             >
               <Icon className="mr-3" />
@@ -179,11 +178,10 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${
-                   isActive
-                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                     : "text-gray-700 hover:bg-gray-100"
-                 }`
+                 ${isActive
+                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                  : "text-gray-700 hover:bg-gray-100"
+                }`
               }
             >
               <FaUserShield className="mr-3" />
@@ -256,9 +254,8 @@ const DashboardLayout: React.FC = () => {
       </aside>
 
       <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-          open ? "md:pl-64" : "md:pl-0"
-        }`}
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${open ? "md:pl-64" : "md:pl-0"
+          }`}
       >
         <header className="flex items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 h-12">
           <div className="flex items-center">

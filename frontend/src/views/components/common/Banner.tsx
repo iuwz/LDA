@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { FaUser } from "react-icons/fa";
 
 // Base URL for your FastAPI backend
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 const ACCENT = { dark: "#C17829", light: "#E3A063" };
 const BRAND = { dark: "#2C2C4A", light: "#444474" };

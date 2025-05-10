@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
   new Date(parseInt(id.substring(0, 8), 16) * 1000).toLocaleString();
 

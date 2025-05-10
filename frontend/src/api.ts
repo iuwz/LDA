@@ -5,7 +5,7 @@
    ─ Risk & Compliance helpers now line‑up with the new backend
 ──────────────────────────────────────────────────────────────── */
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 const common: RequestInit = {
     credentials: "include",
