@@ -3,8 +3,8 @@ services:
     type: web
     env: python
     plan: free
-    buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000"
     envVars:
       - key: SECRET_KEY
         value: YOUR_SECRET_KEY_HERE
@@ -25,4 +25,4 @@ services:
     publishPath: "frontend/dist"
     envVars:
       - key: VITE_API_URL
-        value: "https://backend-service.onrender.com"
+        value: "https://lda-71x7.onrender.com"

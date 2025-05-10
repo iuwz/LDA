@@ -16,15 +16,15 @@ from fastapi import (
 from pydantic import BaseModel, EmailStr
 from starlette.middleware.cors import CORSMiddleware
 
-from backend.app.core.database import init_db
-from backend.app.middleware.jwt_middleware import JWTMiddleware
-from backend.app.mvc.controllers.analysis import analyze_risk, get_risk_report
-
+from app.core.database import init_db
+from app.middleware.jwt_middleware import JWTMiddleware
+from app.mvc.controllers.analysis import analyze_risk, get_risk_report
 from app.mvc.controllers.rephrase import extract_full_text_from_stream
 from app.mvc.controllers.documents import (
     upload_file_to_gridfs,
     store_document_record,
 )
+
 from app.mvc.models.user import UserInDB
 from app.utils.security import (
     get_current_user,
