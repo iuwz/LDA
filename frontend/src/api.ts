@@ -5,7 +5,7 @@
    ─ Risk & Compliance helpers now line‑up with the new backend
 ──────────────────────────────────────────────────────────────── */
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://lda-71x7.onrender.com";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://lda-new-backend.onrender.com";
 console.log("API_BASE:", API_BASE);  // Debugging output
 
 const common: RequestInit = {
