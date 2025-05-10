@@ -24,7 +24,7 @@ from typing import Optional, Any
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.core.openai_client import call_gpt
+from backend.app.core.openai_client import call_gpt
 
 logger = logging.getLogger(__name__)
 COLL = "chat_sessions"

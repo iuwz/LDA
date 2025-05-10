@@ -20,15 +20,15 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
-from app.core.openai_client import call_gpt
-from app.mvc.controllers.documents import (
+from backend.app.core.openai_client import call_gpt
+from backend.app.mvc.controllers.documents import (
     get_document_record,
     open_gridfs_file,
     extract_full_text_from_stream,
     upload_file_to_gridfs,
     store_document_record,
 )
-from app.mvc.models.compliance import ComplianceIssue
+from backend.app.mvc.models.compliance import ComplianceIssue
 
 logger = logging.getLogger(__name__)
 

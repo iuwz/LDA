@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from app.utils.security import require_admin
-from app.mvc.models.user import UserInDB
+from backend.app.mvc.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter( tags=["Admin"])

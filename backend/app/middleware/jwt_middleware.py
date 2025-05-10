@@ -3,7 +3,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from app.utils.jwt_utils import decode_access_token
+from backend.app.utils.jwt_utils import decode_access_token
 
 
 class JWTMiddleware(BaseHTTPMiddleware):
@@ -18,7 +18,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":          # let CORS answer pre‑flights
             return await call_next(request)
 
-        token: str | None = None
+        token = None
 
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.lower().startswith("bearer "):
@@ -27,8 +27,12 @@ class JWTMiddleware(BaseHTTPMiddleware):
             token = request.cookies.get("access_token")
 
         if token:
-            payload = decode_access_token(token)
-            request.state.user_id = payload.get("sub") if payload else None
+            try:
+                payload = decode_access_token(token)
+                request.state.user_id = payload.get("sub") if payload else None
+            except Exception as e:
+                request.state.user_id = None
+                print(f"JWT Middleware Error: {e}")
         else:
             request.state.user_id = None
 

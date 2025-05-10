@@ -10,12 +10,12 @@ from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-from app.mvc.controllers.translate import (
+from backend.app.mvc.controllers.translate import (
     run_translation_tool,
     run_file_translation_tool,
 )
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
 
 router = APIRouter(tags=["Translation"])
 log = logging.getLogger(__name__)

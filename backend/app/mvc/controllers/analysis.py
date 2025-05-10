@@ -15,8 +15,9 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
-from app.core.openai_client import call_gpt
-from app.mvc.controllers.documents import upload_file_to_gridfs, store_document_record
+from backend.app.core.openai_client import call_gpt
+from backend.app.mvc.controllers.documents import upload_file_to_gridfs, store_document_record
+
 
 logger = logging.getLogger(__name__)
 

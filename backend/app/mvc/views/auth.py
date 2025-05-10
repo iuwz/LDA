@@ -2,12 +2,12 @@
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from app.utils.email_utils import send_reset_email
-from app.utils.security import generate_reset_token, verify_reset_token, get_password_hash
+from backend.app.utils.email_utils import send_reset_email
+from backend.app.utils.security import generate_reset_token, verify_reset_token, get_password_hash
 from pydantic import EmailStr
 
-from app.mvc.models.user import User
-from app.mvc.controllers.auth import register_user, login_user
+from backend.app.mvc.models.user import User
+from backend.app.mvc.controllers.auth import register_user, login_user
 
 router = APIRouter()
 

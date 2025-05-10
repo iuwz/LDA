@@ -13,15 +13,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.mvc.controllers.compliance import (
+from backend.app.mvc.controllers.compliance import (
     run_compliance_check,
     get_compliance_report,
     generate_compliance_report_docx,
     generate_compliance_report_pdf,
 )
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
-from app.mvc.models.compliance import ComplianceReportResponse
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
+from backend.app.mvc.models.compliance import ComplianceReportResponse
 
 router = APIRouter(tags=["Compliance"])
 log = logging.getLogger(__name__)

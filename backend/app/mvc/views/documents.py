@@ -18,7 +18,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 
-from app.mvc.controllers.documents import (
+from backend.app.mvc.controllers.documents import (
     upload_file_to_gridfs,
     store_document_record,
     list_user_documents,
@@ -26,8 +26,8 @@ from app.mvc.controllers.documents import (
     get_document_record,
     open_gridfs_file,
 )
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
 
 # Setup logger for this module
 logger = logging.getLogger(__name__)

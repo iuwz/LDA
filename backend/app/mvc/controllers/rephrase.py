@@ -11,13 +11,13 @@ from typing import Optional, Dict, Any
 from bson import ObjectId
 from datetime import datetime
 
-from app.mvc.controllers.documents import (
+from backend.app.mvc.controllers.documents import (
     get_document_record,
     open_gridfs_file,
     store_document_record,
     upload_file_to_gridfs,
 )
-from app.core.openai_client import call_gpt
+from backend.app.core.openai_client import call_gpt
 
 # Try optional imports
 try:

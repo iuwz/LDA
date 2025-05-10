@@ -8,9 +8,9 @@ from bson import ObjectId
 from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.mvc.controllers.rephrase import run_rephrase_tool
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
+from backend.app.mvc.controllers.rephrase import run_rephrase_tool
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
 
 router = APIRouter(tags=["Rephrase"])
 logger = logging.getLogger(__name__)

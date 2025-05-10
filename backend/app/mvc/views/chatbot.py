@@ -4,9 +4,9 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from app.mvc.controllers.chatbot import chat as chat_logic, list_sessions, get_messages
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
+from backend.app.mvc.controllers.chatbot import chat as chat_logic, list_sessions, get_messages
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
 
 router = APIRouter(tags=["Chatbot"])
 logger = logging.getLogger(__name__)

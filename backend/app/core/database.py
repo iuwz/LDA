@@ -7,7 +7,7 @@ from fastapi import FastAPI
 load_dotenv()  # Read from .env
 
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "legaldb")
+DB_NAME = os.getenv("DB_NAME", "LDA")
 
 async def init_db(app: FastAPI):
     """

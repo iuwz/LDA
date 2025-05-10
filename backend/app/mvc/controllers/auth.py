@@ -1,9 +1,15 @@
 # backend/app/mvc/controllers/auth.py
-from app.mvc.models.user import User, UserInDB
+from backend.app.mvc.models.user import User, UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import HTTPException
 from passlib.context import CryptContext
-from app.utils.jwt_utils import create_access_token
+from backend.app.utils.jwt_utils import create_access_token
+
+
+
+
+
+
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

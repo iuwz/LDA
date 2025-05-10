@@ -24,9 +24,9 @@ from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Pt, Inches
 
-from app.core.openai_client import call_gpt
-from app.mvc.controllers.rephrase import extract_full_text_from_stream
-from app.mvc.controllers.documents import (
+from backend.app.core.openai_client import call_gpt
+from backend.app.mvc.controllers.rephrase import extract_full_text_from_stream
+from backend.app.mvc.controllers.documents import (
     upload_file_to_gridfs,
     store_document_record,
 )

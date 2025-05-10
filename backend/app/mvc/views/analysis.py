@@ -3,9 +3,9 @@
 import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
-from app.mvc.controllers.analysis import analyze_risk, get_risk_report
-from app.utils.security import get_current_user
-from app.mvc.models.user import UserInDB
+from backend.app.mvc.controllers.analysis import analyze_risk, get_risk_report
+from backend.app.utils.security import get_current_user
+from backend.app.mvc.models.user import UserInDB
 
 router = APIRouter(tags=["Analysis"])
 
