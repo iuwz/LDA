@@ -2,15 +2,14 @@
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+
 from backend.app.utils.email_utils import send_reset_email
 from backend.app.utils.security import (
     generate_reset_token,
     verify_reset_token,
     get_password_hash,
 )
-from pydantic import EmailStr
-
 from backend.app.mvc.models.user import User
 from backend.app.mvc.controllers.auth import register_user, login_user
 
@@ -26,11 +25,29 @@ class LoginRequest(BaseModel):
 async def register(user: User, request: Request):
     db = request.app.state.db
     try:
+        # Create the user
         saved = await register_user(user, db)
-        return {
-            "message": "User registered successfully",
-            "user": saved.dict(),
-        }
+        # Auto-login: generate token and set cookie
+        auth_result = await login_user(user.email, user.hashed_password, db)
+        token = auth_result["access_token"]
+
+        # Prepare response and set auth cookie
+        resp = JSONResponse(
+            content={
+                "message": "User registered and logged in successfully",
+                "user": saved.dict(),
+            }
+        )
+        resp.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="None",
+            max_age=30 * 24 * 60 * 60,  # 30 days
+        )
+        return resp
+
     except HTTPException:
         raise
     except Exception:
@@ -49,8 +66,8 @@ async def login(payload: LoginRequest, req: Request):
             key="access_token",
             value=token,
             httponly=True,
-            secure=True,          # must match delete attributes
-            samesite="None",      # must match delete attributes
+            secure=True,
+            samesite="None",
             max_age=30 * 24 * 60 * 60,  # 30 days
         )
         return resp
@@ -70,8 +87,8 @@ async def logout(response: Response):
         key="access_token",
         path="/",
         httponly=True,
-        secure=True,     # match login
-        samesite="None", # match login
+        secure=True,
+        samesite="None",
     )
     return {"message": "Logged out successfully"}
 
