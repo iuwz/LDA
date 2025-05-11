@@ -323,12 +323,25 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <button className="text-xl" onClick={handleLoginClick}>
-                Login
-              </button>
-              <button className="text-xl" onClick={handleRegisterClick}>
+              <Button
+                size="md"
+                variant="secondary"
+                className="rounded-full"
+                onClick={handleLoginClick}
+              >
+                <div className="flex items-center space-x-1">
+                  <LogIn size={16} />
+                  <span>Login</span>
+                </div>
+              </Button>
+              <Button
+                size="md"
+                variant="primary"
+                className="rounded-full"
+                onClick={handleRegisterClick}
+              >
                 Register
-              </button>
+              </Button>
             </>
           )}
         </div>
