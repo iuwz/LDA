@@ -87,7 +87,7 @@ export default function DashboardHome() {
   };
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, []);
 
   const confirmDelete = async () => {
@@ -112,36 +112,48 @@ export default function DashboardHome() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
-      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
+      className="
+        grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
+        items-center gap-2 sm:gap-4
+        rounded-lg border px-4 py-3
+        bg-white hover:bg-gray-50
+      "
     >
-      <FaCloudUploadAlt className="text-indigo-600" />
+      <div className="flex items-center">
+        <FaCloudUploadAlt className="text-indigo-600" />
+      </div>
+
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
+
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
+        className="w-full sm:w-auto"
       >
         <Button
           size="xs"
           variant="outline"
-          className="w-24 h-9 flex items-center justify-center"
+          className="w-full sm:w-24 h-9 flex items-center justify-center gap-1"
         >
-          <FaDownload className="mr-2" />
-          Download
+          <FaDownload /> Download
         </Button>
       </a>
+
       <Button
         size="xs"
         variant="outline"
-        className="w-24 h-9 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-        onClick={() => setPendingDel(d)}
         disabled={isDeleting}
+        onClick={() => setPendingDel(d)}
+        className="
+          w-full sm:w-24 h-9 flex items-center justify-center gap-1
+          border-red-600 text-red-600 hover:bg-red-600 hover:text-white
+        "
       >
-        <FaTrashAlt className="mr-2" />
-        Remove
+        <FaTrashAlt /> Remove
       </Button>
     </motion.div>
   );
@@ -258,9 +270,9 @@ export default function DashboardHome() {
   );
 }
 
-// InlineUpload helper (unchanged)
+// InlineUpload helper
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const fileRef = React.useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -310,7 +322,7 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         variant="primary"
         onClick={click}
         disabled={busy}
-        className="w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        className="w-full sm:w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
       >
         {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
       </Button>
