@@ -1,9 +1,14 @@
 # backend/app/mvc/views/auth.py
+
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from backend.app.utils.email_utils import send_reset_email
-from backend.app.utils.security import generate_reset_token, verify_reset_token, get_password_hash
+from backend.app.utils.security import (
+    generate_reset_token,
+    verify_reset_token,
+    get_password_hash,
+)
 from pydantic import EmailStr
 
 from backend.app.mvc.models.user import User
@@ -44,9 +49,9 @@ async def login(payload: LoginRequest, req: Request):
             key="access_token",
             value=token,
             httponly=True,
-            secure=True,                      # set True when using HTTPS
-            samesite="None",
-            max_age=30 * 24 * 60 * 60,         # 30 days in seconds
+            secure=True,          # must match delete attributes
+            samesite="None",      # must match delete attributes
+            max_age=30 * 24 * 60 * 60,  # 30 days
         )
         return resp
 
@@ -65,16 +70,20 @@ async def logout(response: Response):
         key="access_token",
         path="/",
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,     # match login
+        samesite="None", # match login
     )
     return {"message": "Logged out successfully"}
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+
 
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
 
 @router.post("/forgot-password")
 async def forgot_password(payload: ForgotPasswordRequest, request: Request):
@@ -84,10 +93,11 @@ async def forgot_password(payload: ForgotPasswordRequest, request: Request):
         # Don't reveal if user exists
         return {"message": "If that email exists, a reset link has been sent."}
     token = generate_reset_token(payload.email)
-    frontend_url = "http://localhost:5173"  # Or your deployed frontend
+    frontend_url = "http://localhost:5173"  # Or your deployed frontend URL
     reset_link = f"{frontend_url}/reset-password?token={token}"
     send_reset_email(payload.email, reset_link)
     return {"message": "If that email exists, a reset link has been sent."}
+
 
 @router.post("/reset-password")
 async def reset_password(payload: ResetPasswordRequest, request: Request):
