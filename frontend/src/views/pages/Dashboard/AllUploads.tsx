@@ -36,13 +36,17 @@ const AllUploads: React.FC = () => {
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail ?? "Could not load documents");
       setDocs(data);
+      setErr(null);
     } catch (e: any) {
       setErr(e.message);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => void fetchDocs(), []);
+
+  useEffect(() => {
+    void fetchDocs();
+  }, []);
 
   /* delete */
   const confirmDelete = async () => {
@@ -66,10 +70,18 @@ const AllUploads: React.FC = () => {
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
-      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
+      className="
+        grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
+        items-center gap-2 sm:gap-4
+        rounded-lg border px-4 py-3
+        bg-white hover:bg-gray-50
+      "
     >
-      <FaCloudUploadAlt className="text-indigo-600" />
-      <div className="truncate max-w-[260px]">
+      <div className="flex items-center">
+        <FaCloudUploadAlt className="text-indigo-600" />
+      </div>
+
+      <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
@@ -78,13 +90,13 @@ const AllUploads: React.FC = () => {
       <Button
         size="xs"
         variant="outline"
-        className="w-24 h-9 flex items-center justify-center gap-1"
+        className="w-full sm:w-24 h-9 flex items-center justify-center gap-1"
       >
         <a
           href={`${API_BASE}/documents/download/${d._id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 w-full justify-center"
         >
           <FaDownload /> Download
         </a>
@@ -94,7 +106,10 @@ const AllUploads: React.FC = () => {
       <Button
         size="xs"
         variant="outline"
-        className="w-24 h-9 flex items-center justify-center gap-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+        className="
+          w-full sm:w-24 h-9 flex items-center justify-center gap-1
+          border-red-500 text-red-500 hover:bg-red-500 hover:text-white
+        "
         onClick={() => setPendingDel(d)}
       >
         <FaTrashAlt /> Remove
