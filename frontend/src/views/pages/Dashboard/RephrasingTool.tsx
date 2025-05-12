@@ -90,7 +90,13 @@ const RephrasingTool: React.FC = () => {
   }, [copied]);
 
   const filteredHistory = history.filter(
-    (h) => !(h.type === "doc" && h.filename?.toLowerCase().endsWith(".txt"))
+    (
+      h
+    ): h is RephraseHistoryItem & {
+      type: "doc";
+      filename: string;
+      result_doc_id: string;
+    } => h.type === "doc" && !!h.filename && !!h.result_doc_id
   );
   const displayedHistory = showAllHistory
     ? filteredHistory
@@ -153,8 +159,6 @@ const RephrasingTool: React.FC = () => {
         { _id: res.doc_id, filename: file.name, owner_id: "", file_id: "" },
       ]);
       handleDocSelection(res.doc_id, file.name);
-    } catch {
-      setError("Failed to upload document.");
     } finally {
       setIsLoading(false);
       loadHistory();
@@ -203,8 +207,6 @@ const RephrasingTool: React.FC = () => {
         setRephrasedText(resp.rephrased_text);
         setChanges(resp.changes || []);
       } else setError("Please enter text or select a document.");
-    } catch (err: any) {
-      setError(err.message || "Rephrase failed");
     } finally {
       setIsLoading(false);
       loadHistory();
@@ -214,16 +216,6 @@ const RephrasingTool: React.FC = () => {
   const handleCopy = () => {
     navigator.clipboard.writeText(rephrasedText);
     setCopied(true);
-  };
-
-  const handleDownloadText = (text: string) => {
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "rephrased.txt";
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const confirmDelete = async () => {
@@ -520,45 +512,25 @@ const RephrasingTool: React.FC = () => {
                   <div className="min-w-0 flex-1 sm:mb-0 mb-3">
                     <p className="flex items-start text-sm font-semibold text-gray-800">
                       <span className="mr-2 mt-0.5 flex-shrink-0 text-[#c17829]">
-                        {h.type === "doc" ? (
-                          getFileIcon(h.filename || "", DROPDOWN_ICON_SIZE)
-                        ) : (
-                          <FaEdit className={DROPDOWN_ICON_SIZE} />
-                        )}
+                        {getFileIcon(h.filename, DROPDOWN_ICON_SIZE)}
                       </span>
-                      <span className="break-all">
-                        {h.type === "doc"
-                          ? h.filename || "Document"
-                          : "Text snippet"}
-                      </span>
+                      <span className="break-all">{h.filename}</span>
                     </p>
                     <p className="mt-1 text-xs text-gray-500">
                       Style: {h.style}
                     </p>
                   </div>
                   <div className="flex gap-3 self-end sm:self-center">
-                    {h.type === "doc" && h.result_doc_id && h.filename && (
-                      <motion.button
-                        onClick={() =>
-                          downloadDocumentById(h.result_doc_id!, h.filename!)
-                        }
-                        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaDownload /> Download
-                      </motion.button>
-                    )}
-                    {h.type === "text" && h.result_text && (
-                      <motion.button
-                        onClick={() => handleDownloadText(h.result_text!)}
-                        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaDownload /> Download
-                      </motion.button>
-                    )}
+                    <motion.button
+                      onClick={() =>
+                        downloadDocumentById(h.result_doc_id, h.filename)
+                      }
+                      className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FaDownload /> Download
+                    </motion.button>
                     <button
                       onClick={() => setPendingDeleteId(h.id)}
                       className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
