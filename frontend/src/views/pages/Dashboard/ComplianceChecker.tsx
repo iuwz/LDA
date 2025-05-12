@@ -799,8 +799,10 @@ function ResultView({
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
-          <div>
-            <h3 className="font-medium text-gray-800">
+          {/* Added flex-1 and min-w-0 to the div containing filename and report ID */}
+          {/* Added break-words to the h3 for the filename */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-gray-800 break-words">
               {results.analyzedFilename}
             </h3>
             <p className="text-xs text-gray-500">
