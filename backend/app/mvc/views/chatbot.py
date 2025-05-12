@@ -4,7 +4,12 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from backend.app.mvc.controllers.chatbot import chat as chat_logic, list_sessions, get_messages
+from backend.app.mvc.controllers.chatbot import (
+    chat as chat_logic,
+    list_sessions,
+    get_messages,
+    delete_session,          #  ← import
+)
 from backend.app.utils.security import get_current_user
 from backend.app.mvc.models.user import UserInDB
 
@@ -57,3 +62,17 @@ async def messages_endpoint(
         return {"messages": await get_messages(db, str(current_user.id), session_id)}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+
+@router.delete("/session/{session_id}")
+async def delete_session_endpoint(
+    session_id: str,
+    request: Request,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    try:
+        await delete_session(db, user_id=str(current_user.id), session_id=session_id)
+        return {"status": "deleted"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))    
