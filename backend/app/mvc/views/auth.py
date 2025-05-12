@@ -13,9 +13,13 @@ from backend.app.utils.security import (
 )
 from backend.app.mvc.models.user import User
 from backend.app.mvc.controllers.auth import register_user, login_user
-
+from datetime import datetime, timedelta
+from random import randint
+from passlib import CryptContext
+from backend.app.utils.email_utils import send_verification_email
 router = APIRouter()
 
+_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginRequest(BaseModel):
     email: str
@@ -134,3 +138,49 @@ async def reset_password(payload: ResetPasswordRequest, request: Request):
     hashed = get_password_hash(payload.new_password)
     await db["users"].update_one({"email": email}, {"$set": {"hashed_password": hashed}})
     return {"message": "Password reset successful"}
+
+class SendCodeRequest(BaseModel):
+    email: EmailStr
+
+@router.post("/send-code")
+async def send_code(payload: SendCodeRequest, request: Request):
+    db = request.app.state.db
+
+    # don't allow if account already exists
+    if await db["users"].find_one({"email": payload.email}):
+        raise HTTPException(400, "Email already registered")
+
+    code = f"{randint(0, 999_999):06d}"
+    hashed = _pwd_ctx.hash(code)
+    expires = datetime.utcnow() + timedelta(minutes=10)
+
+    await db["email_verifications"].update_one(
+        {"email": payload.email},
+        {"$set": {"code_hash": hashed, "expires": expires}},
+        upsert=True,
+    )
+
+    await send_verification_email(payload.email, code)
+    return {"message": "Code sent"}
+
+# ─── POST /auth/verify-code ───────────────────────────────────────
+class VerifyCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+@router.post("/verify-code")
+async def verify_code(payload: VerifyCodeRequest, request: Request):
+    rec = await request.app.state.db["email_verifications"].find_one(
+        {"email": payload.email}
+    )
+    if not rec or rec["expires"] < datetime.utcnow():
+        raise HTTPException(400, "Code expired")
+
+    if not _pwd_ctx.verify(payload.code, rec["code_hash"]):
+        raise HTTPException(400, "Invalid code")
+
+    # delete so the code can’t be reused
+    await request.app.state.db["email_verifications"].delete_one(
+        {"email": payload.email}
+    )
+    return {"verified": True}

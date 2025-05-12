@@ -2,6 +2,11 @@
 import os, logging
 from typing import Optional
 from mailersend import emails
+from random import randint
+from datetime import datetime, timedelta
+from passlib import CryptContext
+
+_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 API_TOKEN   = os.getenv("MAILERSEND_API_TOKEN")
 FROM_EMAIL  = os.getenv("FROM_EMAIL")
@@ -72,4 +77,25 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
     except Exception as exc:
         logging.exception("MailerSend failure")
         raise RuntimeError("Email service unavailable") from exc
+    
+def _random_code() -> str:
+    """Return a zero-padded 6-digit string, e.g. '042519'."""
+    return f"{randint(0, 999_999):06d}"
 
+async def send_verification_email(to_email: str, code: str) -> None:
+    """
+    Send the 6-digit verification `code` to `to_email`.
+    Uses the same template logic as reset-password; customise as you like.
+    """
+    html = (
+        "<p>Hello,</p>"
+        "<p>Your verification code is:</p>"
+        f"<h2>{code}</h2>"
+        "<p>This code expires in 10 minutes.</p>"
+    )
+    _mailer.set_mail_from({"email": FROM_EMAIL, "name": "Legal Doc Analyzer"}, {})
+    _mailer.set_mail_to([{"email": to_email}], {})
+    _mailer.set_subject("Your verification code", {})
+    _mailer.set_html_content(html, {})
+    _mailer.set_plaintext_content(f"Your verification code is {code}", {})
+    _mailer.send()
