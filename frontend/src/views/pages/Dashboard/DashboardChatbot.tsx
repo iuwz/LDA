@@ -378,13 +378,15 @@ const DashboardChatbot: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-800">
                   Your Conversations
                 </h2>
-                <button
+                <motion.button
                   onClick={createDraft}
-                  className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md bg-[color:var(--accent-dark)] text-white hover:bg-[color:var(--accent-light)]"
+                  className="flex items-center space-x-1 text-sm font-medium px-3 py-1 rounded-md shadow-sm transition-colors bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)] text-white"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <FaPlus size={12} />
                   <span>New Chat</span>
-                </button>
+                </motion.button>
               </div>
 
               <div className="p-3 sm:p-4 flex-1 overflow-y-auto space-y-2">
@@ -392,12 +394,14 @@ const DashboardChatbot: React.FC = () => {
                   <div className="text-center py-12">
                     <FaHistory className="mx-auto text-4xl text-gray-300 mb-3" />
                     <p className="text-gray-500">No history yet</p>
-                    <button
+                    <motion.button
                       onClick={createDraft}
-                      className="mt-4 text-[color:var(--accent-dark)] underline hover:text-[color:var(--accent-light)]"
+                      className="mt-4 text-sm underline text-[rgb(193,120,41)]"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       Start a conversation
-                    </button>
+                    </motion.button>
                   </div>
                 ) : (
                   chats.map((c) => (
