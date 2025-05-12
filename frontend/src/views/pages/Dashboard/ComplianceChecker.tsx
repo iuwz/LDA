@@ -384,7 +384,8 @@ function ComplianceChecker() {
                         {h.report_filename || "Compliance report"}
                       </span>{" "}
                     </p>
-                    <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                    {/* Removed ml-6 to align under the filename start */}
+                    <p className="mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
                       {" "}
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
