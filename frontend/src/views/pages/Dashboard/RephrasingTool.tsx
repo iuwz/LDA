@@ -1,9 +1,8 @@
 // src/views/pages/Dashboard/RephrasingTool.tsx
-
 import React, { useState, ChangeEvent, useEffect, useRef } from "react";
 import {
   FaEdit,
-  FaUpload,
+  FaCloudUploadAlt,
   FaFileAlt,
   FaTrash,
   FaExchangeAlt,
@@ -14,6 +13,7 @@ import {
   FaChevronDown,
   FaFilePdf,
   FaFileWord,
+  FaSearch,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -45,8 +45,8 @@ type StyleId = (typeof STYLE_OPTIONS)[number]["id"];
 const FILE_ICON_SIZE = "text-5xl";
 const DROPDOWN_ICON_SIZE = "text-xl";
 
-const getFileIcon = (filename: string, sizeClassName: string) => {
-  const ext = filename.split(".").pop()?.toLowerCase();
+const getFileIcon = (filename: string | undefined, sizeClassName: string) => {
+  const ext = filename?.split(".").pop()?.toLowerCase();
   if (ext === "pdf")
     return <FaFilePdf className={`${sizeClassName} text-red-600`} />;
   if (ext === "doc" || ext === "docx")
@@ -54,13 +54,25 @@ const getFileIcon = (filename: string, sizeClassName: string) => {
   return <FaFileAlt className={`${sizeClassName} text-gray-500`} />;
 };
 
+/* ─────────────────────────────── COMPONENT ─────────────────────────────── */
 const RephrasingTool: React.FC = () => {
+  /* document management */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
+
+  /* new upload */
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /* history */
   const [history, setHistory] = useState<RephraseHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeletingHistory, setIsDeletingHistory] = useState(false);
+
+  /* rephrase */
   const [originalText, setOriginalText] = useState("");
   const [rephrasedText, setRephrasedText] = useState("");
   const [rephrasedDocDetails, setRephrasedDocDetails] = useState<{
@@ -73,9 +85,6 @@ const RephrasingTool: React.FC = () => {
   const [activeStyle, setActiveStyle] = useState<StyleId>("formal");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isDeletingHistory, setIsDeletingHistory] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUploadedDocuments();
@@ -89,20 +98,17 @@ const RephrasingTool: React.FC = () => {
     }
   }, [copied]);
 
-  const filteredHistory = history.filter(
-    (h) => !(h.type === "doc" && h.filename?.toLowerCase().endsWith(".txt"))
-  );
-  const displayedHistory = showAllHistory
-    ? filteredHistory
-    : filteredHistory.slice(0, 5);
-  const displayedChanges = showAllChanges ? changes : changes.slice(0, 5);
-
+  /* ───────────────────────── fetch helpers ───────────────────────── */
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
     setError(null);
     try {
       const docs = await listDocuments();
       setUploadedDocs(docs);
+      if (selectedDocId && !docs.find((d) => d._id === selectedDocId))
+        setSelectedDocId(null);
+    } catch {
+      setError("Failed to load uploaded documents.");
     } finally {
       setFetchingDocs(false);
     }
@@ -121,17 +127,15 @@ const RephrasingTool: React.FC = () => {
     }
   }
 
-  const handleDocSelection = (
-    docId: string | null,
-    filenameOverride?: string
-  ) => {
-    setSelectedDocId(docId);
+  /* ───────────────────────── selection & upload ───────────────────────── */
+  function handleDocSelection(id: string | null) {
+    setSelectedDocId(id);
+    setFileToUpload(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setOriginalText(
-      docId
+      id
         ? `Document selected: ${
-            filenameOverride ??
-            uploadedDocs.find((d) => d._id === docId)?.filename ??
-            ""
+            uploadedDocs.find((d) => d._id === id)?.filename
           }`
         : ""
     );
@@ -140,38 +144,25 @@ const RephrasingTool: React.FC = () => {
     setChanges([]);
     setShowAllChanges(false);
     setError(null);
-    setDocSelectOpen(false);
-  };
+  }
 
-  const handleFileUpload = async (file: File) => {
-    setIsLoading(true);
+  function handleFileDrop(f: File | null) {
+    if (!f) return;
     setError(null);
-    try {
-      const res = await uploadDocument(file);
-      setUploadedDocs((prev) => [
-        ...prev,
-        { _id: res.doc_id, filename: file.name, owner_id: "", file_id: "" },
-      ]);
-      handleDocSelection(res.doc_id, file.name);
-    } catch {
-      setError("Failed to upload document.");
-    } finally {
-      setIsLoading(false);
-      loadHistory();
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setOriginalText(e.target.value);
+    setFileToUpload(f);
     setSelectedDocId(null);
+    setOriginalText("");
     setRephrasedText("");
     setRephrasedDocDetails(null);
     setChanges([]);
     setShowAllChanges(false);
-    setError(null);
-  };
+  }
 
+  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    handleFileDrop(e.target.files?.[0] || null);
+  }
+
+  /* ───────────────────────── rephrase action ───────────────────────── */
   const handleRephrase = async () => {
     setIsLoading(true);
     setError(null);
@@ -181,7 +172,19 @@ const RephrasingTool: React.FC = () => {
     setShowAllChanges(false);
 
     try {
-      if (selectedDocId) {
+      if (fileToUpload) {
+        const { doc_id } = await uploadDocument(fileToUpload);
+        fetchUploadedDocuments();
+        const resp = (await rephrase({
+          doc_id,
+          style: activeStyle,
+        })) as RephraseDocumentResponse & { changes: Change[] };
+        setRephrasedDocDetails({
+          id: resp.rephrased_doc_id,
+          filename: resp.rephrased_doc_filename,
+        });
+        setChanges(resp.changes || []);
+      } else if (selectedDocId) {
         const resp = (await rephrase({
           doc_id: selectedDocId,
           style: activeStyle,
@@ -202,15 +205,18 @@ const RephrasingTool: React.FC = () => {
         };
         setRephrasedText(resp.rephrased_text);
         setChanges(resp.changes || []);
-      } else setError("Please enter text or select a document.");
+      } else {
+        setError("Please enter text or choose a document.");
+      }
     } catch (err: any) {
-      setError(err.message || "Rephrase failed");
+      setError(err.message || "Rephrase failed.");
     } finally {
       setIsLoading(false);
       loadHistory();
     }
   };
 
+  /* ───────────────────────── utilities ───────────────────────── */
   const handleCopy = () => {
     navigator.clipboard.writeText(rephrasedText);
     setCopied(true);
@@ -238,52 +244,244 @@ const RephrasingTool: React.FC = () => {
     }
   };
 
-  const originalTextPlaceholder = selectedDocId
-    ? "Document content not shown here in document mode."
-    : "Type your text here…";
+  const originalTextPlaceholder =
+    selectedDocId || fileToUpload
+      ? "Document content not shown in document mode."
+      : "Type your text here…";
 
-  const rephrasedContent = selectedDocId ? (
-    isLoading ? (
+  const displayedHistory = (
+    showAllHistory ? history : history.slice(0, 5)
+  ).filter(
+    (h) => !(h.type === "doc" && h.filename?.toLowerCase().endsWith(".txt"))
+  );
+  const displayedChanges = showAllChanges ? changes : changes.slice(0, 5);
+
+  const isRephraseDisabled =
+    (!originalText.trim() && !selectedDocId && !fileToUpload) ||
+    isLoading ||
+    fetchingDocs;
+
+  /* ───────────────────────── UI: spinner & buttons ───────────────────────── */
+  const Spinner = ({ label }: { label: string }) => (
+    <div className="py-12 text-center text-gray-700">
+      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[#c17829]" />
+      <p className="mt-2">{label}</p>
+    </div>
+  );
+
+  const AnalyzeButton = ({
+    onClick,
+    disabled,
+    busy,
+    label,
+  }: {
+    onClick: () => void;
+    disabled: boolean;
+    busy: boolean;
+    label: string;
+  }) => (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-2 rounded-md bg-[#c17829] px-6 py-2 text-white hover:bg-[#a66224]"
+      whileHover={{ scale: disabled ? 1 : 1.05 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
+    >
+      {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
+      {busy ? "Processing…" : label}
+    </motion.button>
+  );
+
+  /* ───────────────────────── UI: existing picker ───────────────────────── */
+  const ExistingDocPicker = () => (
+    <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
+      <p className="text-gray-700">Rephrase a previously uploaded document:</p>
+      <div className="relative w-full">
+        <button
+          className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
+          onClick={() => setDocSelectOpen(!docSelectOpen)}
+          disabled={isLoading}
+        >
+          {selectedDocId
+            ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
+            : "Choose Document"}
+          <FaChevronDown
+            className={`ml-2 transition-transform ${
+              docSelectOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+        <AnimatePresence>
+          {docSelectOpen && (
+            <motion.ul
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+            >
+              {selectedDocId && (
+                <li
+                  className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => handleDocSelection(null)}
+                >
+                  Clear Selection
+                </li>
+              )}
+              {uploadedDocs.length ? (
+                uploadedDocs.map((doc) => (
+                  <li
+                    key={doc._id}
+                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      selectedDocId === doc._id ? "bg-gray-100" : ""
+                    }`}
+                    onClick={() => {
+                      handleDocSelection(doc._id);
+                      setDocSelectOpen(false);
+                    }}
+                  >
+                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
+                    <span className="break-all">{doc.filename}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="px-4 py-2 text-sm italic text-gray-500">
+                  No documents uploaded yet.
+                </li>
+              )}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </div>
+      {selectedDocId && (
+        <AnalyzeButton
+          onClick={handleRephrase}
+          disabled={isRephraseDisabled}
+          busy={isLoading}
+          label="Rephrase Selected"
+        />
+      )}
+    </div>
+  );
+
+  /* ───────────────────────── UI: upload drop zone ───────────────────────── */
+  const UploadDropZone = () => (
+    <div
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
+        isLoading
+          ? "cursor-not-allowed opacity-60"
+          : "cursor-pointer hover:border-[#c17829]"
+      }`}
+      onClick={() => !isLoading && fileInputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        if (isLoading) return;
+        const f = e.dataTransfer.files?.[0];
+        if (f) handleFileDrop(f);
+      }}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx"
+        className="hidden"
+        disabled={isLoading}
+        onChange={onFileChange}
+      />
+      {fileToUpload ? (
+        <>
+          {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}
+          <p className="mt-2">{fileToUpload.name}</p>
+          <p className="text-xs text-gray-500">
+            {(fileToUpload.size / 1048576).toFixed(2)} MB
+          </p>
+        </>
+      ) : (
+        <>
+          <FaCloudUploadAlt className="text-5xl text-gray-400" />
+          <p className="mt-2">Drag & drop or click to upload</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOC, DOCX</p>
+        </>
+      )}
+    </div>
+  );
+
+  /* ───────────────────────── UI: select area (mirror of compliance) ───────────────────────── */
+  const SelectArea = () => {
+    if (isLoading || fetchingDocs) {
+      return (
+        <Spinner label={isLoading ? "Processing…" : "Loading documents…"} />
+      );
+    }
+    return (
+      <div className="space-y-8 p-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <ExistingDocPicker />
+          <UploadDropZone />
+        </div>
+        {fileToUpload && !selectedDocId && (
+          <div className="text-center">
+            <AnalyzeButton
+              onClick={handleRephrase}
+              disabled={isRephraseDisabled}
+              busy={isLoading}
+              label="Rephrase Uploaded"
+            />
+          </div>
+        )}
+        {error && (
+          <p className="mt-4 text-center text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    );
+  };
+
+  /* ───────────────────────── UI: rephrased preview ───────────────────────── */
+  const rephrasedContent =
+    selectedDocId || fileToUpload ? (
+      isLoading ? (
+        <div className="flex h-full items-center justify-center">
+          <FaSpinner className="animate-spin text-[#c17829]" size={28} />
+        </div>
+      ) : rephrasedDocDetails ? (
+        <div className="flex flex-col items-center gap-4">
+          <p>Document rephrased successfully!</p>
+          <button
+            onClick={() =>
+              downloadDocumentById(
+                rephrasedDocDetails.id,
+                rephrasedDocDetails.filename
+              )
+            }
+            className="inline-flex items-center gap-2 rounded-md bg-[#c17829] px-4 py-2 text-white transition-colors hover:bg-[#a66224]"
+          >
+            <FaDownload /> Download "{rephrasedDocDetails.filename}"
+          </button>
+        </div>
+      ) : (
+        <p className="italic text-gray-400">
+          Rephrased document will appear here…
+        </p>
+      )
+    ) : isLoading ? (
       <div className="flex h-full items-center justify-center">
         <FaSpinner className="animate-spin text-[#c17829]" size={28} />
       </div>
-    ) : rephrasedDocDetails ? (
-      <div className="flex flex-col items-center gap-4">
-        <p>Document rephrased successfully!</p>
-        <button
-          onClick={() =>
-            downloadDocumentById(
-              rephrasedDocDetails.id,
-              rephrasedDocDetails.filename
-            )
-          }
-          className="inline-flex items-center gap-2 rounded-md bg-[#c17829] px-4 py-2 text-white transition-colors hover:bg-[#a66224]"
-        >
-          <FaDownload /> Download "{rephrasedDocDetails.filename}"
-        </button>
-      </div>
+    ) : rephrasedText ? (
+      <pre className="whitespace-pre-line text-gray-800">{rephrasedText}</pre>
     ) : (
       <p className="italic text-gray-400">
-        Rephrased document will appear here…
+        Your rephrased text will appear here…
       </p>
-    )
-  ) : isLoading ? (
-    <div className="flex h-full items-center justify-center">
-      <FaSpinner className="animate-spin text-[#c17829]" size={28} />
-    </div>
-  ) : rephrasedText ? (
-    <pre className="whitespace-pre-line text-gray-800">{rephrasedText}</pre>
-  ) : (
-    <p className="italic text-gray-400">
-      Your rephrased text will appear here…
-    </p>
-  );
+    );
 
-  const isRephraseDisabled =
-    (!originalText.trim() && !selectedDocId) || isLoading || fetchingDocs;
-
+  /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="space-y-8 p-6">
+      {/* header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -295,12 +493,14 @@ const RephrasingTool: React.FC = () => {
               Rephrasing
             </h1>
             <p className="text-gray-600">
-              {selectedDocId ? "Document Mode" : "Text Mode"} — choose a style
+              {selectedDocId || fileToUpload ? "Document Mode" : "Text Mode"} —
+              choose a style
             </p>
           </div>
         </div>
       </header>
 
+      {/* style chips */}
       <div className="flex flex-wrap gap-2 px-6">
         {STYLE_OPTIONS.map(({ id, label }) => (
           <button
@@ -317,115 +517,42 @@ const RephrasingTool: React.FC = () => {
         ))}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 px-6">
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <div className="relative w-full sm:w-auto">
-            <button
-              onClick={() => setDocSelectOpen(!docSelectOpen)}
-              disabled={fetchingDocs || isLoading}
-              className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:border-[#c17829] focus:outline-none focus:ring-2 focus:ring-[#c17829] disabled:opacity-50"
-            >
-              {selectedDocId
-                ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
-                : "Select a Document"}
-              {fetchingDocs ? (
-                <FaSpinner className="ml-2 animate-spin text-[#c17829]" />
-              ) : (
-                <FaChevronDown
-                  className={`ml-2 text-[#c17829] ${
-                    docSelectOpen ? "rotate-180" : ""
-                  }`}
-                />
-              )}
-            </button>
-            <AnimatePresence>
-              {docSelectOpen && (
-                <motion.ul
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 sm:w-48"
-                >
-                  {selectedDocId && (
-                    <li
-                      className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => handleDocSelection(null)}
-                    >
-                      Clear Selection
-                    </li>
-                  )}
-                  {uploadedDocs.map((doc) => (
-                    <li
-                      key={doc._id}
-                      className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => handleDocSelection(doc._id)}
-                    >
-                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
-                      <span className="break-all">{doc.filename}</span>
-                    </li>
-                  ))}
-                  {uploadedDocs.length === 0 && (
-                    <li className="px-4 py-2 text-sm italic text-gray-500">
-                      No documents uploaded.
-                    </li>
-                  )}
-                </motion.ul>
-              )}
-            </AnimatePresence>
-          </div>
+      {/* select/upload area (mirrored from compliance) */}
+      <section className="rounded-xl border bg-white shadow-sm">
+        <SelectArea />
+      </section>
 
-          <span className="text-gray-500">OR</span>
-
-          <div>
-            <input
-              type="file"
-              accept=".pdf,.docx"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFileUpload(f);
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading || fetchingDocs}
-              className="inline-flex items-center gap-2 rounded-md bg-[#c17829] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#a66224] disabled:opacity-50"
-            >
-              <FaUpload /> Upload New Document
-            </button>
-          </div>
-        </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      </div>
-
+      {/* text & preview */}
       <section className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="grid divide-gray-200 md:grid-cols-2 md:divide-x">
           <div className="p-6">
             <h2 className="mb-2 font-medium text-[var(--brand-dark)]">
-              {selectedDocId ? "Selected Document" : "Original Text"}
+              {selectedDocId || fileToUpload
+                ? "Selected / Uploaded Document"
+                : "Original Text"}
             </h2>
             <textarea
               className="h-64 w-full resize-none rounded-lg border border-gray-300 bg-gray-50 p-4 outline-none focus:border-[#c17829] focus:ring-2 focus:ring-[#c17829]"
               placeholder={originalTextPlaceholder}
               value={originalText}
-              onChange={handleTextChange}
-              disabled={!!selectedDocId || isLoading}
-              readOnly={!!selectedDocId}
+              onChange={(e) => setOriginalText(e.target.value)}
+              disabled={!!selectedDocId || !!fileToUpload || isLoading}
+              readOnly={!!selectedDocId || !!fileToUpload}
             />
-            {selectedDocId && !isLoading && (
+            {(selectedDocId || fileToUpload) && !isLoading && (
               <p className="mt-2 text-sm text-gray-600">
-                Ready to rephrase document ID: {selectedDocId}
+                Ready to rephrase selected document.
               </p>
             )}
           </div>
-
           <div className="p-6">
             <div className="mb-2 flex items-center justify-between">
               <h2 className="font-medium text-[var(--brand-dark)]">
-                {selectedDocId ? "Rephrased Document" : "Rephrased Text"}
+                {selectedDocId || fileToUpload
+                  ? "Rephrased Document"
+                  : "Rephrased Text"}
               </h2>
-              {!selectedDocId && rephrasedText && (
+              {!(selectedDocId || fileToUpload) && rephrasedText && (
                 <button
                   onClick={handleCopy}
                   disabled={copied}
@@ -442,6 +569,7 @@ const RephrasingTool: React.FC = () => {
           </div>
         </div>
 
+        {/* suggested changes */}
         {changes.length > 0 && (
           <section className="p-6">
             <h2 className="mb-2 font-medium text-[var(--brand-dark)]">
@@ -481,33 +609,25 @@ const RephrasingTool: React.FC = () => {
           </section>
         )}
 
-        <div className="flex justify-end bg-gray-50 p-4">
-          <motion.button
-            onClick={handleRephrase}
-            disabled={isRephraseDisabled}
-            className="flex items-center gap-2 rounded-md bg-[#c17829] px-6 py-2 text-white disabled:opacity-50 hover:bg-[#a66224]"
-            whileHover={{ scale: isRephraseDisabled ? 1 : 1.05 }}
-            whileTap={{ scale: isRephraseDisabled ? 1 : 0.95 }}
-          >
-            {isLoading ? (
-              <FaSpinner className="animate-spin" />
-            ) : (
-              <FaExchangeAlt />
-            )}
-            {isLoading
-              ? "Processing..."
-              : selectedDocId
-              ? "Rephrase Document"
-              : "Rephrase Text"}
-          </motion.button>
-        </div>
+        {/* rephrase button (text mode only) */}
+        {!(selectedDocId || fileToUpload) && (
+          <div className="flex justify-end bg-gray-50 p-4">
+            <AnalyzeButton
+              onClick={handleRephrase}
+              disabled={isRephraseDisabled}
+              busy={isLoading}
+              label="Rephrase Text"
+            />
+          </div>
+        )}
       </section>
 
+      {/* history */}
       <section className="rounded-xl border bg-white p-6 shadow-sm">
         <h2 className="mb-4 font-medium text-[var(--brand-dark)]">
           Previous Rephrasings
         </h2>
-        {filteredHistory.length === 0 ? (
+        {history.length === 0 ? (
           <p className="text-sm italic text-gray-500">No history yet.</p>
         ) : (
           <>
@@ -520,11 +640,9 @@ const RephrasingTool: React.FC = () => {
                   <div className="min-w-0 flex-1 sm:mb-0 mb-3">
                     <p className="flex items-start text-sm font-semibold text-gray-800">
                       <span className="mr-2 mt-0.5 flex-shrink-0 text-[#c17829]">
-                        {h.type === "doc" ? (
-                          getFileIcon(h.filename || "", DROPDOWN_ICON_SIZE)
-                        ) : (
-                          <FaEdit className={DROPDOWN_ICON_SIZE} />
-                        )}
+                        {h.type === "doc"
+                          ? getFileIcon(h.filename, DROPDOWN_ICON_SIZE)
+                          : getFileIcon(undefined, DROPDOWN_ICON_SIZE)}
                       </span>
                       <span className="break-all">
                         {h.type === "doc"
@@ -569,7 +687,7 @@ const RephrasingTool: React.FC = () => {
                 </li>
               ))}
             </ul>
-            {filteredHistory.length > 5 && (
+            {history.length > 5 && (
               <div className="mt-4 text-center">
                 <button
                   onClick={() => setShowAllHistory(!showAllHistory)}
@@ -577,7 +695,7 @@ const RephrasingTool: React.FC = () => {
                 >
                   {showAllHistory
                     ? "Show Less"
-                    : `Show ${filteredHistory.length - 5} More`}
+                    : `Show ${history.length - 5} More`}
                 </button>
               </div>
             )}
@@ -585,6 +703,7 @@ const RephrasingTool: React.FC = () => {
         )}
       </section>
 
+      {/* delete modal */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -622,9 +741,9 @@ const RephrasingTool: React.FC = () => {
                     disabled={isDeletingHistory}
                     className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
-                    {isDeletingHistory ? (
+                    {isDeletingHistory && (
                       <FaSpinner className="mr-2 inline-block animate-spin" />
-                    ) : null}
+                    )}
                     {isDeletingHistory ? "Deleting..." : "Delete"}
                   </button>
                 </div>
