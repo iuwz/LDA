@@ -366,15 +366,10 @@ function ComplianceChecker() {
                   key={h.id}
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
+                  {/* Modified structure to align issues count under filename text */}
                   <div className="mb-3 sm:mb-0 min-w-0 flex-1">
-                    {" "}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
-                      {" "}
-                      {/* Applied styling to this span to match the layout */}
                       <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
-                        {" "}
-                        {/* Wrapper for the icon */}
-                        {/* Call getFileIcon with filename and dropdown size */}
                         {getFileIcon(
                           h.report_filename || "",
                           DROPDOWN_ICON_SIZE
@@ -382,11 +377,10 @@ function ComplianceChecker() {
                       </span>
                       <span className="break-all">
                         {h.report_filename || "Compliance report"}
-                      </span>{" "}
+                      </span>
                     </p>
-                    {/* Removed ml-6 to align under the filename start */}
-                    <p className="mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
-                      {" "}
+                    {/* Removed ml-6 and other alignment classes, added mt-1 for spacing */}
+                    <p className="mt-1 text-xs text-gray-500">
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
                   </div>
