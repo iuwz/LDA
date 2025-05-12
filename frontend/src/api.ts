@@ -81,7 +81,17 @@ export function logout() {
     });
 }
 
+export function sendVerificationCode(email: string) {
+    return fetch(`${API_BASE}/auth/send-code`, {
+        ...common, method: "POST", body: JSON.stringify({ email })
+    }).then(r => handleResponse<{ message: string }>(r));
+}
 
+export function verifyEmailCode(email: string, code: string) {
+    return fetch(`${API_BASE}/auth/verify-code`, {
+        ...common, method: "POST", body: JSON.stringify({ email, code })
+    }).then(r => handleResponse<{ verified: boolean }>(r));
+}
 
 /* ═══════════════════════════ RISK  ════════════════════════════ */
 
@@ -300,12 +310,12 @@ export function getChatSession(id: string) {
 
 export function deleteChatSession(id: string) {
     return fetch(`${API_BASE}/chatbot/session/${id}`, {
-      ...common,
-      method: "DELETE",
+        ...common,
+        method: "DELETE",
     }).then((r) => {
-      if (!r.ok) throw new Error("Delete failed");
+        if (!r.ok) throw new Error("Delete failed");
     });
-  }
+}
 
 /* ═════════════════════ DOCUMENT UPLOADS (GridFS) ══════════════ */
 
@@ -583,10 +593,10 @@ export function deleteTranslationReport(id: string) {
 
 /* ───────── TRANSLATION: one stored report ───────── */
 export function getTranslationReport(id: string) {
-  return fetch(`${API_BASE}/translate/${id}`, {
-    ...common,
-    method: "GET",
-  }).then(r => handleResponse<{ translation_report: any }>(r));   // ← no unwrapping
+    return fetch(`${API_BASE}/translate/${id}`, {
+        ...common,
+        method: "GET",
+    }).then(r => handleResponse<{ translation_report: any }>(r));   // ← no unwrapping
 }
 
 export function forgotPassword(email: string) {
