@@ -1,36 +1,61 @@
 # backend/app/utils/email_utils.py
-import os, logging
+"""
+Centralised helpers for all outgoing MailerSend e-mails:
+• password-reset links
+• 6-digit account-verification codes
+The two helpers both build a *payload* dict and call `_mailer.send(payload)`
+because MailerSend’s SDK requires the argument – omitting it yields a 500.
+"""
+
+import os
+import logging
 from typing import Optional
-from mailersend import emails
 from random import randint
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
 
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from mailersend import emails
 
-API_TOKEN   = os.getenv("MAILERSEND_API_TOKEN")
-FROM_EMAIL  = os.getenv("FROM_EMAIL")
-TEMPLATE_ID: Optional[str] = os.getenv("MAILERSEND_TEMPLATE_ID")  # optional
+# ── ENV VARS ────────────────────────────────────────────────────
+API_TOKEN = os.getenv("MAILERSEND_API_TOKEN")
+FROM_EMAIL = os.getenv("FROM_EMAIL")
+TEMPLATE_ID: Optional[str] = os.getenv("MAILERSEND_TEMPLATE_ID")
 
 if not API_TOKEN or not FROM_EMAIL:
     raise RuntimeError(
         "MAILERSEND_API_TOKEN and FROM_EMAIL must be set in the environment."
     )
 
+# single MailerSend client instance
 _mailer = emails.NewEmail(API_TOKEN)
 
+# ────────────────────────────────────────────────────────────────
+def _send_and_assert(payload: dict) -> None:
+    """
+    Low-level wrapper – sends the payload and raises RuntimeError on
+    any non-202 response so callers can surface e-mail failures cleanly.
+    """
+    try:
+        resp = _mailer.send(payload)
+        if not (
+            resp == 202
+            or (hasattr(resp, "status_code") and resp.status_code == 202)
+            or (isinstance(resp, dict) and "message_id" in resp)
+        ):
+            raise RuntimeError(f"MailerSend unexpected response: {resp!r}")
+    except Exception as exc:                       # network / SDK / HTTP …
+        logging.exception("MailerSend failure")
+        raise RuntimeError("Email service unavailable") from exc
 
+
+# ───────────────────────── RESET PASSWORD ───────────────────────
 def send_reset_email(to_email: str, reset_link: str) -> None:
-    """Send password‑reset email via MailerSend HTTP API."""
+    """Send password-reset e-mail with a link valid for one use."""
     payload: dict = {}
 
-    # ── From / To ──────────────────────────────────────────
-    _mailer.set_mail_from(
-        {"email": FROM_EMAIL, "name": "Legal Doc Analyzer"}, payload
-    )
+    # From / To
+    _mailer.set_mail_from({"email": FROM_EMAIL, "name": "Legal Doc Analyzer"}, payload)
     _mailer.set_mail_to([{"email": to_email}], payload)
 
-    # ── Content ───────────────────────────────────────────
+    # Content
     if TEMPLATE_ID:
         _mailer.set_template_id(TEMPLATE_ID, payload)
         _mailer.set_variables(
@@ -59,43 +84,41 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
             payload,
         )
 
-        # ── Send ──────────────────────────────────────────────
-    try:
-        resp = _mailer.send(payload)          # ➜ 202 or dict{"message_id": …}
+    # Send
+    _send_and_assert(payload)
 
-        # ▸ Accept all “obvious success” shapes
-        if (
-            resp == 202                                  # int
-            or (hasattr(resp, "status_code") and resp.status_code == 202)  # SDK resp obj
-            or (isinstance(resp, dict) and "message_id" in resp)           # HTTP JSON
-        ):
-            return                                       # ← success, nothing to raise
 
-        # Anything else is suspicious
-        raise RuntimeError(f"MailerSend unexpected response: {resp!r}")
-
-    except Exception as exc:
-        logging.exception("MailerSend failure")
-        raise RuntimeError("Email service unavailable") from exc
-    
-def _random_code() -> str:
-    """Return a zero-padded 6-digit string, e.g. '042519'."""
+# ─────────────────────── 6-DIGIT VERIFICATION CODE ──────────────
+def random_code() -> str:
+    """Utility used elsewhere: returns a zero-padded 6-digit code, e.g. '042519'."""
     return f"{randint(0, 999_999):06d}"
 
-async def send_verification_email(to_email: str, code: str) -> None:
+
+def send_verification_email(to_email: str, code: str) -> None:
     """
-    Send the 6-digit verification `code` to `to_email`.
-    Uses the same template logic as reset-password; customise as you like.
+    Send a 6-digit account-verification code.
+    The mail uses plain HTML/ text – replace with a template ID if you prefer.
     """
+    payload: dict = {}
+
+    # From / To
+    _mailer.set_mail_from({"email": FROM_EMAIL, "name": "Legal Doc Analyzer"}, payload)
+    _mailer.set_mail_to([{"email": to_email}], payload)
+
+    # Subject & body
+    _mailer.set_subject("Your verification code", payload)
     html = (
         "<p>Hello,</p>"
         "<p>Your verification code is:</p>"
         f"<h2>{code}</h2>"
-        "<p>This code expires in 10 minutes.</p>"
+        "<p>This code will expire in 10&nbsp;minutes.</p>"
     )
-    _mailer.set_mail_from({"email": FROM_EMAIL, "name": "Legal Doc Analyzer"}, {})
-    _mailer.set_mail_to([{"email": to_email}], {})
-    _mailer.set_subject("Your verification code", {})
-    _mailer.set_html_content(html, {})
-    _mailer.set_plaintext_content(f"Your verification code is {code}", {})
-    _mailer.send()
+    _mailer.set_html_content(html, payload)
+    _mailer.set_plaintext_content(
+        f"Your verification code is {code}\n\n"
+        "This code will expire in 10 minutes.",
+        payload,
+    )
+
+    # Send
+    _send_and_assert(payload)
