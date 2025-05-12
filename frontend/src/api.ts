@@ -84,6 +84,7 @@ export function logout() {
 
 
 /* ═══════════════════════════ RISK  ════════════════════════════ */
+
 export interface RiskItemBackend {
     section: string;
     clause?: string;
@@ -94,36 +95,34 @@ export interface RiskItemBackend {
 export interface RiskAnalysisResponse {
     id: string;
     risks: RiskItemBackend[];
-    /* ↓ these are added later when a PDF is uploaded */
+    /* ↓ added later when a PDF is uploaded */
     report_doc_id?: string | null;
     filename?: string | null;
 }
 
-/* ═════ wrapper that accepts every schema version the backend
-   has returned so far – centralising this means the rest of the
-   UI never breaks again when the backend team renames fields. */
+/* ── central response normaliser ─────────────────────────────── */
 function unwrapRisk(payload: any): RiskAnalysisResponse {
-    if (payload?.risks) return payload as RiskAnalysisResponse;          // newest
-    if (payload?.analysis_result) return payload.analysis_result;        // old
-    if (payload?.analysis) return payload.analysis;                      // staging
-    if (payload?.risk_report) return payload.risk_report;                // v0.9.X
+    if (payload?.risks) return payload as RiskAnalysisResponse;   // current
+    if (payload?.analysis_result) return payload.analysis_result;       // legacy
+    if (payload?.analysis) return payload.analysis;                 // staging
+    if (payload?.risk_report) return payload.risk_report;              // v0.9.x
     throw new Error("Unexpected response format from /risk endpoint");
 }
 
-/* analyse raw text ----------------------------------------------------- */
+/* analyse raw text -------------------------------------------- */
 export function analyzeRisk(
-    document_text: string
+    document_text: string,
 ): Promise<RiskAnalysisResponse> {
     return fetch(`${API_BASE}/risk`, {
         ...common,
         method: "POST",
         body: JSON.stringify({ document_text }),
     })
-        .then((r) => handleResponse<any>(r))
+        .then(r => handleResponse<any>(r))
         .then(unwrapRisk);
 }
 
-/* analyse uploaded file (direct upload) ------------------------------- */
+/* analyse uploaded file (direct upload) ----------------------- */
 export function analyzeRiskFile(file: File): Promise<RiskAnalysisResponse> {
     const form = new FormData();
     form.append("file", file);
@@ -132,32 +131,64 @@ export function analyzeRiskFile(file: File): Promise<RiskAnalysisResponse> {
         method: "POST",
         body: form,
     })
-        .then((r) => handleResponse<any>(r))
+        .then(r => handleResponse<any>(r))
         .then(unwrapRisk);
 }
 
-/* NEW ▶ analyse a previously-uploaded document by doc_id */
-export async function analyzeRiskDoc(doc_id: string): Promise<RiskAnalysisResponse> {
-    /* 1) fetch plaintext we stored in GridFS */
+/* analyse a previously-uploaded document by doc_id ------------ */
+export async function analyzeRiskDoc(
+    doc_id: string,
+): Promise<RiskAnalysisResponse> {
+    /* 1) try the stored plaintext first */
     const document_text = await getDocumentContent(doc_id);
-    /* 2) reuse wrapped text-based risk endpoint */
-    return analyzeRisk(document_text);
+
+    /* 2) if we actually got usable text → analyse it directly */
+    if (
+        document_text &&                                  // not null / undefined
+        document_text.trim().length > 0 &&                // not empty
+        !/^error extracting text/i.test(document_text.trim()) // no stub
+    ) {
+        return analyzeRisk(document_text);
+    }
+
+    /* 3) extraction really failed → fall back to analysing the binary file */
+    const blob = await fetchDocumentBlob(doc_id);
+    const file = new File([blob], "document.pdf", {
+        type: blob.type || "application/pdf",
+    });
+    return analyzeRiskFile(file);
 }
 
-/* upload jsPDF generated on the client -------------------------------- */
-export function uploadRiskPdf(reportId: string, blob: Blob, filename: string) {
+/* helper: fetch raw binary without download prompt ------------ */
+export async function fetchDocumentBlob(docId: string): Promise<Blob> {
+    const res = await fetch(`${API_BASE}/documents/download/${docId}`, {
+        credentials: "include",
+    });
+    if (!res.ok) {
+        const detail = await res.text().catch(() => res.statusText);
+        throw new Error(`Failed to fetch document blob: ${detail}`);
+    }
+    return res.blob();
+}
+
+/* upload jsPDF generated on the client ------------------------ */
+export function uploadRiskPdf(
+    reportId: string,
+    blob: Blob,
+    filename: string,
+) {
     const form = new FormData();
     form.append("file", blob, filename);
     return fetch(`${API_BASE}/risk/${reportId}/upload-pdf`, {
         credentials: "include",
         method: "POST",
         body: form,
-    }).then((r) =>
-        handleResponse<{ report_doc_id: string; filename: string }>(r)
+    }).then(r =>
+        handleResponse<{ report_doc_id: string; filename: string }>(r),
     );
 }
 
-/* history list --------------------------------------------------------- */
+/* history list ------------------------------------------------ */
 export interface RiskHistoryItem {
     id: string;
     created_at: string;
@@ -168,27 +199,28 @@ export interface RiskHistoryItem {
 }
 export function listRiskHistory() {
     return fetch(`${API_BASE}/risk/history`, { ...common, method: "GET" })
-        .then((r) => handleResponse<{ history: RiskHistoryItem[] }>(r))
-        .then((d) => d.history);
+        .then(r => handleResponse<{ history: RiskHistoryItem[] }>(r))
+        .then(d => d.history);
 }
 
-/* fetch ONE stored risk report ---------------------------------------- */
+/* fetch ONE stored risk report ------------------------------- */
 export function getRiskReport(id: string): Promise<RiskAnalysisResponse> {
     return fetch(`${API_BASE}/risk/${id}`, { ...common, method: "GET" })
-        .then((r) => handleResponse<any>(r))
+        .then(r => handleResponse<any>(r))
         .then(unwrapRisk);
 }
 
-/* delete --------------------------------------------------------------- */
+/* delete ------------------------------------------------------ */
 export function deleteRiskReport(id: string) {
-    return fetch(`${API_BASE}/risk/${id}`, { ...common, method: "DELETE" }).then(
-        (r) => {
-            if (!r.ok) throw new Error("Delete failed");
-        }
-    );
+    return fetch(`${API_BASE}/risk/${id}`, {
+        ...common,
+        method: "DELETE",
+    }).then(r => {
+        if (!r.ok) throw new Error("Delete failed");
+    });
 }
 
-/* PDF download helper – talks to /risk/file/{file_id} ------------------ */
+/* PDF download helper – /risk/file/{file_id} ------------------ */
 export async function downloadRiskReport(fileId: string, filename: string) {
     const res = await fetch(`${API_BASE}/risk/file/${fileId}`, {
         credentials: "include",
@@ -215,6 +247,7 @@ export async function downloadRiskReport(fileId: string, filename: string) {
 }
 
 /* ═══════════════════════════ CHATBOT ══════════════════════════ */
+
 export interface ChatMessage {
     sender: "user" | "bot";
     text: string;
