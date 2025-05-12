@@ -24,7 +24,6 @@ const Navbar: React.FC = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
@@ -102,7 +101,6 @@ const Navbar: React.FC = () => {
   };
 
   const getIconSize = () => (screenWidth < 350 ? 16 : 20);
-
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
