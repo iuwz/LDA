@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File
 from pydantic import BaseModel
 from bson import ObjectId
-
+from backend.app.mvc.controllers.documents import extract_full_text_from_stream
 from backend.app.mvc.controllers.analysis import analyze_risk, get_risk_report
 from backend.app.utils.security import get_current_user
 from backend.app.mvc.models.user import UserInDB
@@ -32,6 +32,33 @@ async def analyze_risk_endpoint(
     except Exception as e:
         logging.error(f"Internal server error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/analyze-file", tags=["Analysis"])
+async def analyze_document_file(
+    file: UploadFile = File(...),
+    request: Request = None,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    user_id = current_user.email
+
+    raw = await file.read()
+
+    class AsyncBytes:
+        def __init__(self, b: bytes):
+            self._b = b
+
+        async def read(self) -> bytes:
+            return self._b
+
+    async_stream = AsyncBytes(raw)
+    text = await extract_full_text_from_stream(async_stream, file.filename)
+    if text.startswith("Error:"):
+        raise HTTPException(status_code=422, detail=text)
+
+    result = await analyze_risk(text, user_id, db, filename=file.filename)
+    return {"analysis_result": result}
+
 
 @router.get("/history", tags=["Analysis"])
 async def list_user_risk_reports(
