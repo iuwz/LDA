@@ -82,7 +82,7 @@ const TranslationTool: React.FC = () => {
       try {
         const { blob, filename } = await translateFile(
           file,
-          tgtLangLabel.toLowerCase(),
+          tgtLangLabel.toLowerCase()
         );
         const url = URL.createObjectURL(blob);
         setDocUrl(url);
@@ -97,7 +97,7 @@ const TranslationTool: React.FC = () => {
       try {
         const { translated_text, report_id } = await translateText(
           sourceText,
-          tgtLangLabel.toLowerCase(),
+          tgtLangLabel.toLowerCase()
         );
         setTranslatedText(translated_text);
         setResult({
@@ -145,7 +145,7 @@ const TranslationTool: React.FC = () => {
     if (!window.confirm("Delete this translation?")) return;
     try {
       await deleteTranslationReport(id);
-      setHistory(h => h.filter(i => i.id !== id));
+      setHistory((h) => h.filter((i) => i.id !== id));
       if (result?.report_id === id) setResult(null);
     } catch (e: any) {
       alert(e.message || "Delete failed");
@@ -208,7 +208,7 @@ const TranslationTool: React.FC = () => {
               className="font-serif text-2xl font-bold"
               style={{ color: BRAND.dark }}
             >
-              Translation 
+              Translation
             </h1>
             <p className="text-gray-600">
               {srcLangLabel} ↔ {tgtLangLabel}
@@ -221,19 +221,21 @@ const TranslationTool: React.FC = () => {
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
           onClick={() => setFromEnglish(true)}
-          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${fromEnglish
-            ? "bg-[color:var(--accent-dark)] text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
+            fromEnglish
+              ? "bg-[color:var(--accent-dark)] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
         >
           English → Arabic
         </button>
         <button
           onClick={() => setFromEnglish(false)}
-          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${!fromEnglish
-            ? "bg-[color:var(--accent-dark)] text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
+            !fromEnglish
+              ? "bg-[color:var(--accent-dark)] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
         >
           Arabic → English
         </button>
@@ -244,7 +246,7 @@ const TranslationTool: React.FC = () => {
         <div
           className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-[color:var(--accent-dark)] transition-colors"
           onClick={() => fileInputRef.current?.click()}
-          onDragOver={e => e.preventDefault()}
+          onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
         >
           <input
@@ -309,7 +311,7 @@ const TranslationTool: React.FC = () => {
                 className="w-full h-56 border rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-dark)]"
                 placeholder={`Type or paste ${srcLangLabel} here…`}
                 value={sourceText}
-                onChange={e => setSourceText(e.target.value)}
+                onChange={(e) => setSourceText(e.target.value)}
               />
             </div>
 
@@ -358,10 +360,11 @@ const TranslationTool: React.FC = () => {
             <motion.button
               onClick={handleTranslate}
               disabled={translateDisabled}
-              className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${translateDisabled
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
-                }`}
+              className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${
+                translateDisabled
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+              }`}
               whileHover={{
                 scale: translateDisabled ? 1 : 1.05,
               }}
@@ -395,7 +398,7 @@ const TranslationTool: React.FC = () => {
           <p className="text-sm text-gray-500 italic">No history yet.</p>
         ) : (
           <ul className="space-y-3">
-            {history.map(h => (
+            {history.map((h) => (
               <li
                 key={h.id}
                 className="border rounded-lg p-4 flex justify-between items-center"
@@ -414,7 +417,7 @@ const TranslationTool: React.FC = () => {
                       onClick={() =>
                         downloadDocumentById(
                           h.result_doc_id!,
-                          h.translated_filename!,
+                          h.translated_filename!
                         )
                       }
                       className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
