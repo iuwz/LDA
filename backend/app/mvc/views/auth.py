@@ -160,7 +160,7 @@ async def send_code(payload: SendCodeRequest, request: Request):
         upsert=True,
     )
 
-    await send_verification_email(payload.email, code)
+    send_verification_email(payload.email, code)
     return {"message": "Code sent"}
 
 # ─── POST /auth/verify-code ───────────────────────────────────────
