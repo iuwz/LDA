@@ -43,21 +43,26 @@ interface DisplayResult {
 }
 
 const TranslationTool: React.FC = () => {
+  /* Fresh translate state */
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [fromEnglish, setFromEnglish] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  /* File translation state */
   const [file, setFile] = useState<File | null>(null);
   const [docProcessing, setDocProcessing] = useState(false);
   const [docUrl, setDocUrl] = useState<string | null>(null);
 
+  /* History */
   const [history, setHistory] = useState<TranslationHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
 
+  /* Current result */
   const [result, setResult] = useState<DisplayResult | null>(null);
 
+  /* Delete modal state */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -67,7 +72,6 @@ const TranslationTool: React.FC = () => {
     loadHistory();
   }, []);
 
-  // ← FIXED: listTranslationHistory() returns TranslationHistoryItem[]
   async function loadHistory() {
     try {
       const items = await listTranslationHistory();
@@ -238,7 +242,7 @@ const TranslationTool: React.FC = () => {
 
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* ——————— Header ——————— */}
+      {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div
           className="h-2 bg-gradient-to-r"
@@ -267,7 +271,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* ——————— Direction Toggle ——————— */}
+      {/* Direction Toggle */}
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
           onClick={() => {
@@ -307,7 +311,7 @@ const TranslationTool: React.FC = () => {
         </button>
       </div>
 
-      {/* ——————— Upload Zone ——————— */}
+      {/* Upload Zone */}
       <div className="rounded-xl border bg-white shadow-sm p-6">
         <div
           className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
@@ -364,7 +368,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ——————— Editor / File Actions ——————— */}
+      {/* Editor / File Actions */}
       <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
         {file ? (
           <div className="p-6 text-center space-y-4">
@@ -403,7 +407,7 @@ const TranslationTool: React.FC = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* Source Text */}
+            {/* Source */}
             <div className="p-6">
               <h2 className="font-semibold mb-2" style={{ color: BRAND.dark }}>
                 Source Text ({srcLangLabel})
@@ -421,7 +425,7 @@ const TranslationTool: React.FC = () => {
               />
             </div>
 
-            {/* Translated Text */}
+            {/* Translated */}
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold" style={{ color: BRAND.dark }}>
@@ -497,7 +501,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ───── History ───── */}
+      {/* History */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Translations
@@ -579,7 +583,7 @@ const TranslationTool: React.FC = () => {
         )}
       </section>
 
-      {/* ───── Delete Modal ───── */}
+      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
