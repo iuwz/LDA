@@ -20,7 +20,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────── Sign-In ───────── */
+/* ───────── Sign-In (balanced) ───────── */
 
 interface SignInFormProps {
   email: string;
@@ -45,7 +45,7 @@ function SignInForm({
     <>
       <div className="text-center mb-8">
         <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
-          Sign In
+          Sign&nbsp;In
         </h2>
         <p className="text-gray-600 text-base">Access your account</p>
       </div>
@@ -299,16 +299,32 @@ function SignUpForm({
           </button>
 
           <ul className="mt-2 text-sm space-y-0.5">
-            <li className={hasUppercase ? "text-green-600" : "text-gray-500"}>
+            <li
+              className={`flex items-center ${hasUppercase ? "text-green-600" : "text-gray-500"
+                }`}
+            >
+              <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
               Uppercase letter
             </li>
-            <li className={hasNumber ? "text-green-600" : "text-gray-500"}>
+            <li
+              className={`flex items-center ${hasNumber ? "text-green-600" : "text-gray-500"
+                }`}
+            >
+              <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
               Number
             </li>
-            <li className={hasSymbol ? "text-green-600" : "text-gray-500"}>
+            <li
+              className={`flex items-center ${hasSymbol ? "text-green-600" : "text-gray-500"
+                }`}
+            >
+              <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
               Special character
             </li>
-            <li className={hasMinLength ? "text-green-600" : "text-gray-500"}>
+            <li
+              className={`flex items-center ${hasMinLength ? "text-green-600" : "text-gray-500"
+                }`}
+            >
+              <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
               ≥ 8 characters
             </li>
           </ul>
