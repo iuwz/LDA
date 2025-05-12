@@ -370,7 +370,16 @@ function ComplianceChecker() {
                     {" "}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
                       {" "}
-                      <FaFileAlt className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0" />{" "}
+                      {/* Applied styling to this span to match the layout */}
+                      <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
+                        {" "}
+                        {/* Wrapper for the icon */}
+                        {/* Call getFileIcon with filename and dropdown size */}
+                        {getFileIcon(
+                          h.report_filename || "",
+                          DROPDOWN_ICON_SIZE
+                        )}
+                      </span>
                       <span className="break-all">
                         {h.report_filename || "Compliance report"}
                       </span>{" "}
@@ -887,6 +896,7 @@ function ResultView({
             )}
 
             {/* Removed the orange explanation/recommendation box */}
+            {/* The orange box containing the explanation/recommendation has been removed as requested */}
           </div>
         ))}
         {results.issues.length === 0 && (
