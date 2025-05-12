@@ -1,4 +1,5 @@
 // src/views/pages/Dashboard/TranslationTool.tsx
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
@@ -27,9 +28,11 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
+/* ─────────── theme constants ─────────── */
 const BRAND = { dark: "var(--brand-dark)" } as const;
 const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
 
+/* ─────────── local types ─────────── */
 interface DisplayResult {
   report_id: string;
   type: "text" | "doc";
@@ -40,6 +43,7 @@ interface DisplayResult {
   created_at?: string;
 }
 
+/* ─────────── component ─────────── */
 const TranslationTool: React.FC = () => {
   /* ─────────── state ─────────── */
   const [sourceText, setSourceText] = useState("");
@@ -500,7 +504,7 @@ const TranslationTool: React.FC = () => {
               setDocUrl(null);
               setResult(null);
             }}
-            className="flex items-center gap-2 rounded-md px-4 py-2 bg-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded-md px-4 py-2 bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-dark)] hover:text-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: isTranslating || docProcessing ? 1 : 1.05 }}
             whileTap={{ scale: isTranslating || docProcessing ? 1 : 0.95 }}
             disabled={isTranslating || docProcessing}
@@ -552,8 +556,9 @@ const TranslationTool: React.FC = () => {
                     ? "Arabic"
                     : "English";
 
-                const isDoc =
-                  h.type === "doc" && h.result_doc_id && h.translated_filename;
+                /* treat any record with both fields as downloadable */
+                const isDownloadable =
+                  !!h.result_doc_id && !!h.translated_filename;
 
                 return (
                   <li
@@ -568,7 +573,7 @@ const TranslationTool: React.FC = () => {
                         <span
                           className="break-all cursor-pointer hover:underline"
                           onClick={() => {
-                            if (isDoc) {
+                            if (isDownloadable) {
                               downloadDocumentById(
                                 h.result_doc_id!,
                                 h.translated_filename!
@@ -585,7 +590,7 @@ const TranslationTool: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3 self-end sm:self-center">
-                      {isDoc ? (
+                      {isDownloadable && (
                         <motion.button
                           onClick={() =>
                             downloadDocumentById(
@@ -599,13 +604,6 @@ const TranslationTool: React.FC = () => {
                         >
                           <FaDownload /> Download
                         </motion.button>
-                      ) : (
-                        <button
-                          onClick={() => openReport(h.id)}
-                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                        >
-                          <FaSearch /> View
-                        </button>
                       )}
 
                       <button
