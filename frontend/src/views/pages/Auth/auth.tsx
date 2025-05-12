@@ -35,7 +35,16 @@ function SignInForm({
         </h2>
         <p className="text-gray-600 text-sm sm:text-base">Access your account</p>
       </div>
-
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700 shadow-sm"
+        >
+          {error}
+        </motion.div>
+      )}
       <form
         className="mt-8 sm:mt-12"
         onSubmit={(e) => {
@@ -160,6 +169,17 @@ function SignUpForm({
         </h2>
         <p className="text-gray-600 text-sm sm:text-base">Join our platform</p>
       </div>
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700 shadow-sm"
+        >
+          {error}
+        </motion.div>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -350,7 +370,7 @@ export default function Auth() {
   }, [location]);
 
   /* ── validators ── */
-  const isValidEmail = (val: string) => /.+@.+\..+/.test(val.trim());
+  const isValidEmail = (val: string) => /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(val.trim());
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
@@ -372,7 +392,7 @@ export default function Auth() {
           animate={{ x: [0, -40, 0], y: [0, -40, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
-        
+
         {/* Reduce bubble complexity on mobile */}
         <div className="hidden sm:block">
           <motion.div
