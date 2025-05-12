@@ -1,31 +1,25 @@
-# backend/app/mvc/views/analysis.py
-
 import logging
-from fastapi import APIRouter, HTTPException, Request, Depends, File, UploadFile
+from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File
 from pydantic import BaseModel
 from bson import ObjectId
 
 from backend.app.mvc.controllers.analysis import analyze_risk, get_risk_report
-from backend.app.mvc.controllers.documents import upload_file_to_gridfs
 from backend.app.utils.security import get_current_user
 from backend.app.mvc.models.user import UserInDB
+from backend.app.mvc.controllers.documents import upload_file_to_gridfs
 
 router = APIRouter(tags=["Analysis"])
 
 class RiskAnalysisRequest(BaseModel):
     document_text: str
 
-@router.post("/risk", tags=["Analysis"])
+@router.post("", tags=["Analysis"])
 async def analyze_risk_endpoint(
     request_data: RiskAnalysisRequest,
     *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    API endpoint to analyze legal document risk.
-    Expects JSON body {"document_text": "..."}.
-    """
     db = request.app.state.db
     user_id = current_user.email
 
@@ -39,39 +33,40 @@ async def analyze_risk_endpoint(
         logging.error(f"Internal server error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/risk", tags=["Analysis"])
+@router.get("/history", tags=["Analysis"])
 async def list_user_risk_reports(
     *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    List all risk reports for the logged-in user.
-    """
     db = request.app.state.db
     user_id = current_user.email
 
     try:
-        reports = []
-        async for report in db.risk_assessments.find({"user_id": user_id}):
-            report["_id"] = str(report["_id"])
-            reports.append(report)
-        logging.info(f"Returning {len(reports)} reports for user_id {user_id}")
-        return reports
+        items = []
+        cursor = db["risk_assessments"].find({"user_id": user_id}).sort("_id", -1)
+        async for row in cursor:
+            items.append({
+                "id": str(row["_id"]),
+                "created_at": row.get("created_at"),
+                "num_risks": len(row.get("risks", [])),
+                "origin": "file" if row.get("filename") else "text",
+                "filename": row.get("filename"),
+                "report_filename": row.get("report_filename"),
+                "report_doc_id": row.get("report_doc_id"),
+            })
+        return {"history": items}
     except Exception as e:
         logging.error(f"Error listing risk reports for user_id {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/risk/{report_id}", tags=["Analysis"])
+@router.get("/{report_id}", tags=["Analysis"])
 async def get_risk_report_endpoint(
     report_id: str,
     *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    Retrieve a risk report by ID. Only the user who submitted it may access.
-    """
     db = request.app.state.db
     user_id = current_user.email
 
@@ -79,52 +74,61 @@ async def get_risk_report_endpoint(
         result = await get_risk_report(report_id, db)
         if result.get("user_id") != user_id:
             raise HTTPException(status_code=403, detail="Access denied. This report does not belong to you.")
-        return result
+        return {"risk_report": {
+            "id": result["_id"],
+            "risks": result.get("risks", []),
+            "report_doc_id": result.get("report_doc_id"),
+            "filename": result.get("filename"),
+            "report_filename": result.get("report_filename"),
+        }}
     except HTTPException:
         raise
     except Exception as e:
         logging.error(f"Internal server error while retrieving report: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/risk/{report_id}/upload-pdf", tags=["Analysis"])
-async def upload_risk_pdf_endpoint(
+@router.delete("/{report_id}", tags=["Analysis"])
+async def delete_risk_report(
     report_id: str,
-    file: UploadFile = File(...),
     *,
     request: Request,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """
-    Upload a PDF version of a risk report to GridFS and attach it to the report record.
-    """
     db = request.app.state.db
     user_id = current_user.email
 
-    # Validate report ID
-    if not ObjectId.is_valid(report_id):
-        raise HTTPException(status_code=400, detail="Invalid report ID.")
-    doc = await db.risk_assessments.find_one({"_id": ObjectId(report_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Report not found.")
-    if doc.get("user_id") != user_id:
-        raise HTTPException(status_code=403, detail="Access denied. This report does not belong to you.")
+    try:
+        result = await db.risk_assessments.delete_one({"_id": ObjectId(report_id), "user_id": user_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Not found or not authorized")
+        return {"message": "Deleted"}
+    except Exception as e:
+        logging.error(f"Error deleting risk report: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    # Read file bytes
-    raw = await file.read()
-    class AsyncBytes:
-        def __init__(self, b: bytes):
-            self._b = b
-        async def read(self) -> bytes:
-            return self._b
-    async_stream = AsyncBytes(raw)
+@router.post("/{report_id}/upload-pdf", tags=["Analysis"])
+async def upload_risk_pdf(
+    report_id: str,
+    file: UploadFile = File(...),
+    request: Request = None,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    db = request.app.state.db
+    user_id = current_user.email
 
-    # Upload to GridFS
-    gridfs_id = await upload_file_to_gridfs(async_stream, file.filename)
+    # Check report exists and belongs to user
+    report = await db.risk_assessments.find_one({"_id": ObjectId(report_id), "user_id": user_id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found or not authorized")
 
-    # Update report record with file reference
+    # Save file to GridFS
+    file_bytes = await file.read()
+    gridfs_id = await upload_file_to_gridfs(db, file_bytes, file.filename)
+
+    # Update risk_assessments record
     await db.risk_assessments.update_one(
         {"_id": ObjectId(report_id)},
-        {"$set": {"report_doc_id": gridfs_id, "report_filename": file.filename}}
+        {"$set": {"report_doc_id": str(gridfs_id), "report_filename": file.filename}}
     )
 
     return {"report_doc_id": str(gridfs_id), "filename": file.filename}
