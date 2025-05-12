@@ -298,6 +298,15 @@ export function getChatSession(id: string) {
     );
 }
 
+export function deleteChatSession(id: string) {
+    return fetch(`${API_BASE}/chatbot/session/${id}`, {
+      ...common,
+      method: "DELETE",
+    }).then((r) => {
+      if (!r.ok) throw new Error("Delete failed");
+    });
+  }
+
 /* ═════════════════════ DOCUMENT UPLOADS (GridFS) ══════════════ */
 
 export interface DocumentRecord {

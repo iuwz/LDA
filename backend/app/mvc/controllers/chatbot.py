@@ -151,3 +151,15 @@ async def get_messages(
         }
         for m in doc["messages"]
     ]
+# NEW helper ──────────────────────────────────────────────────
+async def delete_session(
+    db: AsyncIOMotorDatabase, *, user_id: str, session_id: str
+) -> None:
+    if not ObjectId.is_valid(session_id):
+        raise ValueError("Invalid session id")
+
+    res = await db[COLL].delete_one(
+        {"_id": ObjectId(session_id), "user_id": user_id}
+    )
+    if res.deleted_count == 0:
+        raise ValueError("Session not found")
