@@ -500,7 +500,7 @@ const TranslationTool: React.FC = () => {
               setResult(null);
               if (fileInputRef.current) fileInputRef.current.value = "";
             }}
-            className="flex items-center gap-2 rounded-md px-4 py-2 bg-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex items-center gap-2 rounded-md px-4 py-2 bg-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed`}
             whileHover={{ scale: isTranslating || docProcessing ? 1 : 1.05 }}
             whileTap={{ scale: isTranslating || docProcessing ? 1 : 0.95 }}
             disabled={isTranslating || docProcessing}
@@ -571,7 +571,7 @@ const TranslationTool: React.FC = () => {
                           )}
                         </span>
                         <span className="break-all">
-                          {h.translated_filename || `Text Translation`}{" "}
+                          {h.translated_filename || "Text Translation"}{" "}
                           {/* Display filename or text indication */}
                         </span>
                       </p>
@@ -581,31 +581,31 @@ const TranslationTool: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex gap-3 self-end sm:self-center">
-                      {/* View button */}
-                      <button
-                        onClick={() => openReport(h.id)}
-                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                      >
-                        <FaSearch /> View
-                      </button>
-                      {/* Download button (only for file translations with doc ID) */}
+                      {/* Conditional button: Download for doc, View for text */}
                       {h.type === "doc" &&
-                        h.result_doc_id &&
-                        h.translated_filename && (
-                          <motion.button
-                            onClick={() =>
-                              downloadDocumentById(
-                                h.result_doc_id!,
-                                h.translated_filename!
-                              )
-                            }
-                            className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <FaDownload /> Download
-                          </motion.button>
-                        )}
+                      h.result_doc_id &&
+                      h.translated_filename ? (
+                        <motion.button
+                          onClick={() =>
+                            downloadDocumentById(
+                              h.result_doc_id!,
+                              h.translated_filename!
+                            )
+                          }
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FaDownload /> Download
+                        </motion.button>
+                      ) : (
+                        <button
+                          onClick={() => openReport(h.id)}
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                        >
+                          <FaSearch /> View
+                        </button>
+                      )}
                       {/* Delete button */}
                       <button
                         onClick={() => removeReport(h.id)}
