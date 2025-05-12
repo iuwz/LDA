@@ -5,6 +5,7 @@
     2025-05-12  • Added “analyze existing document” picker
                • History list styling now mirrors Compliance page
                • Generates PDF summary and re-uploads to server
+    2025-05-12  • NEW: “PDF” download button in report view
 */
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
@@ -218,7 +219,7 @@ function RiskAssessmentTool() {
         resp = await analyzeRiskDoc(doc_id);
         fetchDocuments(); // refresh list
       } else if (selectedDocId) {
-      /* B) existing doc */
+        /* B) existing doc */
         const doc = uploadedDocs.find((d) => d._id === selectedDocId);
         filename = doc?.filename || "";
         resp = await analyzeRiskDoc(selectedDocId);
@@ -299,6 +300,21 @@ function RiskAssessmentTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  /* ------------ download current PDF ------------ */
+  const reportHistoryItem = results
+    ? history.find((h) => h.id === results.id)
+    : null;
+  const handleDownloadReport = () => {
+    if (reportHistoryItem?.report_doc_id) {
+      downloadRiskReport(
+        reportHistoryItem.report_doc_id as string,
+        reportHistoryItem.report_filename || "risk_report.pdf"
+      );
+    } else {
+      alert("PDF not available yet. Please try again in a moment.");
+    }
+  };
+
   /* ------------ derived values ------------ */
   const filtered = results
     ? results.riskItems.filter(
@@ -373,6 +389,7 @@ function RiskAssessmentTool() {
             activeSection={activeSection}
             setActiveSection={setActiveSection}
             reset={reset}
+            handleDownloadReport={handleDownloadReport}
           />
         )}
       </section>
@@ -684,9 +701,17 @@ function ResultPane(props: {
   activeSection: string;
   setActiveSection: React.Dispatch<React.SetStateAction<string>>;
   reset: () => void;
+  handleDownloadReport: () => void;
 }) {
-  const { results, counts, filtered, activeSection, setActiveSection, reset } =
-    props;
+  const {
+    results,
+    counts,
+    filtered,
+    activeSection,
+    setActiveSection,
+    reset,
+    handleDownloadReport,
+  } = props;
 
   const [showAll, setShowAll] = useState(false);
   useEffect(() => setShowAll(false), [filtered]);
@@ -706,13 +731,24 @@ function ResultPane(props: {
             {results.analyzedFilename || "Report"}
           </h3>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={reset}
-          className="rounded-md bg-[#c17829] px-4 py-2 text-sm text-white hover:bg-[#a66224]"
-        >
-          Analyze Another
-        </motion.button>
+        <div className="flex flex-wrap items-stretch gap-6 justify-center">
+          <motion.button
+            onClick={handleDownloadReport}
+            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FaDownload /> PDF
+          </motion.button>
+          <motion.button
+            onClick={reset}
+            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Analyze Another
+          </motion.button>
+        </div>
       </div>
 
       {/* counts */}
