@@ -517,6 +517,7 @@ function SelectArea({
   DROPDOWN_ICON_SIZE, // Use received size constants
 }: SelectProps) {
   if (analyzing || fetchingDocs) {
+    // Added padding to the Spinner container
     return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
 
@@ -569,7 +570,8 @@ function SelectArea({
 
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="mt-8 text-center text-gray-700">
+    // Added padding to the root div of the Spinner component
+    <div className="mt-8 text-center text-gray-700 py-12">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
       <p className="mt-2">{label}</p>
     </div>
