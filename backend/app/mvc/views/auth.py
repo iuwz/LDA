@@ -111,7 +111,7 @@ async def forgot_password(payload: ForgotPasswordRequest, request: Request):
         # Don't reveal if user exists
         return {"message": "If that email exists, a reset link has been sent."}
     token = generate_reset_token(payload.email)
-    frontend_url = "https://lda-1-dcto.onrender.com/"  # Or your deployed frontend URL
+    frontend_url = "https://lda-1-dcto.onrender.com"  # Or your deployed frontend URL
     reset_link = f"{frontend_url}/reset-password?token={token}"
     send_reset_email(payload.email, reset_link)
     return {"message": "If that email exists, a reset link has been sent."}

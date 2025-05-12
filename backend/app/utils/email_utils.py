@@ -54,11 +54,22 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
             payload,
         )
 
-    # ── Send ──────────────────────────────────────────────
+        # ── Send ──────────────────────────────────────────────
     try:
-        resp = _mailer.send(payload)          # returns {"message_id": "..."} on 202
-        if "message_id" not in resp:
-            raise RuntimeError(str(resp))
+        resp = _mailer.send(payload)          # ➜ 202 or dict{"message_id": …}
+
+        # ▸ Accept all “obvious success” shapes
+        if (
+            resp == 202                                  # int
+            or (hasattr(resp, "status_code") and resp.status_code == 202)  # SDK resp obj
+            or (isinstance(resp, dict) and "message_id" in resp)           # HTTP JSON
+        ):
+            return                                       # ← success, nothing to raise
+
+        # Anything else is suspicious
+        raise RuntimeError(f"MailerSend unexpected response: {resp!r}")
+
     except Exception as exc:
         logging.exception("MailerSend failure")
         raise RuntimeError("Email service unavailable") from exc
+
