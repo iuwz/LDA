@@ -816,9 +816,10 @@ function ResultView({
               {results.complianceScore}/100
             </p>
           </div>
+          {/* Modified PDF Download button styles */}
           <motion.button
             onClick={handleDownloadReport}
-            className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-2 text-sm text-white hover:bg-[color:var(--accent-light)]"
+            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
