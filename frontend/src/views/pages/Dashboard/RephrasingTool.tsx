@@ -56,23 +56,19 @@ const getFileIcon = (filename: string | undefined, sizeClassName: string) => {
 
 /* ─────────────────────────────── COMPONENT ─────────────────────────────── */
 const RephrasingTool: React.FC = () => {
-  /* document management */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
 
-  /* new upload */
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* history */
   const [history, setHistory] = useState<RephraseHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
 
-  /* rephrase */
   const [originalText, setOriginalText] = useState("");
   const [rephrasedText, setRephrasedText] = useState("");
   const [rephrasedDocDetails, setRephrasedDocDetails] = useState<{
@@ -98,7 +94,6 @@ const RephrasingTool: React.FC = () => {
     }
   }, [copied]);
 
-  /* ───────────────────────── fetch helpers ───────────────────────── */
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
     setError(null);
@@ -127,7 +122,6 @@ const RephrasingTool: React.FC = () => {
     }
   }
 
-  /* ───────────────────────── selection & upload ───────────────────────── */
   function handleDocSelection(id: string | null) {
     setSelectedDocId(id);
     setFileToUpload(null);
@@ -162,7 +156,6 @@ const RephrasingTool: React.FC = () => {
     handleFileDrop(e.target.files?.[0] || null);
   }
 
-  /* ───────────────────────── rephrase action ───────────────────────── */
   const handleRephrase = async () => {
     setIsLoading(true);
     setError(null);
@@ -188,9 +181,7 @@ const RephrasingTool: React.FC = () => {
         const resp = (await rephrase({
           doc_id: selectedDocId,
           style: activeStyle,
-        })) as RephraseDocumentResponse & {
-          changes: Change[];
-        };
+        })) as RephraseDocumentResponse & { changes: Change[] };
         setRephrasedDocDetails({
           id: resp.rephrased_doc_id,
           filename: resp.rephrased_doc_filename,
@@ -200,9 +191,7 @@ const RephrasingTool: React.FC = () => {
         const resp = (await rephrase({
           document_text: originalText,
           style: activeStyle,
-        })) as RephraseTextResponse & {
-          changes: Change[];
-        };
+        })) as RephraseTextResponse & { changes: Change[] };
         setRephrasedText(resp.rephrased_text);
         setChanges(resp.changes || []);
       } else {
@@ -216,7 +205,6 @@ const RephrasingTool: React.FC = () => {
     }
   };
 
-  /* ───────────────────────── utilities ───────────────────────── */
   const handleCopy = () => {
     navigator.clipboard.writeText(rephrasedText);
     setCopied(true);
@@ -261,7 +249,6 @@ const RephrasingTool: React.FC = () => {
     isLoading ||
     fetchingDocs;
 
-  /* ───────────────────────── UI: spinner & buttons ───────────────────────── */
   const Spinner = ({ label }: { label: string }) => (
     <div className="py-12 text-center text-gray-700">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[#c17829]" />
@@ -292,7 +279,6 @@ const RephrasingTool: React.FC = () => {
     </motion.button>
   );
 
-  /* ───────────────────────── UI: existing picker ───────────────────────── */
   const ExistingDocPicker = () => (
     <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
       <p className="text-gray-700">Rephrase a previously uploaded document:</p>
@@ -331,7 +317,7 @@ const RephrasingTool: React.FC = () => {
                 uploadedDocs.map((doc) => (
                   <li
                     key={doc._id}
-                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                    className={`cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
                       selectedDocId === doc._id ? "bg-gray-100" : ""
                     }`}
                     onClick={() => {
@@ -339,8 +325,10 @@ const RephrasingTool: React.FC = () => {
                       setDocSelectOpen(false);
                     }}
                   >
-                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
-                    <span className="break-all">{doc.filename}</span>
+                    <div className="flex items-start gap-2">
+                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
+                      <span className="flex-1 break-all">{doc.filename}</span>
+                    </div>
                   </li>
                 ))
               ) : (
@@ -363,7 +351,6 @@ const RephrasingTool: React.FC = () => {
     </div>
   );
 
-  /* ───────────────────────── UI: upload drop zone ───────────────────────── */
   const UploadDropZone = () => (
     <div
       className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
@@ -409,7 +396,6 @@ const RephrasingTool: React.FC = () => {
     </div>
   );
 
-  /* ───────────────────────── UI: select area (mirror of compliance) ───────────────────────── */
   const SelectArea = () => {
     if (isLoading || fetchingDocs) {
       return (
@@ -439,7 +425,6 @@ const RephrasingTool: React.FC = () => {
     );
   };
 
-  /* ───────────────────────── UI: rephrased preview ───────────────────────── */
   const rephrasedContent =
     selectedDocId || fileToUpload ? (
       isLoading ? (
@@ -478,10 +463,8 @@ const RephrasingTool: React.FC = () => {
       </p>
     );
 
-  /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="space-y-8 p-6">
-      {/* header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -500,7 +483,6 @@ const RephrasingTool: React.FC = () => {
         </div>
       </header>
 
-      {/* style chips */}
       <div className="flex flex-wrap gap-2 px-6">
         {STYLE_OPTIONS.map(({ id, label }) => (
           <button
@@ -517,12 +499,10 @@ const RephrasingTool: React.FC = () => {
         ))}
       </div>
 
-      {/* select/upload area (mirrored from compliance) */}
       <section className="rounded-xl border bg-white shadow-sm">
         <SelectArea />
       </section>
 
-      {/* text & preview */}
       <section className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="grid divide-gray-200 md:grid-cols-2 md:divide-x">
           <div className="p-6">
@@ -569,7 +549,6 @@ const RephrasingTool: React.FC = () => {
           </div>
         </div>
 
-        {/* suggested changes */}
         {changes.length > 0 && (
           <section className="p-6">
             <h2 className="mb-2 font-medium text-[var(--brand-dark)]">
@@ -609,7 +588,6 @@ const RephrasingTool: React.FC = () => {
           </section>
         )}
 
-        {/* rephrase button (text mode only) */}
         {!(selectedDocId || fileToUpload) && (
           <div className="flex justify-end bg-gray-50 p-4">
             <AnalyzeButton
@@ -622,7 +600,6 @@ const RephrasingTool: React.FC = () => {
         )}
       </section>
 
-      {/* history */}
       <section className="rounded-xl border bg-white p-6 shadow-sm">
         <h2 className="mb-4 font-medium text-[var(--brand-dark)]">
           Previous Rephrasings
@@ -703,7 +680,6 @@ const RephrasingTool: React.FC = () => {
         )}
       </section>
 
-      {/* delete modal */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
