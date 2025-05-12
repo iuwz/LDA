@@ -362,17 +362,22 @@ function ComplianceChecker() {
                   key={h.id}
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="mb-3 sm:mb-0 min-w-0">
+                  <div className="mb-3 sm:mb-0 min-w-0 flex-1">
                     {" "}
-                    {/* Added min-w-0 here for better truncation handling with flex */}
-                    <p className="flex items-center text-sm font-semibold text-gray-800 truncate">
+                    {/* Added flex-1 to allow this div to take available space and enable wrapping for its children */}
+                    <p className="flex items-start text-sm font-semibold text-gray-800">
                       {" "}
-                      {/* Added truncate here */}
-                      <FaFileAlt className="mr-2 text-[#c17829] flex-shrink-0" />{" "}
-                      {/* Added flex-shrink-0 to prevent icon from shrinking */}
-                      {h.report_filename || "Compliance report"}
+                      {/* Changed items-center to items-start */}
+                      <FaFileAlt className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0" />{" "}
+                      {/* Added mt-0.5 for slight top margin to better align with first line of text, flex-shrink-0 */}
+                      <span className="break-all">
+                        {h.report_filename || "Compliance report"}
+                      </span>{" "}
+                      {/* Added break-all and wrapped text in span */}
                     </p>
                     <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                      {" "}
+                      {/* Consider adjusting margin if icon size/alignment changes significantly */}
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
                   </div>
