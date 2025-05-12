@@ -23,7 +23,7 @@ import {
   downloadComplianceReportPdf,
   DocumentRecord,
   ComplianceReportResponse,
-  ComplianceIssue, // Assuming this type does not have 'rule_name' or 'recommendation'
+  ComplianceIssue,
   listComplianceHistory,
   deleteComplianceReport,
   getComplianceReport,
@@ -99,7 +99,6 @@ function ComplianceChecker() {
   /* history */
   const [history, setHistory] = useState<ComplianceHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
-  const [isLoadingReport, setIsLoadingReport] = useState<string | null>(null);
 
   /* delete modal state */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -112,22 +111,13 @@ function ComplianceChecker() {
   }, []);
 
   /* keep filename label in sync */
-  // Removed 'results' from dependency array as it was causing infinite loops if not memoized correctly.
-  // This effect primarily depends on doc/file changes when results are already present.
   useEffect(() => {
     if (results) {
-      let newFilename: string | undefined;
       if (selectedDocId) {
-        newFilename = uploadedDocs.find(
-          (d) => d._id === selectedDocId
-        )?.filename;
+        const doc = uploadedDocs.find((d) => d._id === selectedDocId);
+        setResults({ ...results, analyzedFilename: doc?.filename });
       } else if (fileToUpload) {
-        newFilename = fileToUpload.name;
-      }
-      if (newFilename && results.analyzedFilename !== newFilename) {
-        setResults((prevResults) =>
-          prevResults ? { ...prevResults, analyzedFilename: newFilename } : null
-        );
+        setResults({ ...results, analyzedFilename: fileToUpload.name });
       }
     }
   }, [selectedDocId, fileToUpload, uploadedDocs]);
@@ -136,7 +126,6 @@ function ComplianceChecker() {
 
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
-    setError(null);
     try {
       const docs = await listDocuments();
       setUploadedDocs(docs);
@@ -151,17 +140,11 @@ function ComplianceChecker() {
   }
 
   async function loadHistory() {
-    setError(null);
     try {
       const h = await listComplianceHistory();
-      h.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
       setHistory(h);
-    } catch (e: any) {
-      setError("Failed to load compliance history.");
-      console.error("Failed to load compliance history:", e);
+    } catch {
+      // ignore
     }
   }
 
@@ -176,17 +159,15 @@ function ComplianceChecker() {
     });
 
     let overall: DisplayAnalysisResult["complianceScore"] = 100;
-    if (tally.bad) overall = Math.max(0, 100 - tally.bad * 20);
-    else if (tally.warn) overall = Math.max(0, 100 - tally.warn * 10);
-    else if (tally.unk) overall = Math.max(0, 100 - tally.unk * 5);
+    if (tally.bad) overall = 100 - tally.bad * 20;
+    else if (tally.warn) overall = 100 - tally.warn * 10;
+    else if (tally.unk) overall = 100 - tally.unk * 5;
 
     return overall;
   }
 
   /* open stored report */
   async function openReport(id: string) {
-    setIsLoadingReport(id);
-    setError(null);
     try {
       const rep = await getComplianceReport(id);
       const score =
@@ -198,15 +179,9 @@ function ComplianceChecker() {
         complianceScore: score,
         analyzedFilename: rep.report_filename || rep.report_id,
       });
-      setSelectedDocId(null);
-      setFileToUpload(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
-      const errorMsg = (e as Error).message || "Failed to open report";
-      setError(errorMsg);
-    } finally {
-      setIsLoadingReport(null);
+      alert(e.message || "Failed to open report");
     }
   }
 
@@ -219,15 +194,12 @@ function ComplianceChecker() {
   async function confirmDelete() {
     if (!pendingDeleteId) return;
     setIsDeleting(true);
-    setError(null);
     try {
       await deleteComplianceReport(pendingDeleteId);
       setHistory((h) => h.filter((r) => r.id !== pendingDeleteId));
       if (results?.report_id === pendingDeleteId) setResults(null);
     } catch (e: any) {
-      const errorMsg = (e as Error).message || "Delete failed";
-      setError(errorMsg);
-      alert(errorMsg);
+      alert(e.message || "Delete failed");
     } finally {
       setIsDeleting(false);
       setPendingDeleteId(null);
@@ -249,30 +221,28 @@ function ComplianceChecker() {
 
   /* fresh analysis */
   const handleAnalyze = async () => {
-    let docIdToAnalyze: string | null = null;
-    let filenameToAnalyze: string | undefined;
+    let docId: string | null = null;
+    let filename: string | undefined;
 
     setAnalyzing(true);
     setError(null);
-    setResults(null);
 
     try {
       if (fileToUpload) {
         const { doc_id } = await uploadDocument(fileToUpload);
-        docIdToAnalyze = doc_id;
-        filenameToAnalyze = fileToUpload.name;
+        docId = doc_id;
+        filename = fileToUpload.name;
         fetchUploadedDocuments();
       } else if (selectedDocId) {
-        docIdToAnalyze = selectedDocId;
-        filenameToAnalyze =
+        docId = selectedDocId;
+        filename =
           uploadedDocs.find((d) => d._id === selectedDocId)?.filename || "";
       } else {
         setError("Please select or upload a document.");
-        setAnalyzing(false);
         return;
       }
 
-      const report = await checkCompliance({ doc_id: docIdToAnalyze });
+      const report = await checkCompliance({ doc_id: docId });
       const score =
         typeof (report as any).compliance_score === "number"
           ? (report as any).compliance_score
@@ -281,13 +251,11 @@ function ComplianceChecker() {
       setResults({
         ...report,
         complianceScore: score,
-        analyzedFilename: filenameToAnalyze,
+        analyzedFilename: filename,
       });
       loadHistory();
     } catch (e: any) {
-      setError(
-        `Compliance check failed: ${(e as Error).message || "Unknown error"}`
-      );
+      setError(`Compliance check failed: ${e.message || "Unknown error"}`);
     } finally {
       setAnalyzing(false);
     }
@@ -325,13 +293,8 @@ function ComplianceChecker() {
   };
 
   const isAnalyzeDisabled =
-    (!selectedDocId && !fileToUpload) ||
-    analyzing ||
-    fetchingDocs ||
-    !!isLoadingReport;
-  const isFileInputDisabled = analyzing || fetchingDocs || !!isLoadingReport;
-
-  const displayedHistory = showAllHistory ? history : history.slice(0, 5);
+    (!selectedDocId && !fileToUpload) || analyzing || fetchingDocs;
+  const isFileInputDisabled = analyzing || fetchingDocs;
 
   /* ───────────────────────── render ───────────────────────── */
   return (
@@ -371,7 +334,7 @@ function ComplianceChecker() {
             onFileChange={onFileChange}
             handleFileDrop={handleFileDrop}
             handleAnalyze={handleAnalyze}
-            error={error} // Pass error to SelectArea
+            error={error}
           />
         ) : (
           <ResultView
@@ -389,17 +352,12 @@ function ComplianceChecker() {
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Compliance Reports
         </h2>
-        {/* Display error from history loading/opening here, if not already shown above and results are null */}
-        {error && !results && (
-          <p className="mb-4 text-sm text-red-600">{error}</p>
-        )}
-        {history.length === 0 && !isLoadingReport && !fetchingDocs && !error ? (
+        {history.length === 0 ? (
           <p className="text-sm italic text-gray-500">No history yet.</p>
-        ) : null}
-        {(history.length > 0 || isLoadingReport || fetchingDocs) && ( // Added check to ensure ul is not rendered if history is empty and not loading
+        ) : (
           <>
             <ul className="space-y-3">
-              {displayedHistory.map((h) => (
+              {(showAllHistory ? history : history.slice(0, 5)).map((h) => (
                 <li
                   key={h.id}
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
@@ -407,9 +365,9 @@ function ComplianceChecker() {
                   <div className="mb-3 sm:mb-0">
                     <p className="flex items-center text-sm font-semibold text-gray-800">
                       <FaFileAlt className="mr-2 text-[#c17829]" />
-                      {h.report_filename || "Compliance Report"}
+                      {h.report_filename || "Compliance report"}
                     </p>
-                    <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-6">
+                    <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -417,32 +375,22 @@ function ComplianceChecker() {
                     <button
                       onClick={() => openReport(h.id)}
                       className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                      disabled={
-                        analyzing ||
-                        isDeleting ||
-                        (!!isLoadingReport && isLoadingReport !== h.id)
-                      }
                     >
-                      {isLoadingReport === h.id ? (
-                        <FaSpinner className="animate-spin" />
-                      ) : (
-                        <FaSearch />
-                      )}
-                      {isLoadingReport === h.id ? "Loading..." : "View"}
+                      <FaSearch /> View
                     </button>
                     {h.report_doc_id && (
-                      <button
+                      <motion.button
                         onClick={() => downloadComplianceReportPdf(h.id)}
-                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                        disabled={analyzing || isDeleting || !!isLoadingReport}
+                        className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaDownload /> Download
-                      </button>
+                      </motion.button>
                     )}
                     <button
                       onClick={() => removeReport(h.id)}
                       className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
-                      disabled={analyzing || isDeleting || !!isLoadingReport}
                     >
                       <FaTrash /> Delete
                     </button>
@@ -456,14 +404,7 @@ function ComplianceChecker() {
                   onClick={() => setShowAllHistory(!showAllHistory)}
                   className="text-sm text-[#c17829] hover:underline"
                 >
-                  {showAllHistory
-                    ? "Show Less"
-                    : `Show ${history.length - 5} More`}
-                  <FaChevronDown
-                    className={`ml-1 inline-block transition-transform duration-200 ${
-                      showAllHistory ? "rotate-180" : ""
-                    }`}
-                  />
+                  {showAllHistory ? "Show less" : "Show more"}
                 </button>
               </div>
             )}
@@ -481,22 +422,15 @@ function ComplianceChecker() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => !isDeleting && setPendingDeleteId(null)}
-              aria-hidden="true"
             />
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-modal-title"
             >
               <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
-                <h4
-                  id="delete-modal-title"
-                  className="text-lg font-semibold text-[color:var(--brand-dark)]"
-                >
+                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
                   Delete Compliance Report
                 </h4>
                 <p className="text-sm text-gray-700">
@@ -548,7 +482,7 @@ interface SelectProps {
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
   handleAnalyze: () => void;
-  error: string | null; // Added error prop
+  error: string | null;
 }
 
 function SelectArea({
@@ -567,31 +501,10 @@ function SelectArea({
   onFileChange,
   handleFileDrop,
   handleAnalyze,
-  error, // Use error prop
+  error,
 }: SelectProps) {
-  const getSmallFileIcon = (filename: string) => {
-    const ext = filename.split(".").pop()?.toLowerCase();
-    if (ext === "pdf") {
-      return <FaFilePdf className="mr-2 text-red-500" />;
-    }
-    if (ext === "doc" || ext === "docx") {
-      return <FaFileWord className="mr-2 text-blue-500" />;
-    }
-    return <FaFileAlt className="mr-2 text-gray-400" />;
-  };
-
   if (analyzing || fetchingDocs) {
-    return (
-      <Spinner
-        label={
-          analyzing
-            ? "Analyzing document…"
-            : fetchingDocs
-            ? "Loading documents…"
-            : "Processing…"
-        }
-      />
-    );
+    return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
 
   return (
@@ -603,7 +516,7 @@ function SelectArea({
           handleDocSelection={handleDocSelection}
           docSelectOpen={docSelectOpen}
           setDocSelectOpen={setDocSelectOpen}
-          getFileIcon={getSmallFileIcon}
+          getFileIcon={getFileIcon}
           handleAnalyze={handleAnalyze}
           isAnalyzeDisabled={isAnalyzeDisabled}
           analyzing={analyzing}
@@ -629,7 +542,7 @@ function SelectArea({
           />
         </div>
       )}
-      {/* Corrected error display condition */}
+
       {error && (
         <p className="mt-4 text-center text-sm text-red-600">{error}</p>
       )}
@@ -641,9 +554,9 @@ function SelectArea({
 
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center p-10 text-gray-700">
-      <FaSpinner className="mb-3 h-10 w-10 animate-spin text-[color:var(--accent-dark)]" />
-      <p className="mt-2 text-sm">{label}</p>
+    <div className="mt-8 text-center text-gray-700">
+      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
+      <p className="mt-2">{label}</p>
     </div>
   );
 }
@@ -663,9 +576,9 @@ function AnalyzeButton({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center justify-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2.5 text-base font-medium text-white shadow-sm transition-colors hover:bg-[rgb(173,108,37)] disabled:cursor-not-allowed disabled:opacity-60"
-      whileHover={{ scale: disabled ? 1 : 1.03 }}
-      whileTap={{ scale: disabled ? 1 : 0.97 }}
+      className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)]"
+      whileHover={{ scale: disabled ? 1 : 1.05 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
     >
       {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
       {busy ? "Analyzing…" : label}
@@ -696,27 +609,20 @@ function ExistingDocPicker(props: {
     analyzing,
   } = props;
 
-  const selectedDoc = uploadedDocs.find((d) => d._id === selectedDocId);
-
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
-      <p className="text-sm text-gray-700">
-        Or analyze a previously uploaded document:
-      </p>
+      <p className="text-gray-700">Analyze a previously uploaded document:</p>
       <div className="relative w-full">
         <button
-          type="button"
-          className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-dark)]/50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
           onClick={() => setDocSelectOpen(!docSelectOpen)}
           disabled={analyzing}
-          aria-haspopup="listbox"
-          aria-expanded={docSelectOpen}
         >
-          <span className="truncate">
-            {selectedDoc ? selectedDoc.filename : "Choose Document"}
-          </span>
+          {selectedDocId
+            ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
+            : "Choose Document"}
           <FaChevronDown
-            className={`ml-2 h-4 w-4 text-gray-400 transition-transform ${
+            className={`ml-2 transition-transform ${
               docSelectOpen ? "rotate-180" : ""
             }`}
           />
@@ -724,47 +630,34 @@ function ExistingDocPicker(props: {
         <AnimatePresence>
           {docSelectOpen && (
             <motion.ul
-              initial={{ opacity: 0, y: -5 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5, transition: { duration: 0.15 } }}
-              className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
-              role="listbox"
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
             >
               {selectedDocId && (
                 <li
-                  className="relative cursor-pointer select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-gray-100"
-                  role="option"
-                  tabIndex={-1}
-                  onClick={() => {
-                    handleDocSelection(null);
-                    setDocSelectOpen(false);
-                  }}
+                  className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => handleDocSelection(null)}
                 >
                   Clear Selection
                 </li>
               )}
-              {uploadedDocs.length > 0 ? (
+              {uploadedDocs.length ? (
                 uploadedDocs.map((doc) => (
                   <li
                     key={doc._id}
-                    className={`relative flex cursor-pointer select-none items-center py-2 pl-3 pr-9 text-gray-900 hover:bg-gray-100 ${
-                      selectedDocId === doc._id
-                        ? "bg-gray-100 font-semibold"
-                        : ""
+                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      selectedDocId === doc._id ? "bg-gray-100" : ""
                     }`}
-                    role="option"
-                    tabIndex={-1}
-                    onClick={() => {
-                      handleDocSelection(doc._id);
-                      setDocSelectOpen(false);
-                    }}
+                    onClick={() => handleDocSelection(doc._id)}
                   >
                     {getFileIcon(doc.filename)}
-                    <span className="truncate">{doc.filename}</span>
+                    {doc.filename}
                   </li>
                 ))
               ) : (
-                <li className="relative cursor-default select-none px-4 py-2 text-sm italic text-gray-500">
+                <li className="px-4 py-2 text-sm italic text-gray-500">
                   No documents uploaded yet.
                 </li>
               )}
@@ -775,8 +668,8 @@ function ExistingDocPicker(props: {
       {selectedDocId && (
         <AnalyzeButton
           onClick={handleAnalyze}
-          disabled={isAnalyzeDisabled || analyzing}
-          busy={analyzing && !!selectedDocId}
+          disabled={isAnalyzeDisabled}
+          busy={analyzing}
           label="Analyze Selected"
         />
       )}
@@ -800,40 +693,21 @@ function UploadDropZone(props: {
     handleFileDrop,
     getFileIcon,
   } = props;
-  const [isDragging, setIsDragging] = useState(false);
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors duration-150 ease-in-out
-        ${
-          isDisabled
-            ? "cursor-not-allowed opacity-60 border-gray-300 bg-gray-50"
-            : "border-gray-300 hover:border-[color:var(--accent-dark)]"
-        }
-        ${
-          isDragging
-            ? "border-[color:var(--accent-dark)] bg-[color:var(--accent-light)]/30"
-            : ""
-        }
-      `}
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
+        isDisabled
+          ? "cursor-not-allowed opacity-60"
+          : "cursor-pointer hover:border-[color:var(--accent-dark)]"
+      }`}
       onClick={() => !isDisabled && fileInputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
-        e.stopPropagation();
-        if (!isDisabled) {
-          e.dataTransfer.dropEffect = "copy";
-          setIsDragging(true);
-        }
-      }}
-      onDragLeave={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
+        e.dataTransfer.dropEffect = "copy";
       }}
       onDrop={(e) => {
         e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
         if (isDisabled) return;
         const f = e.dataTransfer.files?.[0];
         if (f) handleFileDrop(f);
@@ -851,21 +725,16 @@ function UploadDropZone(props: {
       {fileToUpload ? (
         <>
           {getFileIcon(fileToUpload.name)}
-          <p className="mt-2 font-medium text-gray-700">{fileToUpload.name}</p>
+          <p className="mt-2">{fileToUpload.name}</p>
           <p className="text-xs text-gray-500">
-            {(fileToUpload.size / 1024 / 1024).toFixed(2)} MB
+            {(fileToUpload.size / 1048576).toFixed(2)} MB
           </p>
         </>
       ) : (
         <>
-          <FaCloudUploadAlt className="text-5xl text-gray-400 transition-colors group-hover:text-[color:var(--accent-dark)]" />
-          <p className="mt-2 text-sm text-gray-600">
-            Drag & drop or{" "}
-            <span className="font-semibold text-[color:var(--accent-dark)]">
-              click to upload
-            </span>
-          </p>
-          <p className="text-xs text-gray-400">Accepted: PDF, DOCX, DOC, TXT</p>
+          <FaCloudUploadAlt className="text-5xl text-gray-400" />
+          <p className="mt-2">Drag & drop or click to upload</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX</p>
         </>
       )}
     </div>
@@ -900,7 +769,7 @@ function ResultView({
           )}
           <div>
             <h3 className="font-medium text-gray-800">
-              {results.analyzedFilename || "Analysis Result"}
+              {results.analyzedFilename}
             </h3>
             <p className="text-xs text-gray-500">
               Report ID: {results.report_id}
@@ -908,28 +777,26 @@ function ResultView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-center gap-6">
           <div className="text-center">
-            <p className="text-xs uppercase tracking-wider text-gray-500">
-              Compliance Score
-            </p>
-            <p className="text-2xl font-bold text-gray-800">
+            <p className="text-xs text-gray-500">Score</p>
+            <p className="text-lg font-bold text-gray-800">
               {results.complianceScore}/100
             </p>
           </div>
           <motion.button
             onClick={handleDownloadReport}
-            className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[color:var(--accent-dark)]/90 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-dark)]/50 focus:ring-offset-2"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-2 text-sm text-white hover:bg-[color:var(--accent-light)]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <FaDownload /> Download PDF
+            <FaDownload /> PDF
           </motion.button>
           <motion.button
             onClick={reset}
-            className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[rgb(173,108,37)] focus:outline-none focus:ring-2 focus:ring-[rgb(193,120,41)]/50 focus:ring-offset-2"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Analyze Another
           </motion.button>
@@ -943,51 +810,34 @@ function ResultView({
             key={`${results.report_id}-${it.rule_id}-${i}`}
             className="rounded-lg border p-4 transition-shadow hover:shadow-md"
           >
-            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <p className="flex-1 font-medium text-gray-800">
-                {it.description}{" "}
-                {/* Changed from it.rule_name || it.description */}
-                <span className="ml-2 whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-500">
+            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <p className="font-medium text-gray-800">
+                {it.description}
+                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
                   Rule ID: {it.rule_id}
                 </span>
               </p>
-              <div className="flex-shrink-0">
-                <ComplianceStatus status={it.status} />
-              </div>
+              <ComplianceStatus status={it.status} />
             </div>
-            {it.status.toLowerCase() !== "ok" && it.description && (
-              <div className="flex gap-2 rounded-md border border-[color:var(--accent-dark)]/30 bg-[color:var(--accent-light)]/20 p-3 text-sm">
-                <FaInfoCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-[color:var(--accent-dark)]" />
-                <div className="space-y-1 text-sm text-[color:var(--accent-dark)]/90">
-                  <p className="font-medium">Details:</p>
+            {it.status.toLowerCase() !== "ok" && (
+              <div className="flex gap-2 rounded-md border border-[color:var(--accent-dark)]/50 bg-[color:var(--accent-light)]/50 p-3 text-sm">
+                <FaInfoCircle className="mt-1 text-[color:var(--accent-dark)]" />
+                <div className="space-y-2 text-[color:var(--accent-dark)]">
                   <p>{it.description}</p>
                   {it.extracted_text_snippet && (
-                    <p className="mt-1 rounded border bg-white/70 p-2 text-xs italic text-gray-700">
+                    <p className="rounded border bg-white p-2 italic">
                       “{it.extracted_text_snippet}”
                     </p>
                   )}
-                  {/* Removed recommendation block as it's not on ComplianceIssue type
-                   {it.recommendation && (
-                    <p className="mt-1">
-                        <span className="font-semibold">Recommendation:</span> {it.recommendation}
-                    </p>
-                  )}
-                  */}
                 </div>
               </div>
             )}
           </div>
         ))}
         {results.issues.length === 0 && (
-          <div className="py-10 text-center">
-            <FaClipboardCheck className="mx-auto mb-3 text-4xl text-green-500" />
-            <p className="text-lg font-semibold text-gray-700">
-              Excellent! No compliance issues found.
-            </p>
-            <p className="text-sm text-gray-500">
-              This document meets all checked compliance standards.
-            </p>
-          </div>
+          <p className="text-center italic text-gray-600">
+            No compliance issues found.
+          </p>
         )}
       </div>
     </>
