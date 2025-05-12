@@ -603,7 +603,8 @@ function AnalyzeButton({
   );
 }
 
-function ExistingDocPicker(props: {
+/* ───────── ExistingDocPicker subcomponent ───────── */
+interface ExistingDocPickerProps {
   uploadedDocs: DocumentRecord[];
   selectedDocId: string | null;
   handleDocSelection: (id: string | null) => void;
@@ -614,7 +615,9 @@ function ExistingDocPicker(props: {
   isAnalyzeDisabled: boolean;
   analyzing: boolean;
   DROPDOWN_ICON_SIZE: string; // Receive size constant
-}) {
+}
+
+function ExistingDocPicker(props: ExistingDocPickerProps) {
   const {
     uploadedDocs,
     selectedDocId,
@@ -703,7 +706,8 @@ function ExistingDocPicker(props: {
   );
 }
 
-function UploadDropZone(props: {
+/* ───────── UploadDropZone subcomponent ───────── */
+interface UploadDropZoneProps {
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   isDisabled: boolean;
@@ -711,7 +715,9 @@ function UploadDropZone(props: {
   handleFileDrop: (f: File | null) => void;
   getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
   FILE_ICON_SIZE: string; // Receive size constant
-}) {
+}
+
+function UploadDropZone(props: UploadDropZoneProps) {
   const {
     fileToUpload,
     fileInputRef,
@@ -814,32 +820,30 @@ function ResultView({
         <div className="flex flex-wrap items-stretch gap-6">
           {" "}
           {/* Changed items-center to items-stretch */}
-          {/* Wrap buttons in divs with flex-1 for equal width */}
-          <div className="flex-1 min-w-0">
-            <motion.button
-              onClick={handleDownloadReport}
-              // Applied the same classes and motion props as Analyze Another button
-              // Reduced vertical padding from py-2 to py-1.5
-              // Removed h-full to let content dictate height
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FaDownload /> PDF
-            </motion.button>
-          </div>
-          <div className="flex-1 min-w-0">
-            <motion.button
-              onClick={reset}
-              // Reduced vertical padding from py-2 to py-1.5
-              // Removed h-full to let content dictate height
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Analyze Another
-            </motion.button>
-          </div>
+          {/* Removed flex-1 min-w-0 from these wrapping divs */}
+          <motion.button
+            onClick={handleDownloadReport}
+            // Applied the same classes and motion props as Analyze Another button
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[133px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FaDownload /> PDF
+          </motion.button>
+          <motion.button
+            onClick={reset}
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[133px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Analyze Another
+          </motion.button>
         </div>
       </div>
 
