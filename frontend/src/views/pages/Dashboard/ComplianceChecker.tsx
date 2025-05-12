@@ -672,9 +672,12 @@ function ExistingDocPicker(props: {
                       setDocSelectOpen(false); // Close dropdown on selection
                     }}
                   >
-                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
-                    {/* Call with DROPDOWN_ICON_SIZE */}
-                    {doc.filename}
+                    {/* Modified structure to handle long filenames */}
+                    <div className="flex items-start gap-2">
+                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
+                      {/* Call with DROPDOWN_ICON_SIZE */}
+                      <span className="flex-1 break-all">{doc.filename}</span>
+                    </div>
                   </li>
                 ))
               ) : (
