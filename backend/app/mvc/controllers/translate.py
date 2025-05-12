@@ -195,6 +195,7 @@ async def run_file_translation_tool(
                 "translated_text": translated_text,
                 "result_doc_id": doc_id,
                 "translated_filename": translated_filename,
+                "type": "doc",  # ← FIXED: mark this row as a document translation
             }
         },
     )
