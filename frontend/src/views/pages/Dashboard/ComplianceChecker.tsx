@@ -827,7 +827,7 @@ function ResultView({
             // Reduced vertical padding from py-2 to py-1.5
             // Removed h-full to let content dictate height
             // Added fixed width and height
-            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[133px] h-[36px]"
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]" // Updated width to 159px
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -838,7 +838,7 @@ function ResultView({
             // Reduced vertical padding from py-2 to py-1.5
             // Removed h-full to let content dictate height
             // Added fixed width and height
-            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[133px] h-[36px]"
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]" // Updated width to 159px
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -851,15 +851,14 @@ function ResultView({
       <div className="space-y-4 p-6">
         {results.issues.map((it, i) => (
           // Applied styling and structure similar to Risk Assessment cards
+          // Regenerated the div structure for cleanliness around line 874/876
           <div
             key={`${results.report_id}-${it.rule_id}-${i}`}
             className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
           >
             {/* Headline (Description + Rule ID) + Status Badge */}
             <div className="mb-2 flex items-start justify-between gap-4">
-              <h4 className="font-semibold text-gray-900">
-                {" "}
-                {/* Changed to h4 and darker text */}
+              <h4 className="font-semibold text-gray-900 break-words">
                 {it.description}
                 <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
                   Rule ID: {it.rule_id}
@@ -868,6 +867,13 @@ function ResultView({
               <ComplianceStatus status={it.status} />
             </div>
 
+            {/* Clarify the quote source */}
+            {it.extracted_text_snippet && (
+              <p className="text-xs text-gray-500 mb-1">
+                Original text snippet:
+              </p>
+            )}
+
             {/* Quote (Extracted Snippet) */}
             {it.extracted_text_snippet && (
               <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
@@ -875,18 +881,7 @@ function ResultView({
               </blockquote>
             )}
 
-            {/* Explanation/Recommendation (Orange Box) */}
-            {it.status.toLowerCase() !== "ok" && (
-              <div className="flex gap-2 rounded-md border border-[#c17829]/50 bg-[#c17829]/10 p-3 text-sm">
-                {" "}
-                {/* Copied Risk suggestion box styling */}
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#c17829] text-white">
-                  <FaInfoCircle size={14} />
-                </span>
-                {/* Using description for the explanation text */}
-                <span className="text-[#a66224]">{it.description}</span>
-              </div>
-            )}
+            {/* Removed the orange explanation/recommendation box */}
           </div>
         ))}
         {results.issues.length === 0 && (
