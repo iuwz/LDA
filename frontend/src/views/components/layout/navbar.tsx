@@ -1,7 +1,7 @@
 // src/views/components/Navbar.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
-import { FaBalanceScale, FaBars, FaTimes } from "react-icons/fa";
+import { FaBalanceScale, FaBars, FaTimes, FaSignOutAlt } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
@@ -12,20 +12,15 @@ const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
-  // track auth state
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initials, setInitials] = useState("");
-
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
-  // fetch auth status once
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -39,7 +34,6 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  // handle resize
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -49,7 +43,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // close profile dropdown on outside click
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -64,7 +57,6 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
-  // lock scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -72,7 +64,6 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  // smooth‐scroll to services
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -110,9 +101,7 @@ const Navbar: React.FC = () => {
 
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* Desktop Navbar */}
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
-        {/* Brand */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -125,7 +114,6 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* Center Links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -179,11 +167,9 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* Right side */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
-              /* Authenticated view */
               <div className="relative">
                 <div
                   onClick={toggleProfileDropdown}
@@ -204,15 +190,15 @@ const Navbar: React.FC = () => {
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center"
                     >
+                      <FaSignOutAlt className="mr-2" size={getIconSize()} />{" "}
                       Logout
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              /* Not authenticated view */
               <>
                 <Button
                   size="md"
@@ -236,12 +222,10 @@ const Navbar: React.FC = () => {
               </>
             )
           ) : (
-            /* Placeholder while figuring out auth */
             <div className="h-8 w-32" />
           )}
         </div>
 
-        {/* Mobile toggle */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -256,7 +240,6 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-white pt-20 flex flex-col items-center space-y-6">
           <NavLink
@@ -315,10 +298,10 @@ const Navbar: React.FC = () => {
                 Profile
               </button>
               <button
-                className="text-xl text-red-600"
                 onClick={handleLogout}
+                className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg font-medium text-red-600 hover:bg-gray-100"
               >
-                Logout
+                <FaSignOutAlt className="mr-2" size={getIconSize()} /> Logout
               </button>
             </>
           ) : (
