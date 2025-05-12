@@ -809,13 +809,15 @@ function ResultView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-wrap items-stretch gap-6">
+          {" "}
+          {/* Changed items-center to items-stretch */}
           {/* Wrap buttons in divs with flex-1 for equal width */}
           <div className="flex-1 min-w-0">
             <motion.button
               onClick={handleDownloadReport}
               // Applied the same classes and motion props as Analyze Another button
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full h-full" // Added h-full
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -825,7 +827,7 @@ function ResultView({
           <div className="flex-1 min-w-0">
             <motion.button
               onClick={reset}
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full h-full" // Added h-full
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
