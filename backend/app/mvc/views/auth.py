@@ -15,7 +15,7 @@ from backend.app.mvc.models.user import User
 from backend.app.mvc.controllers.auth import register_user, login_user
 from datetime import datetime, timedelta
 from random import randint
-from passlib import CryptContext
+from passlib.context import CryptContext
 from backend.app.utils.email_utils import send_verification_email
 router = APIRouter()
 
