@@ -102,10 +102,10 @@ export interface RiskAnalysisResponse {
 
 /* ── central response normaliser ─────────────────────────────── */
 function unwrapRisk(payload: any): RiskAnalysisResponse {
-    if (payload?.risks) return payload as RiskAnalysisResponse;   // current
-    if (payload?.analysis_result) return payload.analysis_result;       // legacy
-    if (payload?.analysis) return payload.analysis;                 // staging
-    if (payload?.risk_report) return payload.risk_report;              // v0.9.x
+    if (payload?.risks) return payload as RiskAnalysisResponse;          // current
+    if (payload?.analysis_result) return payload.analysis_result;        // legacy
+    if (payload?.analysis) return payload.analysis;                      // staging
+    if (payload?.risk_report) return payload.risk_report;                // v0.9.x
     throw new Error("Unexpected response format from /risk endpoint");
 }
 
@@ -153,9 +153,21 @@ export async function analyzeRiskDoc(
 
     /* 3) extraction really failed → fall back to analysing the binary file */
     const blob = await fetchDocumentBlob(doc_id);
-    const file = new File([blob], "document.pdf", {
+
+    /* ── NEW: preserve the original filename instead of “document.pdf” ── */
+    let originalName = "document.pdf";
+    try {
+        const docs = await listDocuments();               // defined further below
+        const match = docs.find(d => d._id === doc_id);
+        if (match?.filename) originalName = match.filename;
+    } catch {
+        /* not fatal – keep fallback name */
+    }
+
+    const file = new File([blob], originalName, {
         type: blob.type || "application/pdf",
     });
+
     return analyzeRiskFile(file);
 }
 
@@ -245,6 +257,7 @@ export async function downloadRiskReport(fileId: string, filename: string) {
     a.click();
     URL.revokeObjectURL(url);
 }
+
 
 /* ═══════════════════════════ CHATBOT ══════════════════════════ */
 
