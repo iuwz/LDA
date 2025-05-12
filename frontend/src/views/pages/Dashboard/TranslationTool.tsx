@@ -28,11 +28,11 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-/* ─────────── theme constants ─────────── */
+/* ---------- theme constants ---------- */
 const BRAND = { dark: "var(--brand-dark)" } as const;
 const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
 
-/* ─────────── local types ─────────── */
+/* ---------- local types ---------- */
 interface DisplayResult {
   report_id: string;
   type: "text" | "doc";
@@ -43,9 +43,9 @@ interface DisplayResult {
   created_at?: string;
 }
 
-/* ─────────── component ─────────── */
+/* ---------- component ---------- */
 const TranslationTool: React.FC = () => {
-  /* ─────────── state ─────────── */
+  /* ---------- state ---------- */
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -66,7 +66,7 @@ const TranslationTool: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* ─────────── lifecycle ─────────── */
+  /* ---------- lifecycle ---------- */
   useEffect(() => {
     loadHistory();
   }, []);
@@ -80,7 +80,7 @@ const TranslationTool: React.FC = () => {
     }
   }
 
-  /* ─────────── helpers ─────────── */
+  /* ---------- helpers ---------- */
   const srcLangLabel = fromEnglish ? "English" : "Arabic";
   const tgtLangLabel = fromEnglish ? "Arabic" : "English";
 
@@ -93,14 +93,41 @@ const TranslationTool: React.FC = () => {
     return <FaFileAlt className={`${size} text-gray-500`} />;
   };
 
-  /* ─────────── translate (text or file) ─────────── */
+  /** Download a plain-text translation as .txt */
+  const downloadTextReport = async (reportId: string) => {
+    try {
+      const resp = await getTranslationReport(reportId);
+      const txt = resp?.translation_report?.translated_text;
+      if (!txt) throw new Error("No translated text found.");
+      const fname =
+        resp.translation_report.translated_filename ||
+        `translation-${reportId.slice(-6)}.txt`;
+      const url = URL.createObjectURL(
+        new Blob([txt], { type: "text/plain;charset=utf-8" })
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fname.replace(/\s+/g, "_");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert(
+        (err as Error).message || "Failed to download plain-text translation."
+      );
+    }
+  };
+
+  /* ---------- translate (text or file) ---------- */
   const handleTranslate = async () => {
     setIsTranslating(true);
     setResult(null);
     setDocUrl(null);
     setTranslatedText("");
 
-    /* —— FILE —— */
+    /* ---- FILE ---- */
     if (file) {
       setDocProcessing(true);
       try {
@@ -134,7 +161,7 @@ const TranslationTool: React.FC = () => {
       return;
     }
 
-    /* —— TEXT —— */
+    /* ---- TEXT ---- */
     if (!sourceText.trim()) {
       setIsTranslating(false);
       return;
@@ -161,19 +188,20 @@ const TranslationTool: React.FC = () => {
     setIsTranslating(false);
   };
 
-  /* ─────────── report loader ─────────── */
+  /* ---------- report loader ---------- */
   async function openReport(id: string) {
     try {
       const response = await getTranslationReport(id);
-
-      if (!response || !response.translation_report) {
-        console.error("Invalid response structure:", response);
+      if (!response?.translation_report)
         throw new Error("Failed to load report data.");
-      }
 
       const rep = response.translation_report;
-
-      const r: DisplayResult = {
+      setFromEnglish(rep.target_lang.toLowerCase() !== "arabic");
+      setFile(null);
+      setDocUrl(null);
+      setSourceText(rep.source_text ?? "");
+      setTranslatedText(rep.translated_text ?? "");
+      setResult({
         report_id: rep._id ?? id,
         type: rep.type,
         translatedText: rep.translated_text,
@@ -181,33 +209,24 @@ const TranslationTool: React.FC = () => {
         resultDocId: rep.result_doc_id,
         target_lang: rep.target_lang,
         created_at: rep.timestamp,
-      };
-
-      setFromEnglish(r.target_lang.toLowerCase() !== "arabic");
-      setFile(null);
-      setDocUrl(null);
-      setTranslatedText(r.translatedText ?? "");
-      setSourceText(rep.source_text ?? "");
-      setResult(r);
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       alert(e.message || "Failed to open translation report");
-      console.error("Error opening report:", e);
     }
   }
 
-  /* ─────────── delete flow ─────────── */
+  /* ---------- delete flow ---------- */
   function removeReport(id: string) {
     setPendingDeleteId(id);
   }
-
   async function confirmDelete() {
     if (!pendingDeleteId) return;
     setIsDeleting(true);
     try {
       await deleteTranslationReport(pendingDeleteId);
       setHistory((h) => h.filter((r) => r.id !== pendingDeleteId));
-      if (result?.report_id === pendingDeleteId) {
+      if (pendingDeleteId === result?.report_id) {
         setResult(null);
         setSourceText("");
         setTranslatedText("");
@@ -222,14 +241,13 @@ const TranslationTool: React.FC = () => {
     }
   }
 
-  /* ─────────── misc UI helpers ─────────── */
+  /* ---------- misc helpers ---------- */
   const handleCopy = () => {
     if (!result?.translatedText) return;
     navigator.clipboard.writeText(result.translatedText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
@@ -239,7 +257,6 @@ const TranslationTool: React.FC = () => {
     setResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0] ?? null;
@@ -253,17 +270,16 @@ const TranslationTool: React.FC = () => {
 
   const translateDisabled =
     (file ? false : !sourceText.trim()) || isTranslating || docProcessing;
-
   const isMainDownloadLinkDisabled =
     !docUrl && (!result?.resultDocId || !result?.translatedFilename);
 
-  /* ─────────── render ─────────── */
+  /* ---------- render ---------- */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* ───────────────── header ───────────────── */}
+      {/* ---------- header ---------- */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div
-          className="h-2 bg-gradient-to-r"
+          className="h-2"
           style={{
             background: `linear-gradient(to right, ${ACCENT.dark}, ${ACCENT.light})`,
           }}
@@ -289,7 +305,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* ───────────────── direction toggle ───────────────── */}
+      {/* ---------- direction toggle ---------- */}
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
           onClick={() => {
@@ -327,7 +343,7 @@ const TranslationTool: React.FC = () => {
         </button>
       </div>
 
-      {/* ───────────────── upload zone ───────────────── */}
+      {/* ---------- upload zone ---------- */}
       <div className="rounded-xl border bg-white shadow-sm p-6">
         <div
           className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
@@ -383,11 +399,10 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ───────────────── editor / file actions ───────────────── */}
+      {/* ---------- editor / file actions ---------- */}
       <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
         {file ? (
           <div className="p-6 text-center space-y-4">
-            {/* —— FILE states —— */}
             {isTranslating || docProcessing ? (
               <Spinner text="Translating document…" />
             ) : !docUrl && !result?.resultDocId ? (
@@ -412,7 +427,6 @@ const TranslationTool: React.FC = () => {
                   : "Translate Document"}
               </motion.button>
             ) : (
-              /* —— download translated —— */
               <a
                 href={docUrl || "#"}
                 onClick={(e) => {
@@ -442,7 +456,6 @@ const TranslationTool: React.FC = () => {
             )}
           </div>
         ) : (
-          /* —— TEXT editor —— */
           <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
             {/* source */}
             <div className="p-6">
@@ -536,9 +549,9 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ───────────────── history ───────────────── */}
+      {/* ---------- history ---------- */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
-        <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
+        <h2 className="mb-4 font-medium" style={{ color: BRAND.dark }}>
           Previous Translations
         </h2>
         {history.length === 0 ? (
@@ -556,9 +569,7 @@ const TranslationTool: React.FC = () => {
                     ? "Arabic"
                     : "English";
 
-                /* treat any record with both fields as downloadable */
-                const isDownloadable =
-                  !!h.result_doc_id && !!h.translated_filename;
+                const hasFile = !!h.result_doc_id && !!h.translated_filename;
 
                 return (
                   <li
@@ -573,7 +584,7 @@ const TranslationTool: React.FC = () => {
                         <span
                           className="break-all cursor-pointer hover:underline"
                           onClick={() => {
-                            if (isDownloadable) {
+                            if (hasFile) {
                               downloadDocumentById(
                                 h.result_doc_id!,
                                 h.translated_filename!
@@ -590,7 +601,7 @@ const TranslationTool: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3 self-end sm:self-center">
-                      {isDownloadable && (
+                      {hasFile ? (
                         <motion.button
                           onClick={() =>
                             downloadDocumentById(
@@ -604,6 +615,24 @@ const TranslationTool: React.FC = () => {
                         >
                           <FaDownload /> Download
                         </motion.button>
+                      ) : (
+                        <motion.button
+                          onClick={() => downloadTextReport(h.id)}
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FaDownload /> Download
+                        </motion.button>
+                      )}
+
+                      {!hasFile && (
+                        <button
+                          onClick={() => openReport(h.id)}
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                        >
+                          <FaSearch /> View
+                        </button>
                       )}
 
                       <button
@@ -631,7 +660,7 @@ const TranslationTool: React.FC = () => {
         )}
       </section>
 
-      {/* ───────────────── delete confirmation ───────────────── */}
+      {/* ---------- delete confirmation modal ---------- */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -649,7 +678,10 @@ const TranslationTool: React.FC = () => {
               exit={{ scale: 0.9, opacity: 0 }}
             >
               <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
-                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
+                <h4
+                  className="text-lg font-semibold"
+                  style={{ color: BRAND.dark }}
+                >
                   Delete Translation Report
                 </h4>
                 <p className="text-sm text-gray-700">
@@ -684,7 +716,7 @@ const TranslationTool: React.FC = () => {
   );
 };
 
-/* ─────────── simple spinner ─────────── */
+/* ---------- simple spinner ---------- */
 const Spinner: React.FC<{ text?: string }> = ({ text }) => (
   <div className="flex flex-col items-center gap-2">
     <div className="animate-spin h-8 w-8 border-b-2 border-[color:var(--accent-dark)] rounded-full" />
