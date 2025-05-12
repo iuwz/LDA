@@ -174,7 +174,7 @@ function RiskAssessmentTool() {
 
   /* ------------- mapping helper ------------- */
   const mapRisks = (raw: RiskItemBackend[]): RiskItem[] =>
-    raw.map((r, idx) => ({
+    (raw ?? []).map((r, idx) => ({
       id: idx + 1,
       title: r.risk_description,
       quote:
