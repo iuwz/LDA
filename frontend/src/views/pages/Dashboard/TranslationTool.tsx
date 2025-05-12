@@ -391,7 +391,7 @@ const TranslationTool: React.FC = () => {
             <>
               <FaFileUpload className="text-5xl text-gray-400" />
               <p className="mt-2 text-gray-700">Upload Document</p>
-              <p className="text-xs text-gray-400">PDF, DOCX, TXT</p>
+              <p className="text-xs text-gray-400">PDF, DOCX</p>
             </>
           )}
         </div>
