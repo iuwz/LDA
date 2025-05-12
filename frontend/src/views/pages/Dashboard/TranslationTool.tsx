@@ -41,6 +41,7 @@ interface DisplayResult {
 }
 
 const TranslationTool: React.FC = () => {
+  /* ─────────── state ─────────── */
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -61,6 +62,7 @@ const TranslationTool: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* ─────────── lifecycle ─────────── */
   useEffect(() => {
     loadHistory();
   }, []);
@@ -74,6 +76,7 @@ const TranslationTool: React.FC = () => {
     }
   }
 
+  /* ─────────── helpers ─────────── */
   const srcLangLabel = fromEnglish ? "English" : "Arabic";
   const tgtLangLabel = fromEnglish ? "Arabic" : "English";
 
@@ -86,17 +89,18 @@ const TranslationTool: React.FC = () => {
     return <FaFileAlt className={`${size} text-gray-500`} />;
   };
 
+  /* ─────────── translate (text or file) ─────────── */
   const handleTranslate = async () => {
     setIsTranslating(true);
     setResult(null);
     setDocUrl(null);
     setTranslatedText("");
 
+    /* —— FILE —— */
     if (file) {
       setDocProcessing(true);
       try {
         setSourceText("");
-        // Ensure result_doc_id is returned by your API
         const { blob, filename, report_id, result_doc_id } =
           (await translateFile(file, tgtLangLabel.toLowerCase())) as {
             blob: Blob;
@@ -104,13 +108,14 @@ const TranslationTool: React.FC = () => {
             report_id: string;
             result_doc_id?: string;
           };
+
         const url = URL.createObjectURL(blob);
         setDocUrl(url);
         setResult({
           report_id,
           type: "doc",
           translatedFilename: filename,
-          resultDocId: result_doc_id ?? report_id, // Use result_doc_id from API, fallback to report_id
+          resultDocId: result_doc_id ?? report_id,
           target_lang: tgtLangLabel.toLowerCase(),
         });
         await loadHistory();
@@ -122,81 +127,72 @@ const TranslationTool: React.FC = () => {
       }
       setDocProcessing(false);
       setIsTranslating(false);
-    } else {
-      if (!sourceText.trim()) {
-        setIsTranslating(false);
-        return;
-      }
-      try {
-        const { translated_text, report_id } = await translateText(
-          sourceText,
-          tgtLangLabel.toLowerCase()
-        );
-        setTranslatedText(translated_text);
-        setResult({
-          report_id,
-          type: "text",
-          translatedText: translated_text,
-          target_lang: tgtLangLabel.toLowerCase(),
-        });
-        loadHistory();
-      } catch (e) {
-        console.error(e);
-        alert(
-          `Text translation failed: ${(e as any).message || "Unknown error"}`
-        );
-      }
-      setIsTranslating(false);
+      return;
     }
+
+    /* —— TEXT —— */
+    if (!sourceText.trim()) {
+      setIsTranslating(false);
+      return;
+    }
+    try {
+      const { translated_text, report_id } = await translateText(
+        sourceText,
+        tgtLangLabel.toLowerCase()
+      );
+      setTranslatedText(translated_text);
+      setResult({
+        report_id,
+        type: "text",
+        translatedText: translated_text,
+        target_lang: tgtLangLabel.toLowerCase(),
+      });
+      loadHistory();
+    } catch (e) {
+      console.error(e);
+      alert(
+        `Text translation failed: ${(e as any).message || "Unknown error"}`
+      );
+    }
+    setIsTranslating(false);
   };
 
+  /* ─────────── report loader ─────────── */
   async function openReport(id: string) {
     try {
       const response = await getTranslationReport(id);
 
-      // Add a check to ensure the expected data structure exists
       if (!response || !response.translation_report) {
-        console.error("Invalid response structure for report:", response);
+        console.error("Invalid response structure:", response);
         throw new Error("Failed to load report data.");
       }
 
       const rep = response.translation_report;
 
-      // Ensure rep is not null/undefined, although the check above should handle this
-      if (!rep) {
-        console.error(
-          "Translation report is null or undefined in response:",
-          response
-        );
-        throw new Error("Invalid report data received.");
-      }
-
       const r: DisplayResult = {
-        // Use rep._id if available, otherwise fallback to the id passed in
         report_id: rep._id ?? id,
         type: rep.type,
         translatedText: rep.translated_text,
         translatedFilename: rep.translated_filename,
-        resultDocId: rep.result_doc_id, // Use the actual result_doc_id from the report
+        resultDocId: rep.result_doc_id,
         target_lang: rep.target_lang,
         created_at: rep.timestamp,
       };
 
-      // Determine source lang based on target lang of the *report*
       setFromEnglish(r.target_lang.toLowerCase() !== "arabic");
-      setFile(null); // Clear file state when loading report
-      setDocUrl(null); // Clear docUrl as we might download later
+      setFile(null);
+      setDocUrl(null);
       setTranslatedText(r.translatedText ?? "");
-      setSourceText(rep.source_text ?? ""); // Load source text from report
+      setSourceText(rep.source_text ?? "");
       setResult(r);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
-      // This catch block will now also handle the errors thrown above
       alert(e.message || "Failed to open translation report");
-      console.error("Error opening report:", e); // Log the error for debugging
+      console.error("Error opening report:", e);
     }
   }
 
+  /* ─────────── delete flow ─────────── */
   function removeReport(id: string) {
     setPendingDeleteId(id);
   }
@@ -222,6 +218,7 @@ const TranslationTool: React.FC = () => {
     }
   }
 
+  /* ─────────── misc UI helpers ─────────── */
   const handleCopy = () => {
     if (!result?.translatedText) return;
     navigator.clipboard.writeText(result.translatedText);
@@ -253,13 +250,13 @@ const TranslationTool: React.FC = () => {
   const translateDisabled =
     (file ? false : !sourceText.trim()) || isTranslating || docProcessing;
 
-  // Determine if the main download link should be effectively disabled
   const isMainDownloadLinkDisabled =
     !docUrl && (!result?.resultDocId || !result?.translatedFilename);
 
+  /* ─────────── render ─────────── */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
+      {/* ───────────────── header ───────────────── */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div
           className="h-2 bg-gradient-to-r"
@@ -288,7 +285,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* Direction Toggle */}
+      {/* ───────────────── direction toggle ───────────────── */}
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
           onClick={() => {
@@ -326,7 +323,7 @@ const TranslationTool: React.FC = () => {
         </button>
       </div>
 
-      {/* Upload Zone */}
+      {/* ───────────────── upload zone ───────────────── */}
       <div className="rounded-xl border bg-white shadow-sm p-6">
         <div
           className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
@@ -382,18 +379,16 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* Editor / File Actions */}
+      {/* ───────────────── editor / file actions ───────────────── */}
       <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
         {file ? (
           <div className="p-6 text-center space-y-4">
-            {/* Conditional rendering based on translation/processing state */}
+            {/* —— FILE states —— */}
             {isTranslating || docProcessing ? (
               <Spinner text="Translating document…" />
-            ) : // Display translate button or download link
-            !docUrl && !result?.resultDocId ? ( // Show translate button if no result yet
+            ) : !docUrl && !result?.resultDocId ? (
               <motion.button
                 onClick={handleTranslate}
-                // Updated className for styling to match ComplianceChecker Analyze button
                 className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
                   translateDisabled
                     ? "bg-gray-400 cursor-not-allowed"
@@ -403,7 +398,6 @@ const TranslationTool: React.FC = () => {
                 whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
                 disabled={translateDisabled}
               >
-                {/* Icon logic already matches ComplianceChecker Analyze button */}
                 {isTranslating || docProcessing ? (
                   <FaSpinner className="animate-spin" />
                 ) : (
@@ -414,7 +408,7 @@ const TranslationTool: React.FC = () => {
                   : "Translate Document"}
               </motion.button>
             ) : (
-              // Display download link/button if docUrl or resultDocId is available
+              /* —— download translated —— */
               <a
                 href={docUrl || "#"}
                 onClick={(e) => {
@@ -444,8 +438,9 @@ const TranslationTool: React.FC = () => {
             )}
           </div>
         ) : (
+          /* —— TEXT editor —— */
           <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* Source */}
+            {/* source */}
             <div className="p-6">
               <h2 className="font-semibold mb-2" style={{ color: BRAND.dark }}>
                 Source Text ({srcLangLabel})
@@ -463,7 +458,7 @@ const TranslationTool: React.FC = () => {
               />
             </div>
 
-            {/* Translated */}
+            {/* translated */}
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold" style={{ color: BRAND.dark }}>
@@ -494,7 +489,7 @@ const TranslationTool: React.FC = () => {
           </div>
         )}
 
-        {/* Actions Bar */}
+        {/* actions bar */}
         <div className="bg-gray-50 p-4 flex justify-between items-center">
           <motion.button
             onClick={() => {
@@ -516,7 +511,6 @@ const TranslationTool: React.FC = () => {
             <motion.button
               onClick={handleTranslate}
               disabled={translateDisabled}
-              // Updated className for styling to match ComplianceChecker Analyze button
               className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${
                 translateDisabled
                   ? "bg-gray-400 cursor-not-allowed"
@@ -525,7 +519,6 @@ const TranslationTool: React.FC = () => {
               whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
               whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
             >
-              {/* Icon logic already matches ComplianceChecker Analyze button */}
               {isTranslating && !docProcessing ? (
                 <FaSpinner className="animate-spin" />
               ) : (
@@ -539,7 +532,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* Previous Translations */}
+      {/* ───────────────── history ───────────────── */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Translations
@@ -559,6 +552,9 @@ const TranslationTool: React.FC = () => {
                     ? "Arabic"
                     : "English";
 
+                const isDoc =
+                  h.type === "doc" && h.result_doc_id && h.translated_filename;
+
                 return (
                   <li
                     key={h.id}
@@ -570,47 +566,48 @@ const TranslationTool: React.FC = () => {
                           {getFileIcon(h.translated_filename, "text-xl")}
                         </span>
                         <span
-                          className={`break-all ${
-                            h.type === "doc" && h.result_doc_id
-                              ? "cursor-pointer hover:underline"
-                              : ""
-                          }`}
-                          // Make history item filename clickable to open report
-                          onClick={() => openReport(h.id)}
+                          className="break-all cursor-pointer hover:underline"
+                          onClick={() => {
+                            if (isDoc) {
+                              downloadDocumentById(
+                                h.result_doc_id!,
+                                h.translated_filename!
+                              );
+                            } else {
+                              openReport(h.id);
+                            }
+                          }}
                         >
-                          {h.translated_filename || "Text Translation Report"}{" "}
-                          {/* Clarified text */}
+                          {h.translated_filename || "Text Translation Report"}
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">{`${sourceLang} → ${targetLang}`}</p>
                     </div>
-                    <div className="flex gap-3 self-end sm:self-center">
-                      {/* View Report button */}
-                      <button
-                        onClick={() => openReport(h.id)}
-                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                      >
-                        <FaSearch /> View
-                      </button>
 
-                      {/* Download Button for Document Translations */}
-                      {h.type === "doc" &&
-                        h.result_doc_id &&
-                        h.translated_filename && (
-                          <motion.button
-                            onClick={() =>
-                              downloadDocumentById(
-                                h.result_doc_id!,
-                                h.translated_filename!
-                              )
-                            }
-                            className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <FaDownload /> Download
-                          </motion.button>
-                        )}
+                    <div className="flex gap-3 self-end sm:self-center">
+                      {isDoc ? (
+                        <motion.button
+                          onClick={() =>
+                            downloadDocumentById(
+                              h.result_doc_id!,
+                              h.translated_filename!
+                            )
+                          }
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FaDownload /> Download
+                        </motion.button>
+                      ) : (
+                        <button
+                          onClick={() => openReport(h.id)}
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                        >
+                          <FaSearch /> View
+                        </button>
+                      )}
+
                       <button
                         onClick={() => removeReport(h.id)}
                         className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
@@ -636,7 +633,7 @@ const TranslationTool: React.FC = () => {
         )}
       </section>
 
-      {/* Delete Confirmation Modal */}
+      {/* ───────────────── delete confirmation ───────────────── */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -689,6 +686,7 @@ const TranslationTool: React.FC = () => {
   );
 };
 
+/* ─────────── simple spinner ─────────── */
 const Spinner: React.FC<{ text?: string }> = ({ text }) => (
   <div className="flex flex-col items-center gap-2">
     <div className="animate-spin h-8 w-8 border-b-2 border-[color:var(--accent-dark)] rounded-full" />
