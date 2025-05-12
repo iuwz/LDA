@@ -20,8 +20,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────── Sign-In ───────── */
-
+/* ───────── Sign-In (balanced height) ───────── */
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -42,91 +41,96 @@ function SignInForm({
   const [showPw, setShowPw] = useState(false);
 
   return (
-    <>
-      <div className="text-center mb-8">
-        <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
-          Sign In
-        </h2>
-        <p className="text-gray-600 text-base">Access your account</p>
-      </div>
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
-        >
-          {error}
-        </motion.div>
-      )}
-
-      <form
-        className="space-y-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit();
-        }}
-      >
-        {/* Email */}
-        <div>
-          <label className="block text-gray-700 mb-2 text-sm">Email</label>
-          <input
-            type="email"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-          />
+    <div className="min-h-[440px] flex flex-col justify-between">
+      <div>
+        <div className="text-center mb-8">
+          <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
+            Sign&nbsp;In
+          </h2>
+          <p className="text-gray-600 text-base">Access your account</p>
         </div>
 
-        {/* Password */}
-        <div>
-          <div className="flex justify-between mb-2">
-            <label className="text-gray-700 text-sm">Password</label>
-            <a
-              href="/forgot-password"
-              className="text-sm text-[#C17829] hover:text-[#ad6823]"
-            >
-              Forgot?
-            </a>
-          </div>
-          <div className="relative">
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <form
+          className="space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+        >
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <input
-              type={showPw ? "text" : "password"}
+              type="email"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPw((s) => !s)}
-              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
-              aria-label={showPw ? "Hide password" : "Show password"}
-            >
-              {showPw ? <FaEyeSlash /> : <FaEye />}
-            </button>
           </div>
-        </div>
 
-        <Button
-          type="submit"
-          className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823]"
-        >
-          Sign In
-        </Button>
-      </form>
-    </>
+          {/* Password */}
+          <div>
+            <div className="flex justify-between mb-2">
+              <label className="text-gray-700 text-sm">Password</label>
+              <a
+                href="/forgot-password"
+                className="text-sm text-[#C17829] hover:text-[#ad6823]"
+              >
+                Forgot?
+              </a>
+            </div>
+            <div className="relative">
+              <input
+                type={showPw ? "text" : "password"}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((s) => !s)}
+                className="absolute inset-y-0 right-4 flex items-center text-gray-400"
+                aria-label={showPw ? "Hide password" : "Show password"}
+              >
+                {showPw ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823] mt-10"
+            style={{ marginTop: "50px" }}
+          >
+            Sign In
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
 
 
-/* ───────── Sign-Up ───────── */
+
+/* ───────── Sign-Up (balanced height + checklist ✓) ───────── */
 
 interface SignUpFormProps {
+  /* data */
   firstName: string;
   setFirstName: (v: string) => void;
   lastName: string;
@@ -135,6 +139,8 @@ interface SignUpFormProps {
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
+
+  /* verification */
   codeSent: boolean;
   code: string;
   setCode: (v: string) => void;
@@ -143,8 +149,12 @@ interface SignUpFormProps {
   canSend: boolean;
   handleSendCode: () => void;
   handleVerifyCode: () => void;
+
+  /* submit + error */
   onSubmit: () => void;
   error?: string | null;
+
+  /* password-rule flags */
   hasUppercase: boolean;
   hasNumber: boolean;
   hasSymbol: boolean;
@@ -180,151 +190,164 @@ function SignUpForm({
   const [showPw, setShowPw] = useState(false);
 
   return (
-    <>
-      <div className="text-center mb-8">
-        <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
-          Create&nbsp;Account
-        </h2>
-        <p className="text-gray-600 text-base">Join us today</p>
-      </div>
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
-        >
-          {error}
-        </motion.div>
-      )}
-
-      <form
-        className="space-y-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit();
-        }}
-      >
-        {/* Names */}
-        <div className="flex gap-3">
-          <input
-            type="text"
-            className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="First name"
-            required
-          />
-          <input
-            type="text"
-            className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Last name"
-            required
-          />
+    <div className="min-h-[440px] flex flex-col justify-between">
+      {/* ── header ────────────────────────────────────────────── */}
+      <div>
+        <div className="text-center mb-8">
+          <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
+            Create&nbsp;Account
+          </h2>
+          <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
-        {/* Email + code */}
-        <div>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        {/* ── form ────────────────────────────────────────────── */}
+        <form
+          className="space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+        >
+          {/* Names */}
           <div className="flex gap-3">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setCode("");
-              }}
-              placeholder="Email"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+              type="text"
+              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First name"
               required
             />
-            <Button
-              type="button"
-              disabled={!canSend}
-              onClick={handleSendCode}
-              className="shrink-0 px-4 py-3 bg-[#C17829] text-white rounded-lg text-sm disabled:opacity-40"
-            >
-              {codeSent ? "Resend" : "Send"}
-            </Button>
+            <input
+              type="text"
+              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last name"
+              required
+            />
           </div>
 
-          {codeSent && !codeVerified && (
-            <div className="mt-3 flex gap-3 items-center">
+          {/* Email + code */}
+          <div>
+            <div className="flex gap-3">
               <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                maxLength={6}
-                placeholder="6-digit code"
-                className="flex-1 px-4 py-3 border rounded-lg text-base"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setCode("");
+                }}
+                placeholder="Email"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+                required
               />
               <Button
                 type="button"
-                onClick={handleVerifyCode}
-                disabled={code.length !== 6}
-                className="px-4 py-3 bg-[#2C2C4A] text-white rounded-lg text-sm disabled:opacity-40"
+                disabled={!canSend}
+                onClick={handleSendCode}
+                className="shrink-0 px-4 py-3 bg-[#C17829] text-white rounded-lg text-sm disabled:opacity-40"
               >
-                Verify
+                {codeSent ? "Resend" : "Send"}
               </Button>
             </div>
-          )}
 
-          {codeError && (
-            <p className="text-red-600 text-sm mt-1">{codeError}</p>
-          )}
-          {codeVerified && (
-            <p className="text-green-600 text-sm mt-1">✓ E-mail verified</p>
-          )}
-        </div>
+            {codeSent && !codeVerified && (
+              <div className="mt-3 flex gap-3 items-center">
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  className="flex-1 px-4 py-3 border rounded-lg text-base"
+                />
+                <Button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={code.length !== 6}
+                  className="px-4 py-3 bg-[#2C2C4A] text-white rounded-lg text-sm disabled:opacity-40"
+                >
+                  Verify
+                </Button>
+              </div>
+            )}
 
-        {/* Password */}
-        <div className="relative">
-          <input
-            type={showPw ? "text" : "password"}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-4 flex items-center text-gray-400"
-            onClick={() => setShowPw((s) => !s)}
-            aria-label={showPw ? "Hide password" : "Show password"}
+            {codeError && (
+              <p className="text-red-600 text-sm mt-1">{codeError}</p>
+            )}
+            {codeVerified && (
+              <p className="text-green-600 text-sm mt-1">✓ E-mail verified</p>
+            )}
+          </div>
+
+          {/* Password — fixed */}
+          <div>
+            <div className="relative">
+              <input
+                type={showPw ? "text" : "password"}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-4 flex items-center text-gray-400"
+                onClick={() => setShowPw((s) => !s)}
+                aria-label={showPw ? "Hide password" : "Show password"}
+              >
+                {showPw ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+
+            {/* checklist now outside the relative box */}
+            <ul className="mt-2 text-sm space-y-0.5">
+              <li className={`flex items-center ${hasUppercase ? "text-green-600" : "text-gray-500"}`}>
+                <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
+                Uppercase letter
+              </li>
+              <li className={`flex items-center ${hasNumber ? "text-green-600" : "text-gray-500"}`}>
+                <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
+                Number
+              </li>
+              <li className={`flex items-center ${hasSymbol ? "text-green-600" : "text-gray-500"}`}>
+                <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
+                Special character
+              </li>
+              <li className={`flex items-center ${hasMinLength ? "text-green-600" : "text-gray-500"}`}>
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
+                ≥ 8 characters
+              </li>
+            </ul>
+          </div>
+
+          {/* submit */}
+          <Button
+            type="submit"
+            disabled={!isAllValid || !codeVerified}
+            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base disabled:opacity-40"
           >
-            {showPw ? <FaEyeSlash /> : <FaEye />}
-          </button>
-
-          <ul className="mt-2 text-sm space-y-0.5">
-            <li className={hasUppercase ? "text-green-600" : "text-gray-500"}>
-              Uppercase letter
-            </li>
-            <li className={hasNumber ? "text-green-600" : "text-gray-500"}>
-              Number
-            </li>
-            <li className={hasSymbol ? "text-green-600" : "text-gray-500"}>
-              Special character
-            </li>
-            <li className={hasMinLength ? "text-green-600" : "text-gray-500"}>
-              ≥ 8 characters
-            </li>
-          </ul>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={!isAllValid || !codeVerified}
-          className="w-full bg-[#C17829] text-white py-3 rounded-full text-base disabled:opacity-40"
-        >
-          Create Account
-        </Button>
-      </form>
-    </>
+            Create Account
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
+
 
 
 /* ───────────────────────── Master Auth ───────────────────────── */
