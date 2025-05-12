@@ -31,12 +31,6 @@ interface Doc {
 
 const tools: ToolCard[] = [
   {
-    icon: FaRobot,
-    title: "Chatbot",
-    desc: "Ask legal-doc questions.",
-    link: "/dashboard/chatbot",
-  },
-  {
     icon: FaEdit,
     title: "Rephrasing",
     desc: "Improve clarity & tone.",
@@ -59,6 +53,12 @@ const tools: ToolCard[] = [
     title: "Translation",
     desc: "Translate accurately.",
     link: "/dashboard/translation",
+  },
+  {
+    icon: FaRobot,
+    title: "Chatbot",
+    desc: "Ask legal-doc questions.",
+    link: "/dashboard/chatbot",
   },
 ];
 

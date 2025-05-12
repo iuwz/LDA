@@ -1,26 +1,13 @@
 /*  src/views/pages/Dashboard/RiskAssessmentTool.tsx
     ──────────────────────────────────────────────────────────────
-    Single-file implementation of the Risk-Assessment front-end.
-    New in this version — 2025-05-12:
-      • “Analyze a previously uploaded document” picker (left column)
-      • Keeps drag-and-drop / direct-upload flow unchanged (right column)
-      • History list of finished risk reports unchanged
-      • Generates a PDF summary and stores back to server
+    Single-file implementation of the Risk-Assessment front end.
 
-    Required API helpers (all already exist in ../api for Compliance; if you
-    don’t have them in your risk API wrapper, add thin wrappers that forward
-    to the same endpoints):
-      uploadDocument(file)          →  { doc_id }
-      listDocuments()               →  DocumentRecord[]
-      analyzeRiskDoc({ doc_id })    →  RiskAnalysisResponse
+    2025-05-12  • Added “analyze existing document” picker
+               • History list styling now mirrors Compliance page
+               • Generates PDF summary and re-uploads to server
 */
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  ChangeEvent,
-} from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
   FaShieldAlt,
   FaCloudUploadAlt,
@@ -41,8 +28,7 @@ import autoTable from "jspdf-autotable";
 
 import {
   /* analysis & reports */
-  analyzeRiskFile,
-  analyzeRiskDoc,       // ✔ now exists
+  analyzeRiskDoc,
   uploadRiskPdf,
   listRiskHistory,
   deleteRiskReport,
@@ -51,7 +37,6 @@ import {
   /* raw-doc helpers */
   uploadDocument,
   listDocuments,
-  getDocumentContent,
   /* types */
   RiskAnalysisResponse,
   RiskItemBackend,
@@ -89,7 +74,7 @@ function RiskLevel({ level }: { level: Severity }) {
 
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="mt-8 text-center text-gray-700">
+    <div className="mt-8 text-center text-gray-700 py-12">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[#c17829]" />
       <p className="mt-2">{label}</p>
     </div>
@@ -102,7 +87,8 @@ const DROPDOWN_ICON_SIZE = "text-xl";
 
 const getFileIcon = (filename: string, sizeClass: string) => {
   const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return <FaFilePdf className={`${sizeClass} text-red-600`} />;
+  if (ext === "pdf")
+    return <FaFilePdf className={`${sizeClass} text-red-600`} />;
   if (ext === "doc" || ext === "docx")
     return <FaFileWord className={`${sizeClass} text-blue-600`} />;
   return <FaFileAlt className={`${sizeClass} text-gray-500`} />;
@@ -110,23 +96,23 @@ const getFileIcon = (filename: string, sizeClass: string) => {
 
 /* ═════════════════════════  MAIN COMPONENT  ═════════════════════════ */
 function RiskAssessmentTool() {
-  /* ------------- raw document state ------------- */
+  /* ------------ raw document state ------------ */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
 
-  /* ------------- file upload ------------- */
+  /* ------------ file upload ------------ */
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* ------------- history of finished reports ------------- */
+  /* ------------ history ------------ */
   const [history, setHistory] = useState<RiskHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
 
-  /* ------------- analysis state ------------- */
+  /* ------------ analysis state ------------ */
   const [results, setResults] = useState<{
     id: string;
     riskItems: RiskItem[];
@@ -138,7 +124,7 @@ function RiskAssessmentTool() {
   /* misc */
   const [activeSection, setActiveSection] = useState("all");
 
-  /* ------------- initial load ------------- */
+  /* ------------ initial load ------------ */
   useEffect(() => {
     fetchDocuments();
     loadHistory();
@@ -168,11 +154,11 @@ function RiskAssessmentTool() {
       );
       setHistory(h);
     } catch {
-      /* history isn’t critical for initial load */
+      /* history isn’t critical */
     }
   }
 
-  /* ------------- mapping helper ------------- */
+  /* ------------ mapping helper ------------ */
   const mapRisks = (raw: RiskItemBackend[]): RiskItem[] =>
     (raw ?? []).map((r, idx) => ({
       id: idx + 1,
@@ -187,12 +173,14 @@ function RiskAssessmentTool() {
       recommendation: r.recommendation ?? "No recommendation provided.",
     }));
 
-  /* ------------- PDF builder ------------- */
+  /* ------------ PDF helper ------------ */
   const buildPdfBlob = (items: RiskItem[], srcName?: string): Blob => {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
     doc.setFontSize(18);
     doc.text(
-      srcName ? `Risk Assessment Report for ${srcName}` : "Risk Assessment Report",
+      srcName
+        ? `Risk Assessment Report for ${srcName}`
+        : "Risk Assessment Report",
       40,
       50
     );
@@ -213,7 +201,7 @@ function RiskAssessmentTool() {
     return doc.output("blob");
   };
 
-  /* ------------- main analyze handler ------------- */
+  /* ------------ analyze handler ------------ */
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setError(null);
@@ -229,9 +217,8 @@ function RiskAssessmentTool() {
         filename = fileToUpload.name;
         resp = await analyzeRiskDoc(doc_id);
         fetchDocuments(); // refresh list
-      }
+      } else if (selectedDocId) {
       /* B) existing doc */
-      else if (selectedDocId) {
         const doc = uploadedDocs.find((d) => d._id === selectedDocId);
         filename = doc?.filename || "";
         resp = await analyzeRiskDoc(selectedDocId);
@@ -263,7 +250,7 @@ function RiskAssessmentTool() {
     }
   };
 
-  /* ------------- open a finished report from history ------------- */
+  /* ------------ open a finished report ------------ */
   const openReport = async (id: string) => {
     setIsAnalyzing(true);
     setError(null);
@@ -286,7 +273,7 @@ function RiskAssessmentTool() {
     }
   };
 
-  /* ------------- delete helpers ------------- */
+  /* ------------ delete helpers ------------ */
   const confirmDelete = async () => {
     if (!pendingDeleteId) return;
     setIsDeletingHistory(true);
@@ -302,7 +289,7 @@ function RiskAssessmentTool() {
     }
   };
 
-  /* ------------- reset UI ------------- */
+  /* ------------ reset UI ------------ */
   const reset = () => {
     setSelectedDocId(null);
     setFileToUpload(null);
@@ -312,19 +299,19 @@ function RiskAssessmentTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  /* ------------- derived values ------------- */
+  /* ------------ derived values ------------ */
   const filtered = results
     ? results.riskItems.filter(
-      (i) =>
-        activeSection === "all" ||
-        i.section.toLowerCase() === activeSection.toLowerCase()
-    )
+        (i) =>
+          activeSection === "all" ||
+          i.section.toLowerCase() === activeSection.toLowerCase()
+      )
     : [];
   const counts = results
     ? results.riskItems.reduce(
-      (acc, i) => ((acc[i.risk] = (acc[i.risk] || 0) + 1), acc),
-      { high: 0, medium: 0, low: 0 } as Record<Severity, number>
-    )
+        (acc, i) => ((acc[i.risk] = (acc[i.risk] || 0) + 1), acc),
+        { high: 0, medium: 0, low: 0 } as Record<Severity, number>
+      )
     : { high: 0, medium: 0, low: 0 };
 
   const isAnalyzeDisabled =
@@ -334,7 +321,7 @@ function RiskAssessmentTool() {
   /* ═══════════════════  RENDER  ═══════════════════ */
   return (
     <div className="space-y-8 p-6">
-      {/* header */}
+      {/* ───────── Header ───────── */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -347,7 +334,7 @@ function RiskAssessmentTool() {
         </div>
       </header>
 
-      {/* main panel */}
+      {/* ───────── Main panel ───────── */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <SelectArea
@@ -390,20 +377,22 @@ function RiskAssessmentTool() {
         )}
       </section>
 
-      {/* history list */}
+      {/* ───────── History ───────── */}
       <HistoryPane
         history={history}
         showAll={showAllHistory}
         setShowAll={setShowAllHistory}
         openReport={openReport}
         downloadRiskReport={(fileId: string, fn: string) =>
-          downloadRiskReport(fileId!, fn) /* fileId guaranteed in caller */
+          downloadRiskReport(fileId!, fn)
         }
         setPendingDeleteId={setPendingDeleteId}
         isBusy={isAnalyzing || isDeletingHistory}
+        getFileIcon={getFileIcon}
+        DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
       />
 
-      {/* delete confirmation */}
+      {/* ───────── Delete modal ───────── */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -456,22 +445,19 @@ function RiskAssessmentTool() {
   );
 }
 
-/* ───────────────  SUB-COMPONENTS  ─────────────── */
+/* ───────────────────────────────────────────────── SUB COMPONENTS ───────────────────────────────────────────────── */
 
 /* SelectArea — two-column picker (existing-doc picker + upload) */
 function SelectArea(props: {
-  /* picker */
   uploadedDocs: DocumentRecord[];
   selectedDocId: string | null;
   handleDocSelection: (id: string | null) => void;
   docSelectOpen: boolean;
   setDocSelectOpen: (v: boolean) => void;
-  /* upload */
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
-  /* meta */
   isAnalyzeDisabled: boolean;
   isFileInputDisabled: boolean;
   analyzing: boolean;
@@ -504,9 +490,11 @@ function SelectArea(props: {
   return (
     <div className="space-y-8 p-6">
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Existing document picker */}
+        {/* Existing doc picker */}
         <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
-          <p className="text-gray-700">Analyze a previously uploaded document:</p>
+          <p className="text-gray-700">
+            Analyze a previously uploaded document:
+          </p>
           <div className="relative w-full">
             <button
               className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
@@ -517,8 +505,9 @@ function SelectArea(props: {
                 ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
                 : "Choose Document"}
               <FaChevronDown
-                className={`ml-2 transition-transform ${docSelectOpen ? "rotate-180" : ""
-                  }`}
+                className={`ml-2 transition-transform ${
+                  docSelectOpen ? "rotate-180" : ""
+                }`}
               />
             </button>
             <AnimatePresence>
@@ -541,8 +530,9 @@ function SelectArea(props: {
                     uploadedDocs.map((doc) => (
                       <li
                         key={doc._id}
-                        className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${selectedDocId === doc._id ? "bg-gray-100" : ""
-                          }`}
+                        className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                          selectedDocId === doc._id ? "bg-gray-100" : ""
+                        }`}
                         onClick={() => {
                           handleDocSelection(doc._id);
                           setDocSelectOpen(false);
@@ -571,7 +561,7 @@ function SelectArea(props: {
           )}
         </div>
 
-        {/* Upload drop zone */}
+        {/* Upload area */}
         <UploadDropZone
           fileToUpload={fileToUpload}
           fileInputRef={fileInputRef}
@@ -641,10 +631,11 @@ function UploadDropZone(props: {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${isDisabled
-        ? "cursor-not-allowed opacity-60"
-        : "cursor-pointer hover:border-[#c17829]"
-        }`}
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
+        isDisabled
+          ? "cursor-not-allowed opacity-60"
+          : "cursor-pointer hover:border-[#c17829]"
+      }`}
       onClick={() => !isDisabled && fileInputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
@@ -685,7 +676,7 @@ function UploadDropZone(props: {
   );
 }
 
-/* ───────────────  Result Pane  ─────────────── */
+/* ───────────────  Result pane  ─────────────── */
 function ResultPane(props: {
   results: { id: string; riskItems: RiskItem[]; analyzedFilename?: string };
   counts: Record<Severity, number>;
@@ -694,14 +685,8 @@ function ResultPane(props: {
   setActiveSection: React.Dispatch<React.SetStateAction<string>>;
   reset: () => void;
 }) {
-  const {
-    results,
-    counts,
-    filtered,
-    activeSection,
-    setActiveSection,
-    reset,
-  } = props;
+  const { results, counts, filtered, activeSection, setActiveSection, reset } =
+    props;
 
   const [showAll, setShowAll] = useState(false);
   useEffect(() => setShowAll(false), [filtered]);
@@ -717,7 +702,7 @@ function ResultPane(props: {
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
-          <h3 className="font-medium text-gray-800">
+          <h3 className="font-medium text-gray-800 break-words">
             {results.analyzedFilename || "Report"}
           </h3>
         </div>
@@ -753,10 +738,11 @@ function ResultPane(props: {
               <button
                 key={sec}
                 onClick={() => setActiveSection(sec)}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors ${activeSection.toLowerCase() === sec.toLowerCase()
-                  ? "bg-[#c17829] text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors ${
+                  activeSection.toLowerCase() === sec.toLowerCase()
+                    ? "bg-[#c17829] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 {sec === "all" ? "All Sections" : sec}
               </button>
@@ -780,7 +766,9 @@ function ResultPane(props: {
             >
               {/* headline + severity */}
               <div className="mb-2 flex items-start justify-between gap-4">
-                <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
+                  {item.title}
+                </h4>
                 <RiskLevel level={item.risk} />
               </div>
 
@@ -807,8 +795,9 @@ function ResultPane(props: {
           >
             {showAll ? "Show Less" : `Show ${filtered.length - 3} More`}
             <FaChevronDown
-              className={`ml-1 inline-block transition-transform ${showAll ? "rotate-180" : ""
-                }`}
+              className={`ml-1 inline-block transition-transform ${
+                showAll ? "rotate-180" : ""
+              }`}
             />
           </button>
         )}
@@ -817,7 +806,7 @@ function ResultPane(props: {
   );
 }
 
-/* HistoryPane – unchanged visual design, just split out for clarity */
+/* ─────────────── History pane (mirrors Compliance styling) ─────────────── */
 function HistoryPane(props: {
   history: RiskHistoryItem[];
   showAll: boolean;
@@ -826,6 +815,8 @@ function HistoryPane(props: {
   downloadRiskReport: (docId: string, filename: string) => void;
   setPendingDeleteId: (id: string) => void;
   isBusy: boolean;
+  getFileIcon: (filename: string, sizeClass: string) => JSX.Element;
+  DROPDOWN_ICON_SIZE: string;
 }) {
   const {
     history,
@@ -835,6 +826,8 @@ function HistoryPane(props: {
     downloadRiskReport,
     setPendingDeleteId,
     isBusy,
+    getFileIcon,
+    DROPDOWN_ICON_SIZE,
   } = props;
 
   return (
@@ -854,12 +847,17 @@ function HistoryPane(props: {
               >
                 <div className="mb-3 sm:mb-0 min-w-0 flex-1">
                   <p className="flex items-start text-sm font-semibold text-gray-800">
-                    <FaFileAlt className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0" />
+                    <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
+                      {getFileIcon(
+                        h.filename ?? h.report_filename ?? "",
+                        DROPDOWN_ICON_SIZE
+                      )}
+                    </span>
                     <span className="break-all">
-                      {h.filename ?? h.report_filename ?? "Risk Report"}
+                      {h.filename ?? h.report_filename ?? "Risk report"}
                     </span>
                   </p>
-                  <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                  <p className="mt-1 text-xs text-gray-500">
                     {h.num_risks} risk{h.num_risks !== 1 ? "s" : ""}
                   </p>
                 </div>
@@ -882,6 +880,7 @@ function HistoryPane(props: {
                       className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      disabled={isBusy}
                     >
                       <FaDownload /> Download
                     </motion.button>
