@@ -1,5 +1,5 @@
 # backend/app/mvc/views/auth.py
-
+import os
 import logging
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -18,7 +18,7 @@ from random import randint
 from passlib.context import CryptContext
 from backend.app.utils.email_utils import send_verification_email
 router = APIRouter()
-
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 _pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginRequest(BaseModel):
@@ -113,15 +113,17 @@ async def forgot_password(payload: ForgotPasswordRequest, request: Request):
     db = request.app.state.db
     user = await db["users"].find_one({"email": payload.email})
     if not user:
-        # Don't reveal if user exists
+        # Don’t reveal whether the user exists
         return {"message": "If that email exists, a reset link has been sent."}
+
     token = generate_reset_token(payload.email)
-    frontend_url = "https://lda-1-dcto.onrender.com"  # Or your deployed frontend URL
-    reset_link = f"{frontend_url}/reset-password?token={token}"
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+
     try:
-        await send_reset_email(payload.email, reset_link)
+        send_reset_email(payload.email, reset_link)    # ← no await
     except RuntimeError:
         logging.exception("Password-reset email failed")
+
     return {"message": f"Password reset link has been sent to {payload.email}"}
 
 
