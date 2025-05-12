@@ -20,7 +20,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────────────────────── Sign-In ─────────────────────────── */
+/* ───────── Sign-In ───────── */
 
 interface SignInFormProps {
   email: string;
@@ -44,12 +44,10 @@ function SignInForm({
   return (
     <>
       <div className="text-center mb-8">
-        <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#2C2C4A] mb-2">
+        <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
           Sign In
         </h2>
-        <p className="text-gray-600 text-sm md:text-base">
-          Access your account
-        </p>
+        <p className="text-gray-600 text-base">Access your account</p>
       </div>
 
       {error && (
@@ -57,61 +55,56 @@ function SignInForm({
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700 shadow-sm"
+          className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
         >
           {error}
         </motion.div>
       )}
 
       <form
-        className="mt-8"
+        className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
         }}
       >
         {/* Email */}
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2 text-sm">
-            Email
-          </label>
+        <div>
+          <label className="block text-gray-700 mb-2 text-sm">Email</label>
           <input
             type="email"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] transition-all text-sm"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder="you@example.com"
             required
           />
         </div>
 
         {/* Password */}
-        <div className="mb-6">
+        <div>
           <div className="flex justify-between mb-2">
-            <label className="block text-gray-700 font-medium text-sm">
-              Password
-            </label>
+            <label className="text-gray-700 text-sm">Password</label>
             <a
               href="/forgot-password"
-              className="text-xs text-[#C17829] hover:text-[#ad6823] transition-colors"
+              className="text-sm text-[#C17829] hover:text-[#ad6823]"
             >
-              Forgot Password?
+              Forgot?
             </a>
           </div>
-
           <div className="relative">
             <input
               type={showPw ? "text" : "password"}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C17829] transition-all text-sm"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Password"
               required
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
               onClick={() => setShowPw((s) => !s)}
+              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
               aria-label={showPw ? "Hide password" : "Show password"}
             >
               {showPw ? <FaEyeSlash /> : <FaEye />}
@@ -121,7 +114,7 @@ function SignInForm({
 
         <Button
           type="submit"
-          className="w-full bg-[#C17829] text-white py-3 rounded-full font-semibold text-lg hover:bg-[#ad6823] shadow-md transition-all active:bg-[#A66F24] hover:scale-[1.01]"
+          className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823]"
         >
           Sign In
         </Button>
@@ -130,10 +123,10 @@ function SignInForm({
   );
 }
 
-/* ───────────────────────── Sign-Up ─────────────────────────── */
+
+/* ───────── Sign-Up ───────── */
 
 interface SignUpFormProps {
-  /* data fields */
   firstName: string;
   setFirstName: (v: string) => void;
   lastName: string;
@@ -142,8 +135,6 @@ interface SignUpFormProps {
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
-
-  /* verification */
   codeSent: boolean;
   code: string;
   setCode: (v: string) => void;
@@ -152,12 +143,8 @@ interface SignUpFormProps {
   canSend: boolean;
   handleSendCode: () => void;
   handleVerifyCode: () => void;
-
-  /* submit + error */
   onSubmit: () => void;
   error?: string | null;
-
-  /* password-rule flags */
   hasUppercase: boolean;
   hasNumber: boolean;
   hasSymbol: boolean;
@@ -194,38 +181,36 @@ function SignUpForm({
 
   return (
     <>
-      {/* heading */}
-      <div className="text-center mb-5">
-        <h2 className="font-serif text-2xl font-bold text-[#2C2C4A] mb-1">
-          Create Account
+      <div className="text-center mb-8">
+        <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
+          Create&nbsp;Account
         </h2>
-        <p className="text-gray-600 text-sm">Join us today</p>
+        <p className="text-gray-600 text-base">Join us today</p>
       </div>
 
-      {/* server-side error banner */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="mb-3 rounded border border-red-300 bg-red-100 px-3 py-2 text-xs text-red-700"
+          className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
         >
           {error}
         </motion.div>
       )}
 
       <form
-        className="space-y-4"
+        className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
         }}
       >
-        {/* first & last name side-by-side */}
-        <div className="flex gap-2">
+        {/* Names */}
+        <div className="flex gap-3">
           <input
             type="text"
-            className="w-1/2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C17829] text-sm"
+            className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="First name"
@@ -233,7 +218,7 @@ function SignUpForm({
           />
           <input
             type="text"
-            className="w-1/2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C17829] text-sm"
+            className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Last name"
@@ -241,69 +226,64 @@ function SignUpForm({
           />
         </div>
 
-        {/* e-mail + send-code button */}
+        {/* Email + code */}
         <div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                /* reset verification state when email changes */
                 setCode("");
               }}
               placeholder="Email"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C17829] text-sm"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
               required
             />
             <Button
               type="button"
               disabled={!canSend}
               onClick={handleSendCode}
-              className="shrink-0 px-3 py-2 bg-[#C17829] text-white rounded text-xs disabled:opacity-40"
+              className="shrink-0 px-4 py-3 bg-[#C17829] text-white rounded-lg text-sm disabled:opacity-40"
             >
               {codeSent ? "Resend" : "Send"}
             </Button>
           </div>
 
-          {/* code input & verify button */}
           {codeSent && !codeVerified && (
-            <div className="mt-2 flex gap-2 items-center">
+            <div className="mt-3 flex gap-3 items-center">
               <input
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 maxLength={6}
                 placeholder="6-digit code"
-                className="flex-1 px-3 py-2 border rounded text-sm"
+                className="flex-1 px-4 py-3 border rounded-lg text-base"
               />
               <Button
                 type="button"
                 onClick={handleVerifyCode}
                 disabled={code.length !== 6}
-                className="px-3 py-2 bg-[#2C2C4A] text-white rounded text-xs disabled:opacity-40"
+                className="px-4 py-3 bg-[#2C2C4A] text-white rounded-lg text-sm disabled:opacity-40"
               >
                 Verify
               </Button>
             </div>
           )}
 
-          {/* code status messages */}
           {codeError && (
-            <p className="text-red-600 text-xs mt-1">{codeError}</p>
+            <p className="text-red-600 text-sm mt-1">{codeError}</p>
           )}
           {codeVerified && (
-            <p className="text-green-600 text-xs mt-1">
-              ✓ E-mail verified
-            </p>
+            <p className="text-green-600 text-sm mt-1">✓ E-mail verified</p>
           )}
         </div>
 
-        {/* password + eye + simple checklist */}
+        {/* Password */}
         <div className="relative">
           <input
             type={showPw ? "text" : "password"}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C17829] text-sm"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
@@ -311,14 +291,14 @@ function SignUpForm({
           />
           <button
             type="button"
-            className="absolute inset-y-0 right-3 flex items-center text-gray-400"
+            className="absolute inset-y-0 right-4 flex items-center text-gray-400"
             onClick={() => setShowPw((s) => !s)}
             aria-label={showPw ? "Hide password" : "Show password"}
           >
             {showPw ? <FaEyeSlash /> : <FaEye />}
           </button>
 
-          <ul className="mt-2 text-xs space-y-0.5">
+          <ul className="mt-2 text-sm space-y-0.5">
             <li className={hasUppercase ? "text-green-600" : "text-gray-500"}>
               Uppercase letter
             </li>
@@ -334,11 +314,10 @@ function SignUpForm({
           </ul>
         </div>
 
-        {/* submit */}
         <Button
           type="submit"
           disabled={!isAllValid || !codeVerified}
-          className="w-full bg-[#C17829] text-white py-2 rounded-full text-sm disabled:opacity-40"
+          className="w-full bg-[#C17829] text-white py-3 rounded-full text-base disabled:opacity-40"
         >
           Create Account
         </Button>
@@ -346,6 +325,7 @@ function SignUpForm({
     </>
   );
 }
+
 
 /* ───────────────────────── Master Auth ───────────────────────── */
 
