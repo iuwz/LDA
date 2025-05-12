@@ -810,29 +810,28 @@ function ResultView({
         </div>
 
         <div className="flex flex-wrap items-center gap-6">
-          <div className="text-center">
-            <p className="text-xs text-gray-500">Score</p>
-            <p className="text-lg font-bold text-gray-800">
-              {results.complianceScore}/100
-            </p>
+          {/* Wrap buttons in divs with flex-1 for equal width */}
+          <div className="flex-1 min-w-0">
+            <motion.button
+              onClick={handleDownloadReport}
+              // Applied the same classes and motion props as Analyze Another button
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FaDownload /> PDF
+            </motion.button>
           </div>
-          {/* Modified PDF Download button styles */}
-          <motion.button
-            onClick={handleDownloadReport}
-            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaDownload /> PDF
-          </motion.button>
-          <motion.button
-            onClick={reset}
-            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Analyze Another
-          </motion.button>
+          <div className="flex-1 min-w-0">
+            <motion.button
+              onClick={reset}
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Analyze Another
+            </motion.button>
+          </div>
         </div>
       </div>
 
