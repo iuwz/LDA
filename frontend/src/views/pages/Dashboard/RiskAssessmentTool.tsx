@@ -1,9 +1,17 @@
 /*  src/views/pages/Dashboard/RiskAssessmentTool.tsx
     ──────────────────────────────────────────────────────────────
-    Single-file implementation of the Risk-Assessment front end.
+    Single-file implementation of the Risk-Assessment front-end.
+    Upload section now mirrors ComplianceChecker exactly.
 */
 
-import React, { useState, useEffect, useRef, ChangeEvent } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import {
   FaShieldAlt,
   FaCloudUploadAlt,
@@ -67,40 +75,60 @@ const getFileIcon = (filename: string, sizeClass: string) => {
   return <FaFileAlt className={`${sizeClass} text-gray-500`} />;
 };
 
-function RiskLevel({ level }: { level: Severity }) {
-  return (
-    <span
-      className={`rounded border px-2 py-1 text-xs font-medium ${palette[level]}`}
-    >
-      {level[0].toUpperCase() + level.slice(1)} Risk
-    </span>
-  );
-}
-
+/* ─────────────── shared UI elements ─────────────── */
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="mt-8 text-center text-gray-700 py-12">
-      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[#c17829]" />
+    <div className="py-12 mt-8 text-center text-gray-700">
+      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
       <p className="mt-2">{label}</p>
     </div>
   );
 }
 
+function AnalyzeButton({
+  onClick,
+  disabled,
+  busy,
+  label,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  busy: boolean;
+  label: string;
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)] disabled:opacity-50"
+      whileHover={{ scale: disabled ? 1 : 1.05 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
+    >
+      {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
+      {busy ? "Analyzing…" : label}
+    </motion.button>
+  );
+}
+
 /* ═════════════════════════  MAIN COMPONENT  ═════════════════════════ */
 function RiskAssessmentTool() {
+  /* uploaded docs */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
 
+  /* upload */
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* history */
   const [history, setHistory] = useState<RiskHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
 
+  /* analysis */
   const [results, setResults] = useState<{
     id: string;
     riskItems: RiskItem[];
@@ -109,6 +137,7 @@ function RiskAssessmentTool() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* UI filter */
   const [activeSection, setActiveSection] = useState("all");
 
   /* ------------ lifecycle ------------ */
@@ -291,21 +320,11 @@ function RiskAssessmentTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const reportHistoryItem = results
-    ? history.find((h) => h.id === results.id)
-    : null;
-  const handleDownloadReport = () => {
-    if (reportHistoryItem?.report_doc_id) {
-      downloadRiskReport(
-        reportHistoryItem.report_doc_id as string,
-        reportHistoryItem.report_filename || "risk_report.pdf"
-      );
-    } else {
-      alert("PDF not available yet. Please try again in a moment.");
-    }
-  };
-
   /* ------------ derived ------------ */
+  const isAnalyzeDisabled =
+    (!selectedDocId && !fileToUpload) || isAnalyzing || fetchingDocs;
+  const isFileInputDisabled = isAnalyzing || fetchingDocs;
+
   const filtered = results
     ? results.riskItems.filter(
         (i) =>
@@ -320,13 +339,24 @@ function RiskAssessmentTool() {
       )
     : { high: 0, medium: 0, low: 0 };
 
-  const isAnalyzeDisabled =
-    (!selectedDocId && !fileToUpload) || isAnalyzing || fetchingDocs;
-  const isFileInputDisabled = isAnalyzing || fetchingDocs;
+  const reportHistoryItem = results
+    ? history.find((h) => h.id === results.id)
+    : null;
+  const handleDownloadReport = () => {
+    if (reportHistoryItem?.report_doc_id) {
+      downloadRiskReport(
+        reportHistoryItem.report_doc_id as string,
+        reportHistoryItem.report_filename || "risk_report.pdf"
+      );
+    } else {
+      alert("PDF not available yet. Please try again in a moment.");
+    }
+  };
 
   /* ═══════════════════  RENDER  ═══════════════════ */
   return (
     <div className="space-y-8 p-6">
+      {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -339,9 +369,16 @@ function RiskAssessmentTool() {
         </div>
       </header>
 
+      {/* Upload / Select area */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <SelectArea
+            /* disable / busy flags */
+            isAnalyzeDisabled={isAnalyzeDisabled}
+            isFileInputDisabled={isFileInputDisabled}
+            analyzing={isAnalyzing}
+            fetchingDocs={fetchingDocs}
+            /* uploaded docs */
             uploadedDocs={uploadedDocs}
             selectedDocId={selectedDocId}
             handleDocSelection={(id) => {
@@ -353,16 +390,18 @@ function RiskAssessmentTool() {
             }}
             docSelectOpen={docSelectOpen}
             setDocSelectOpen={setDocSelectOpen}
+            /* icons / constants */
+            getFileIcon={getFileIcon}
+            FILE_ICON_SIZE={FILE_ICON_SIZE}
+            DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
+            /* upload handlers */
             fileToUpload={fileToUpload}
             fileInputRef={fileInputRef}
             onFileChange={(e: ChangeEvent<HTMLInputElement>) =>
               setFileToUpload(e.target.files?.[0] || null)
             }
             handleFileDrop={(f) => setFileToUpload(f)}
-            isAnalyzeDisabled={isAnalyzeDisabled}
-            isFileInputDisabled={isFileInputDisabled}
-            analyzing={isAnalyzing}
-            fetchingDocs={fetchingDocs}
+            /* actions */
             handleAnalyze={handleAnalyze}
             error={error}
           />
@@ -379,13 +418,14 @@ function RiskAssessmentTool() {
         )}
       </section>
 
+      {/* History */}
       <HistoryPane
         history={history}
         showAll={showAllHistory}
         setShowAll={setShowAllHistory}
         openReport={openReport}
         downloadRiskReport={(fileId: string, fn: string) =>
-          downloadRiskReport(fileId!, fn)
+          downloadRiskReport(fileId, fn)
         }
         setPendingDeleteId={setPendingDeleteId}
         isBusy={isAnalyzing || isDeletingHistory}
@@ -393,6 +433,7 @@ function RiskAssessmentTool() {
         DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
       />
 
+      {/* Delete modal */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -447,41 +488,47 @@ function RiskAssessmentTool() {
 
 /* ───────────────────────────────────────────────── SUB COMPONENTS ───────────────────────────────────────────────── */
 
-function SelectArea(props: {
-  uploadedDocs: DocumentRecord[];
-  selectedDocId: string | null;
-  handleDocSelection: (id: string | null) => void;
-  docSelectOpen: boolean;
-  setDocSelectOpen: (v: boolean) => void;
-  fileToUpload: File | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  handleFileDrop: (f: File | null) => void;
+interface SelectAreaProps {
   isAnalyzeDisabled: boolean;
   isFileInputDisabled: boolean;
   analyzing: boolean;
   fetchingDocs: boolean;
+  uploadedDocs: DocumentRecord[];
+  selectedDocId: string | null;
+  handleDocSelection: (id: string | null) => void;
+  docSelectOpen: boolean;
+  setDocSelectOpen: Dispatch<SetStateAction<boolean>>;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  fileToUpload: File | null;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleFileDrop: (f: File | null) => void;
   handleAnalyze: () => void;
   error: string | null;
-}) {
-  const {
-    uploadedDocs,
-    selectedDocId,
-    handleDocSelection,
-    docSelectOpen,
-    setDocSelectOpen,
-    fileToUpload,
-    fileInputRef,
-    onFileChange,
-    handleFileDrop,
-    isAnalyzeDisabled,
-    isFileInputDisabled,
-    analyzing,
-    fetchingDocs,
-    handleAnalyze,
-    error,
-  } = props;
+  FILE_ICON_SIZE: string;
+  DROPDOWN_ICON_SIZE: string;
+}
 
+function SelectArea({
+  isAnalyzeDisabled,
+  isFileInputDisabled,
+  analyzing,
+  fetchingDocs,
+  uploadedDocs,
+  selectedDocId,
+  handleDocSelection,
+  docSelectOpen,
+  setDocSelectOpen,
+  getFileIcon,
+  fileToUpload,
+  fileInputRef,
+  onFileChange,
+  handleFileDrop,
+  handleAnalyze,
+  error,
+  FILE_ICON_SIZE,
+  DROPDOWN_ICON_SIZE,
+}: SelectAreaProps) {
   if (analyzing || fetchingDocs) {
     return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
@@ -489,75 +536,18 @@ function SelectArea(props: {
   return (
     <div className="space-y-8 p-6">
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
-          <p className="text-gray-700">
-            Analyze a previously uploaded document:
-          </p>
-          <div className="relative w-full">
-            <button
-              className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
-              onClick={() => setDocSelectOpen(!docSelectOpen)}
-              disabled={analyzing}
-            >
-              {selectedDocId
-                ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
-                : "Choose Document"}
-              <FaChevronDown
-                className={`ml-2 transition-transform ${
-                  docSelectOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            <AnimatePresence>
-              {docSelectOpen && (
-                <motion.ul
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                >
-                  {selectedDocId && (
-                    <li
-                      className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => handleDocSelection(null)}
-                    >
-                      Clear Selection
-                    </li>
-                  )}
-                  {uploadedDocs.length ? (
-                    uploadedDocs.map((doc) => (
-                      <li
-                        key={doc._id}
-                        className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                          selectedDocId === doc._id ? "bg-gray-100" : ""
-                        }`}
-                        onClick={() => {
-                          handleDocSelection(doc._id);
-                          setDocSelectOpen(false);
-                        }}
-                      >
-                        {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
-                        {doc.filename}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-4 py-2 text-sm italic text-gray-500">
-                      No documents uploaded yet.
-                    </li>
-                  )}
-                </motion.ul>
-              )}
-            </AnimatePresence>
-          </div>
-          {selectedDocId && (
-            <AnalyzeButton
-              onClick={handleAnalyze}
-              disabled={isAnalyzeDisabled}
-              busy={analyzing}
-              label="Analyze Selected"
-            />
-          )}
-        </div>
+        <ExistingDocPicker
+          uploadedDocs={uploadedDocs}
+          selectedDocId={selectedDocId}
+          handleDocSelection={handleDocSelection}
+          docSelectOpen={docSelectOpen}
+          setDocSelectOpen={setDocSelectOpen}
+          getFileIcon={getFileIcon}
+          handleAnalyze={handleAnalyze}
+          isAnalyzeDisabled={isAnalyzeDisabled}
+          analyzing={analyzing}
+          DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
+        />
 
         <UploadDropZone
           fileToUpload={fileToUpload}
@@ -565,6 +555,8 @@ function SelectArea(props: {
           isDisabled={isFileInputDisabled}
           onFileChange={onFileChange}
           handleFileDrop={handleFileDrop}
+          getFileIcon={getFileIcon}
+          FILE_ICON_SIZE={FILE_ICON_SIZE}
         />
       </div>
 
@@ -586,51 +578,129 @@ function SelectArea(props: {
   );
 }
 
-function AnalyzeButton({
-  onClick,
-  disabled,
-  busy,
-  label,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  busy: boolean;
-  label: string;
-}) {
+interface ExistingDocPickerProps {
+  uploadedDocs: DocumentRecord[];
+  selectedDocId: string | null;
+  handleDocSelection: (id: string | null) => void;
+  docSelectOpen: boolean;
+  setDocSelectOpen: Dispatch<SetStateAction<boolean>>;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  handleAnalyze: () => void;
+  isAnalyzeDisabled: boolean;
+  analyzing: boolean;
+  DROPDOWN_ICON_SIZE: string;
+}
+
+function ExistingDocPicker({
+  uploadedDocs,
+  selectedDocId,
+  handleDocSelection,
+  docSelectOpen,
+  setDocSelectOpen,
+  getFileIcon,
+  handleAnalyze,
+  isAnalyzeDisabled,
+  analyzing,
+  DROPDOWN_ICON_SIZE,
+}: ExistingDocPickerProps) {
   return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled}
-      className="flex items-center gap-2 rounded-md bg-[#c17829] px-6 py-2 text-white hover:bg-[#a66224] disabled:opacity-50"
-      whileHover={{ scale: disabled ? 1 : 1.05 }}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
-    >
-      {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
-      {busy ? "Analyzing…" : label}
-    </motion.button>
+    <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
+      <p className="text-gray-700">Analyze a previously uploaded document:</p>
+      <div className="relative w-full">
+        <button
+          className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
+          onClick={() => setDocSelectOpen(!docSelectOpen)}
+          disabled={analyzing}
+        >
+          {selectedDocId
+            ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
+            : "Choose Document"}
+          <FaChevronDown
+            className={`ml-2 transition-transform ${
+              docSelectOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        <AnimatePresence>
+          {docSelectOpen && (
+            <motion.ul
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+            >
+              {selectedDocId && (
+                <li
+                  className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => handleDocSelection(null)}
+                >
+                  Clear Selection
+                </li>
+              )}
+              {uploadedDocs.length ? (
+                uploadedDocs.map((doc) => (
+                  <li
+                    key={doc._id}
+                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      selectedDocId === doc._id ? "bg-gray-100" : ""
+                    }`}
+                    onClick={() => {
+                      handleDocSelection(doc._id);
+                      setDocSelectOpen(false);
+                    }}
+                  >
+                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
+                    <span className="flex-1 break-all">{doc.filename}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="px-4 py-2 text-sm italic text-gray-500">
+                  No documents uploaded yet.
+                </li>
+              )}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {selectedDocId && (
+        <AnalyzeButton
+          onClick={handleAnalyze}
+          disabled={isAnalyzeDisabled}
+          busy={analyzing}
+          label="Analyze Selected"
+        />
+      )}
+    </div>
   );
 }
 
-function UploadDropZone(props: {
+interface UploadDropZoneProps {
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   isDisabled: boolean;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
-}) {
-  const {
-    fileToUpload,
-    fileInputRef,
-    isDisabled,
-    onFileChange,
-    handleFileDrop,
-  } = props;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  FILE_ICON_SIZE: string;
+}
+
+function UploadDropZone({
+  fileToUpload,
+  fileInputRef,
+  isDisabled,
+  onFileChange,
+  handleFileDrop,
+  getFileIcon,
+  FILE_ICON_SIZE,
+}: UploadDropZoneProps) {
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
         isDisabled
           ? "cursor-not-allowed opacity-60"
-          : "cursor-pointer hover:border-[#c17829]"
+          : "cursor-pointer hover:border-[color:var(--accent-dark)]"
       }`}
       onClick={() => !isDisabled && fileInputRef.current?.click()}
       onDragOver={(e) => {
@@ -672,12 +742,13 @@ function UploadDropZone(props: {
   );
 }
 
+/* --------------- Result pane --------------- */
 function ResultPane(props: {
   results: { id: string; riskItems: RiskItem[]; analyzedFilename?: string };
   counts: Record<Severity, number>;
   filtered: RiskItem[];
   activeSection: string;
-  setActiveSection: React.Dispatch<React.SetStateAction<string>>;
+  setActiveSection: Dispatch<SetStateAction<string>>;
   reset: () => void;
   handleDownloadReport: () => void;
 }) {
@@ -711,7 +782,7 @@ function ResultPane(props: {
         <div className="flex flex-wrap items-stretch gap-6 justify-center">
           <motion.button
             onClick={handleDownloadReport}
-            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -719,7 +790,7 @@ function ResultPane(props: {
           </motion.button>
           <motion.button
             onClick={reset}
-            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -742,6 +813,7 @@ function ResultPane(props: {
         ))}
       </div>
 
+      {/* section filter buttons */}
       <div className="overflow-x-auto px-6">
         <div className="flex flex-wrap gap-2 border-b pb-4 pt-2">
           {["all", ...new Set(results.riskItems.map((i) => i.section))].map(
@@ -751,7 +823,7 @@ function ResultPane(props: {
                 onClick={() => setActiveSection(sec)}
                 className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors ${
                   activeSection.toLowerCase() === sec.toLowerCase()
-                    ? "bg-[#c17829] text-white"
+                    ? "bg-[rgb(193,120,41)] text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -762,10 +834,11 @@ function ResultPane(props: {
         </div>
       </div>
 
+      {/* items */}
       <div className="space-y-4 p-6">
         {filtered.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
-            <FaExclamationTriangle className="mx-auto mb-2 text-3xl text-[#c17829]" />
+            <FaExclamationTriangle className="mx-auto mb-2 text-3xl text-[rgb(193,120,41)]" />
             No items for this filter.
           </div>
         ) : (
@@ -778,16 +851,24 @@ function ResultPane(props: {
                 <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
                   {item.title}
                 </h4>
-                <RiskLevel level={item.risk} />
+                <span
+                  className={`rounded border px-2 py-1 text-xs font-medium ${
+                    palette[item.risk]
+                  }`}
+                >
+                  {item.risk[0].toUpperCase() + item.risk.slice(1)} Risk
+                </span>
               </div>
               <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
                 “{item.quote}”
               </blockquote>
-              <div className="flex gap-2 rounded-md border border-[#c17829]/50 bg-[#c17829]/10 p-3 text-sm">
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#c17829] text-white">
+              <div className="flex gap-2 rounded-md border border-[rgb(193,120,41)]/50 bg-[rgb(193,120,41)]/10 p-3 text-sm">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[rgb(193,120,41)] text-white">
                   <FaInfoCircle size={14} />
                 </span>
-                <span className="text-[#a66224]">{item.recommendation}</span>
+                <span className="text-[rgb(173,108,37)]">
+                  {item.recommendation}
+                </span>
               </div>
             </div>
           ))
@@ -796,7 +877,7 @@ function ResultPane(props: {
         {filtered.length > 3 && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="mt-2 text-sm text-[#c17829] hover:underline"
+            className="mt-2 text-sm text-[rgb(193,120,41)] hover:underline"
           >
             {showAll ? "Show Less" : `Show ${filtered.length - 3} More`}
             <FaChevronDown
@@ -811,13 +892,14 @@ function ResultPane(props: {
   );
 }
 
+/* --------------- History pane --------------- */
 function HistoryPane(props: {
   history: RiskHistoryItem[];
   showAll: boolean;
-  setShowAll: (v: boolean) => void;
+  setShowAll: Dispatch<SetStateAction<boolean>>;
   openReport: (id: string) => void;
   downloadRiskReport: (docId: string, filename: string) => void;
-  setPendingDeleteId: (id: string) => void;
+  setPendingDeleteId: Dispatch<SetStateAction<string | null>>;
   isBusy: boolean;
   getFileIcon: (filename: string, sizeClass: string) => JSX.Element;
   DROPDOWN_ICON_SIZE: string;
