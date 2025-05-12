@@ -362,9 +362,14 @@ function ComplianceChecker() {
                   key={h.id}
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="mb-3 sm:mb-0">
-                    <p className="flex items-center text-sm font-semibold text-gray-800">
-                      <FaFileAlt className="mr-2 text-[#c17829]" />
+                  <div className="mb-3 sm:mb-0 min-w-0">
+                    {" "}
+                    {/* Added min-w-0 here for better truncation handling with flex */}
+                    <p className="flex items-center text-sm font-semibold text-gray-800 truncate">
+                      {" "}
+                      {/* Added truncate here */}
+                      <FaFileAlt className="mr-2 text-[#c17829] flex-shrink-0" />{" "}
+                      {/* Added flex-shrink-0 to prevent icon from shrinking */}
                       {h.report_filename || "Compliance report"}
                     </p>
                     <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
