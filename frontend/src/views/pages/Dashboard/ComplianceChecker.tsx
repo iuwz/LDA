@@ -73,8 +73,7 @@ const ComplianceStatus: React.FC<{ status: string }> = ({ status }) => {
     <span
       className={`flex items-center rounded border px-2 py-1 text-xs font-medium ${palette[displayStatus]}`}
     >
-      {icons[displayStatus]}
-      {labels[displayStatus]}
+            {icons[displayStatus]}      {labels[displayStatus]}   {" "}
     </span>
   );
 };
@@ -85,32 +84,27 @@ function ComplianceChecker() {
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
-  const [docSelectOpen, setDocSelectOpen] = useState(false);
+  const [docSelectOpen, setDocSelectOpen] = useState(false); /* upload */
 
-  /* upload */
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); /* analysis */
 
-  /* analysis */
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<DisplayAnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); /* history */
 
-  /* history */
   const [history, setHistory] = useState<ComplianceHistoryItem[]>([]);
-  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [showAllHistory, setShowAllHistory] =
+    useState(false); /* delete modal state */
 
-  /* delete modal state */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); /* init load */
 
-  /* init load */
   useEffect(() => {
     fetchUploadedDocuments();
     loadHistory();
-  }, []);
+  }, []); /* keep filename label in sync */
 
-  /* keep filename label in sync */
   useEffect(() => {
     if (results) {
       if (selectedDocId) {
@@ -120,9 +114,11 @@ function ComplianceChecker() {
         setResults({ ...results, analyzedFilename: fileToUpload.name });
       }
     }
-  }, [selectedDocId, fileToUpload, uploadedDocs]);
-
-  /* ───────────────────────── helpers ───────────────────────── */
+  }, [
+    selectedDocId,
+    fileToUpload,
+    uploadedDocs,
+  ]); /* ───────────────────────── helpers ───────────────────────── */
 
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
@@ -164,9 +160,8 @@ function ComplianceChecker() {
     else if (tally.unk) overall = 100 - tally.unk * 5;
 
     return overall;
-  }
+  } /* open stored report */
 
-  /* open stored report */
   async function openReport(id: string) {
     try {
       const rep = await getComplianceReport(id);
@@ -178,19 +173,17 @@ function ComplianceChecker() {
         ...rep,
         complianceScore: score,
         analyzedFilename: rep.report_filename || rep.report_id,
-      });
+      }); // Scroll to the top of the page to view the report
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       alert(e.message || "Failed to open report");
     }
-  }
+  } /* queue delete modal */
 
-  /* queue delete modal */
   function removeReport(id: string) {
     setPendingDeleteId(id);
-  }
+  } /* confirm deletion */
 
-  /* confirm deletion */
   async function confirmDelete() {
     if (!pendingDeleteId) return;
     setIsDeleting(true);
@@ -207,9 +200,8 @@ function ComplianceChecker() {
   }
 
   const FILE_ICON_SIZE = "text-5xl"; // Kept for large icons
-  const DROPDOWN_ICON_SIZE = "text-xl"; // New size for dropdown icons
+  const DROPDOWN_ICON_SIZE = "text-xl"; // New size for dropdown icons // Modified getFileIcon to accept a size class
 
-  // Modified getFileIcon to accept a size class
   const getFileIcon = (filename: string, sizeClassName: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (ext === "pdf") {
@@ -219,9 +211,8 @@ function ComplianceChecker() {
       return <FaFileWord className={`${sizeClassName} text-blue-600`} />;
     }
     return <FaFileAlt className={`${sizeClassName} text-gray-500`} />;
-  };
+  }; /* fresh analysis */
 
-  /* fresh analysis */
   const handleAnalyze = async () => {
     let docId: string | null = null;
     let filename: string | undefined;
@@ -296,29 +287,39 @@ function ComplianceChecker() {
 
   const isAnalyzeDisabled =
     (!selectedDocId && !fileToUpload) || analyzing || fetchingDocs;
-  const isFileInputDisabled = analyzing || fetchingDocs;
+  const isFileInputDisabled =
+    analyzing ||
+    fetchingDocs; /* ───────────────────────── render ───────────────────────── */
 
-  /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* header */}
+            {/* header */}     {" "}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+               {" "}
         <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
+               {" "}
         <div className="flex items-center gap-4 p-6">
+                   {" "}
           <span className="rounded-full bg-[color:var(--accent-light)] p-3 text-[color:var(--accent-dark)]">
-            <FaClipboardCheck size={22} />
+                        <FaClipboardCheck size={22} />         {" "}
           </span>
+                   {" "}
           <div>
+                       {" "}
             <h1 className="font-serif text-2xl font-bold text-[color:var(--brand-dark)]">
-              Compliance
+                            Compliance            {" "}
             </h1>
-            <p className="text-gray-600">International Law — Saudi Arabia</p>
+                       {" "}
+            <p className="text-gray-600">International Law — Saudi Arabia</p>   
+                 {" "}
           </div>
+                 {" "}
         </div>
+             {" "}
       </header>
-
-      {/* main panel */}
+            {/* main panel */}     {" "}
       <section className="rounded-xl border bg-white shadow-sm">
+               {" "}
         {!results ? (
           <SelectArea
             isAnalyzeDisabled={isAnalyzeDisabled}
@@ -349,54 +350,73 @@ function ComplianceChecker() {
             reset={reset}
           />
         )}
+             {" "}
       </section>
-
-      {/* history */}
+            {/* history */}     {" "}
       <section className="rounded-xl border bg-white shadow-sm p-6">
+               {" "}
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
-          Previous Compliance Reports
+                    Previous Compliance Reports        {" "}
         </h2>
+               {" "}
         {history.length === 0 ? (
           <p className="text-sm italic text-gray-500">No history yet.</p>
         ) : (
           <>
+                       {" "}
             <ul className="space-y-3">
+                           {" "}
               {(showAllHistory ? history : history.slice(0, 5)).map((h) => (
                 <li
                   key={h.id}
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
+                                   {" "}
                   <div className="mb-3 sm:mb-0 min-w-0 flex-1">
-                    {" "}
+                                                           {" "}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
-                      {" "}
-                      {/* Applied styling to this span to match the layout */}
+                                                                 {" "}
+                      {/* Applied styling to this span to match the layout */} 
+                                         {" "}
                       <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
-                        {" "}
-                        {/* Wrapper for the icon */}
+                                                                       {" "}
+                        {/* Wrapper for the icon */}                       {" "}
                         {/* Call getFileIcon with filename and dropdown size */}
+                                               {" "}
                         {getFileIcon(
                           h.report_filename || "",
                           DROPDOWN_ICON_SIZE
                         )}
+                                             {" "}
                       </span>
+                                           {" "}
                       <span className="break-all">
-                        {h.report_filename || "Compliance report"}
+                                               {" "}
+                        {h.report_filename || "Compliance report"}             
+                               {" "}
                       </span>{" "}
+                                         {" "}
                     </p>
-                    {/* Removed ml-6 to align under the filename start */}
+                                       {" "}
+                    {/* Removed ml-6 to align under the filename start */}     
+                                 {" "}
                     <p className="mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
-                      {" "}
-                      {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
+                                                                  {h.num_issues}{" "}
+                      issue{h.num_issues !== 1 ? "s" : ""}                   {" "}
                     </p>
+                                     {" "}
                   </div>
+                                   {" "}
                   <div className="flex gap-3 self-end sm:self-center">
+                                       {" "}
                     <button
                       onClick={() => openReport(h.id)}
                       className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                     >
-                      <FaSearch /> View
+                                            <FaSearch /> View                  
+                       {" "}
                     </button>
+                                       {" "}
                     {h.report_doc_id && (
                       <motion.button
                         onClick={() => downloadComplianceReportPdf(h.id)}
@@ -404,37 +424,50 @@ function ComplianceChecker() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <FaDownload /> Download
+                                                <FaDownload /> Download        
+                                     {" "}
                       </motion.button>
                     )}
+                                       {" "}
                     <button
                       onClick={() => removeReport(h.id)}
                       className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                     >
-                      <FaTrash /> Delete
+                                            <FaTrash /> Delete                  
+                       {" "}
                     </button>
+                                     {" "}
                   </div>
+                                 {" "}
                 </li>
               ))}
+                         {" "}
             </ul>
+                       {" "}
             {history.length > 5 && (
               <div className="mt-4 text-center">
+                               {" "}
                 <button
                   onClick={() => setShowAllHistory(!showAllHistory)}
                   className="text-sm text-[#c17829] hover:underline"
                 >
-                  {showAllHistory ? "Show less" : "Show more"}
+                                    {showAllHistory ? "Show less" : "Show more"}
+                                 {" "}
                 </button>
+                             {" "}
               </div>
             )}
+                     {" "}
           </>
         )}
+             {" "}
       </section>
-
-      {/* delete confirmation modal */}
+            {/* delete confirmation modal */}     {" "}
       <AnimatePresence>
+               {" "}
         {pendingDeleteId && (
           <>
+                       {" "}
             <motion.div
               className="fixed inset-0 z-40 bg-black/40"
               initial={{ opacity: 0 }}
@@ -442,44 +475,60 @@ function ComplianceChecker() {
               exit={{ opacity: 0 }}
               onClick={() => !isDeleting && setPendingDeleteId(null)}
             />
+                       {" "}
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
+                           {" "}
               <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+                               {" "}
                 <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
-                  Delete Compliance Report
+                                    Delete Compliance Report                {" "}
                 </h4>
+                               {" "}
                 <p className="text-sm text-gray-700">
-                  Are you sure you want to delete this compliance report? This
-                  action cannot be undone.
+                                    Are you sure you want to delete this
+                  compliance report? This                   action cannot be
+                  undone.                {" "}
                 </p>
+                               {" "}
                 <div className="flex justify-end gap-3 pt-2">
+                                   {" "}
                   <button
                     onClick={() => setPendingDeleteId(null)}
                     disabled={isDeleting}
                     className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
                   >
-                    Cancel
+                                        Cancel                  {" "}
                   </button>
+                                   {" "}
                   <button
                     onClick={confirmDelete}
                     disabled={isDeleting}
                     className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
+                                       {" "}
                     {isDeleting ? (
                       <FaSpinner className="mr-2 inline-block animate-spin" />
                     ) : null}
-                    {isDeleting ? "Deleting..." : "Delete"}
+                                        {isDeleting ? "Deleting..." : "Delete"} 
+                                   {" "}
                   </button>
+                                 {" "}
                 </div>
+                             {" "}
               </div>
+                         {" "}
             </motion.div>
+                     {" "}
           </>
         )}
+             {" "}
       </AnimatePresence>
+         {" "}
     </div>
   );
 }
@@ -533,7 +582,9 @@ function SelectArea({
 
   return (
     <div className="space-y-8 p-6">
+           {" "}
       <div className="grid gap-6 md:grid-cols-2">
+               {" "}
         <ExistingDocPicker
           uploadedDocs={uploadedDocs}
           selectedDocId={selectedDocId}
@@ -546,7 +597,7 @@ function SelectArea({
           analyzing={analyzing}
           DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE} // Pass size constant
         />
-
+               {" "}
         <UploadDropZone
           fileToUpload={fileToUpload}
           fileInputRef={fileInputRef}
@@ -556,22 +607,26 @@ function SelectArea({
           getFileIcon={getFileIcon} // Pass the original getFileIcon
           FILE_ICON_SIZE={FILE_ICON_SIZE} // Pass size constant
         />
+               
       </div>
-
+           {" "}
       {fileToUpload && !selectedDocId && (
         <div className="text-center">
+                   {" "}
           <AnalyzeButton
             onClick={handleAnalyze}
             disabled={isAnalyzeDisabled}
             busy={analyzing}
             label="Analyze Uploaded"
           />
+                 {" "}
         </div>
       )}
-
+           {" "}
       {error && (
         <p className="mt-4 text-center text-sm text-red-600">{error}</p>
       )}
+         {" "}
     </div>
   );
 }
@@ -582,8 +637,9 @@ function Spinner({ label }: { label: string }) {
   return (
     // Added padding to the root div of the Spinner component
     <div className="mt-8 text-center text-gray-700 py-12">
+           {" "}
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
-      <p className="mt-2">{label}</p>
+            <p className="mt-2">{label}</p>   {" "}
     </div>
   );
 }
@@ -607,8 +663,8 @@ function AnalyzeButton({
       whileHover={{ scale: disabled ? 1 : 1.05 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
     >
-      {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}
-      {busy ? "Analyzing…" : label}
+            {busy ? <FaSpinner className="animate-spin" /> : <FaSearch />}     {" "}
+      {busy ? "Analyzing…" : label}   {" "}
     </motion.button>
   );
 }
@@ -643,23 +699,31 @@ function ExistingDocPicker(props: ExistingDocPickerProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
-      <p className="text-gray-700">Analyze a previously uploaded document:</p>
+           {" "}
+      <p className="text-gray-700">Analyze a previously uploaded document:</p> 
+         {" "}
       <div className="relative w-full">
+               {" "}
         <button
           className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
           onClick={() => setDocSelectOpen(!docSelectOpen)}
           disabled={analyzing}
         >
+                   {" "}
           {selectedDocId
             ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
             : "Choose Document"}
+                   {" "}
           <FaChevronDown
             className={`ml-2 transition-transform ${
               docSelectOpen ? "rotate-180" : ""
             }`}
           />
+                 {" "}
         </button>
+               {" "}
         <AnimatePresence>
+                   {" "}
           {docSelectOpen && (
             <motion.ul
               initial={{ opacity: 0, y: -10 }}
@@ -667,14 +731,16 @@ function ExistingDocPicker(props: ExistingDocPickerProps) {
               exit={{ opacity: 0, y: -10 }}
               className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
             >
+                           {" "}
               {selectedDocId && (
                 <li
                   className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => handleDocSelection(null)}
                 >
-                  Clear Selection
+                                    Clear Selection                {" "}
                 </li>
               )}
+                           {" "}
               {uploadedDocs.length ? (
                 uploadedDocs.map((doc) => (
                   <li
@@ -687,23 +753,33 @@ function ExistingDocPicker(props: ExistingDocPickerProps) {
                       setDocSelectOpen(false); // Close dropdown on selection
                     }}
                   >
-                    {/* Modified structure to handle long filenames */}
+                                       {" "}
+                    {/* Modified structure to handle long filenames */}         
+                             {" "}
                     <div className="flex items-start gap-2">
-                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
-                      {/* Call with DROPDOWN_ICON_SIZE */}
-                      <span className="flex-1 break-all">{doc.filename}</span>
+                                           {" "}
+                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}          
+                                  {/* Call with DROPDOWN_ICON_SIZE */}         
+                                 {" "}
+                      <span className="flex-1 break-all">{doc.filename}</span> 
+                                       {" "}
                     </div>
+                                     {" "}
                   </li>
                 ))
               ) : (
                 <li className="px-4 py-2 text-sm italic text-gray-500">
-                  No documents uploaded yet.
+                                    No documents uploaded yet.                {" "}
                 </li>
               )}
+                         {" "}
             </motion.ul>
           )}
+                 {" "}
         </AnimatePresence>
+             {" "}
       </div>
+           {" "}
       {selectedDocId && (
         <AnalyzeButton
           onClick={handleAnalyze}
@@ -712,6 +788,7 @@ function ExistingDocPicker(props: ExistingDocPickerProps) {
           label="Analyze Selected"
         />
       )}
+         {" "}
     </div>
   );
 }
@@ -757,6 +834,7 @@ function UploadDropZone(props: UploadDropZoneProps) {
         if (f) handleFileDrop(f);
       }}
     >
+           {" "}
       <input
         ref={fileInputRef}
         type="file"
@@ -765,23 +843,25 @@ function UploadDropZone(props: UploadDropZoneProps) {
         disabled={isDisabled}
         onChange={onFileChange}
       />
-
+           {" "}
       {fileToUpload ? (
         <>
-          {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}{" "}
-          {/* Call with FILE_ICON_SIZE */}
-          <p className="mt-2">{fileToUpload.name}</p>
+                    {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}          {" "}
+          {/* Call with FILE_ICON_SIZE */}         {" "}
+          <p className="mt-2">{fileToUpload.name}</p>         {" "}
           <p className="text-xs text-gray-500">
-            {(fileToUpload.size / 1048576).toFixed(2)} MB
+                        {(fileToUpload.size / 1048576).toFixed(2)} MB          {" "}
           </p>
+                 {" "}
         </>
       ) : (
         <>
-          <FaCloudUploadAlt className="text-5xl text-gray-400" />
-          <p className="mt-2">Drag & drop or click to upload</p>
-          <p className="text-xs text-gray-400">Accepted: PDF, DOCX</p>
+                    <FaCloudUploadAlt className="text-5xl text-gray-400" />     
+              <p className="mt-2">Drag & drop or click to upload</p>         {" "}
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX</p>       {" "}
         </>
       )}
+         {" "}
     </div>
   );
 }
@@ -807,105 +887,116 @@ function ResultView({
 
   return (
     <>
-      {/* header bar */}
+            {/* header bar */}     {" "}
       <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
+               {" "}
         <div className="flex items-center gap-3">
+                   {" "}
           {results.analyzedFilename ? (
             getFileIcon(results.analyzedFilename, FILE_ICON_SIZE) // Call with FILE_ICON_SIZE
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
+                   {" "}
           {/* Added flex-1 and min-w-0 to the div containing filename and report ID */}
-          {/* Added break-words to the h3 for the filename */}
+                    {/* Added break-words to the h3 for the filename */}       
+           {" "}
           <div className="flex-1 min-w-0">
+                       {" "}
             <h3 className="font-medium text-gray-800 break-words">
-              {results.analyzedFilename}
+                            {results.analyzedFilename}           {" "}
             </h3>
+                       {" "}
             <p className="text-xs text-gray-500">
-              Report ID: {results.report_id}
+                            Report ID: {results.report_id}           {" "}
             </p>
+                     {" "}
           </div>
+                 {" "}
         </div>
-
-        {/* Flex container for buttons, centered on mobile */}
+                {/* Flex container for buttons, centered on mobile */}       {" "}
         <div className="flex flex-wrap items-stretch gap-6 justify-center">
-          {" "}
-          {/* Added justify-center */}
-          {/* Removed flex-1 min-w-0 from these wrapping divs */}
+                              {/* Added justify-center */}         {" "}
+          {/* Removed flex-1 min-w-0 from these wrapping divs */}         {" "}
           <motion.button
-            onClick={handleDownloadReport}
-            // Applied the same classes and motion props as Analyze Another button
-            // Reduced vertical padding from py-2 to py-1.5
-            // Removed h-full to let content dictate height
-            // Added fixed width and height
+            onClick={handleDownloadReport} // Applied the same classes and motion props as Analyze Another button // Reduced vertical padding from py-2 to py-1.5 // Removed h-full to let content dictate height // Added fixed width and height
             className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaDownload /> PDF
+                        <FaDownload /> PDF          {" "}
           </motion.button>
+                   {" "}
           <motion.button
-            onClick={reset}
-            // Reduced vertical padding from py-2 to py-1.5
-            // Removed h-full to let content dictate height
-            // Added fixed width and height
+            onClick={reset} // Reduced vertical padding from py-2 to py-1.5 // Removed h-full to let content dictate height // Added fixed width and height
             className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Analyze Another
+                        Analyze Another          {" "}
           </motion.button>
+                 {" "}
         </div>
+             {" "}
       </div>
-
-      {/* detailed list */}
+            {/* detailed list */}     {" "}
       <div className="space-y-4 p-6">
-        {results.issues.map((it, i) => (
-          // Applied styling and structure similar to Risk Assessment cards
-          // Regenerated the div structure for cleanliness around potential error lines
-          <div
-            key={`${results.report_id}-${it.rule_id}-${i}`}
-            className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
-          >
-            {/* Headline (Description + Rule ID) + Status Badge */}
-            <div className="mb-2 flex items-start justify-between gap-4">
-              <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
-                {" "}
-                {/* Added flex and min-width for text wrapping */}
-                {it.description}
-                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 flex-shrink-0">
-                  {" "}
-                  {/* Added flex-shrink-0 to prevent shrinking */}
-                  Rule ID: {it.rule_id}
-                </span>
-              </h4>
-              <ComplianceStatus status={it.status} />
+               {" "}
+        {results.issues.map(
+          (
+            it,
+            i // Applied styling and structure similar to Risk Assessment cards // Regenerated the div structure for cleanliness around potential error lines
+          ) => (
+            <div
+              key={`${results.report_id}-${it.rule_id}-${i}`}
+              className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
+            >
+                         {" "}
+              {/* Headline (Description + Rule ID) + Status Badge */}           {" "}
+              <div className="mb-2 flex items-start justify-between gap-4">
+                             {" "}
+                <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
+                                                 {" "}
+                  {/* Added flex and min-width for text wrapping */}           
+                      {it.description}               {" "}
+                  <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 flex-shrink-0">
+                                                       {" "}
+                    {/* Added flex-shrink-0 to prevent shrinking */}           
+                          Rule ID: {it.rule_id}               {" "}
+                  </span>
+                               {" "}
+                </h4>
+                              <ComplianceStatus status={it.status} />           {" "}
+              </div>
+                          {/* Clarify the quote source */}           {" "}
+              {it.extracted_text_snippet && (
+                <p className="text-xs text-gray-500 mb-1">
+                                  Original text snippet:              {" "}
+                </p>
+              )}
+                          {/* Quote (Extracted Snippet) */}           {" "}
+              {it.extracted_text_snippet && (
+                <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
+                                  “{it.extracted_text_snippet}”              {" "}
+                </blockquote>
+              )}
+                         {" "}
+              {/* Removed the orange explanation/recommendation box */}         
+               {" "}
+              {/* The orange box containing the explanation/recommendation has been removed as requested */}
+                       {" "}
             </div>
-
-            {/* Clarify the quote source */}
-            {it.extracted_text_snippet && (
-              <p className="text-xs text-gray-500 mb-1">
-                Original text snippet:
-              </p>
-            )}
-
-            {/* Quote (Extracted Snippet) */}
-            {it.extracted_text_snippet && (
-              <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
-                “{it.extracted_text_snippet}”
-              </blockquote>
-            )}
-
-            {/* Removed the orange explanation/recommendation box */}
-            {/* The orange box containing the explanation/recommendation has been removed as requested */}
-          </div>
-        ))}
+          )
+        )}
+               {" "}
         {results.issues.length === 0 && (
           <p className="text-center italic text-gray-600">
-            No compliance issues found.
+                        No compliance issues found.          {" "}
           </p>
         )}
+               
       </div>
+         {" "}
     </>
   );
 }
