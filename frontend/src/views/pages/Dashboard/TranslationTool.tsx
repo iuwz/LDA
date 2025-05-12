@@ -96,16 +96,24 @@ const TranslationTool: React.FC = () => {
       setDocProcessing(true);
       try {
         setSourceText("");
-        const { blob, filename, report_id } = (await translateFile(
-          file,
-          tgtLangLabel.toLowerCase()
-        )) as { blob: Blob; filename: string; report_id: string };
+        const { blob, filename, report_id, result_doc_id } =
+          (await translateFile(
+            // Ensure result_doc_id is returned by your API
+            file,
+            tgtLangLabel.toLowerCase()
+          )) as {
+            blob: Blob;
+            filename: string;
+            report_id: string;
+            result_doc_id?: string;
+          };
         const url = URL.createObjectURL(blob);
         setDocUrl(url);
         setResult({
           report_id,
           type: "doc",
           translatedFilename: filename,
+          resultDocId: result_doc_id ?? report_id, // Use result_doc_id from API, fallback to report_id
           target_lang: tgtLangLabel.toLowerCase(),
         });
         await loadHistory();
@@ -153,15 +161,15 @@ const TranslationTool: React.FC = () => {
         type: rep.type,
         translatedText: rep.translated_text,
         translatedFilename: rep.translated_filename,
-        resultDocId: rep.result_doc_id,
+        resultDocId: rep.result_doc_id, // Use the actual result_doc_id from the report
         target_lang: rep.target_lang,
         created_at: rep.timestamp,
       };
-      setFromEnglish(r.target_lang.toLowerCase() === "arabic");
+      setFromEnglish(r.target_lang.toLowerCase() !== "arabic"); // If target is arabic, source was English, vice versa
       setFile(null);
       setDocUrl(null);
       setTranslatedText(r.translatedText ?? "");
-      setSourceText(rep.source_text ?? "");
+      setSourceText(rep.source_text ?? ""); // Load source text from report
       setResult(r);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
@@ -224,6 +232,9 @@ const TranslationTool: React.FC = () => {
 
   const translateDisabled =
     (file ? false : !sourceText.trim()) || isTranslating || docProcessing;
+
+  const isMainDownloadLinkDisabled =
+    !docUrl && (!result?.resultDocId || !result?.translatedFilename);
 
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
@@ -354,34 +365,60 @@ const TranslationTool: React.FC = () => {
       <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
         {file ? (
           <div className="p-6 text-center space-y-4">
-            {!docUrl ? (
-              docProcessing ? (
-                <Spinner text="Translating document…" />
-              ) : (
-                <motion.button
-                  onClick={handleTranslate}
-                  className="flex items-center justify-center gap-2 px-6 py-2 bg-[color:var(--accent-dark)] text-white rounded-md shadow-sm hover:bg-[color:var(--accent-light)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
-                  whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
-                  disabled={translateDisabled}
-                >
-                  {isTranslating || docProcessing ? (
-                    <FaSpinner className="animate-spin" />
-                  ) : (
-                    <FaSearch />
-                  )}
-                  {isTranslating || docProcessing
-                    ? "Translating…"
-                    : "Translate Document"}
-                </motion.button>
-              )
-            ) : (
-              <a
-                href={docUrl!}
-                download={result?.translatedFilename!}
-                className="inline-flex items-center gap-2 px-6 py-2 bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] rounded-md shadow-sm hover:bg-[color:var(--accent-dark)] hover:text-white transition-colors"
+            {/* Conditional rendering based on translation/processing state */}
+            {isTranslating || docProcessing ? (
+              <Spinner text="Translating document…" />
+            ) : // Display translate button or download link
+            !docUrl && !result?.resultDocId ? ( // Show translate button if no result yet
+              <motion.button
+                onClick={handleTranslate}
+                // Updated className for styling to match ComplianceChecker Analyze button
+                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
+                  translateDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)] text-white"
+                }`}
+                whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
+                whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
+                disabled={translateDisabled}
               >
-                <FaDownload /> Download Translated DOCX
+                {/* Icon logic already matches ComplianceChecker Analyze button */}
+                {isTranslating || docProcessing ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <FaSearch />
+                )}
+                {isTranslating || docProcessing
+                  ? "Translating…"
+                  : "Translate Document"}
+              </motion.button>
+            ) : (
+              // Display download link/button if docUrl or resultDocId is available
+              <a
+                href={docUrl || "#"}
+                onClick={(e) => {
+                  if (isMainDownloadLinkDisabled) {
+                    e.preventDefault();
+                  } else if (
+                    !docUrl &&
+                    result?.resultDocId &&
+                    result?.translatedFilename
+                  ) {
+                    e.preventDefault();
+                    downloadDocumentById(
+                      result.resultDocId,
+                      result.translatedFilename
+                    );
+                  }
+                }}
+                download={result?.translatedFilename || "translated_document"}
+                className={`inline-flex items-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
+                  isMainDownloadLinkDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-dark)] hover:text-white"
+                }`}
+              >
+                <FaDownload /> Download Translated Document
               </a>
             )}
           </div>
@@ -458,14 +495,16 @@ const TranslationTool: React.FC = () => {
             <motion.button
               onClick={handleTranslate}
               disabled={translateDisabled}
+              // Updated className for styling to match ComplianceChecker Analyze button
               className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${
                 translateDisabled
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[color:var(--accent-dark)] hover:bg-[color:var(--accent-light)]"
+                  : "bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)]"
               }`}
               whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
               whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
             >
+              {/* Icon logic already matches ComplianceChecker Analyze button */}
               {isTranslating && !docProcessing ? (
                 <FaSpinner className="animate-spin" />
               ) : (
@@ -509,13 +548,29 @@ const TranslationTool: React.FC = () => {
                         <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
                           {getFileIcon(h.translated_filename, "text-xl")}
                         </span>
-                        <span className="break-all">
-                          {h.translated_filename || "Text Translation"}
+                        <span
+                          className={`break-all ${
+                            h.type === "doc" && h.result_doc_id
+                              ? "cursor-pointer hover:underline"
+                              : ""
+                          }`}
+                          onClick={() => openReport(h.id)}
+                        >
+                          {h.translated_filename || "Text Translation Report"}
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">{`${sourceLang} → ${targetLang}`}</p>
                     </div>
                     <div className="flex gap-3 self-end sm:self-center">
+                      {/* View Report button */}
+                      <button
+                        onClick={() => openReport(h.id)}
+                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                      >
+                        <FaSearch /> View
+                      </button>
+
+                      {/* Download Button for Document Translations */}
                       {h.type === "doc" &&
                         h.result_doc_id &&
                         h.translated_filename && (
