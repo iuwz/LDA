@@ -96,12 +96,9 @@ const TranslationTool: React.FC = () => {
       setDocProcessing(true);
       try {
         setSourceText("");
+        // Ensure result_doc_id is returned by your API
         const { blob, filename, report_id, result_doc_id } =
-          (await translateFile(
-            // Ensure result_doc_id is returned by your API
-            file,
-            tgtLangLabel.toLowerCase()
-          )) as {
+          (await translateFile(file, tgtLangLabel.toLowerCase())) as {
             blob: Blob;
             filename: string;
             report_id: string;
@@ -155,8 +152,27 @@ const TranslationTool: React.FC = () => {
 
   async function openReport(id: string) {
     try {
-      const rep = (await getTranslationReport(id)).translation_report;
+      const response = await getTranslationReport(id);
+
+      // Add a check to ensure the expected data structure exists
+      if (!response || !response.translation_report) {
+        console.error("Invalid response structure for report:", response);
+        throw new Error("Failed to load report data.");
+      }
+
+      const rep = response.translation_report;
+
+      // Ensure rep is not null/undefined, although the check above should handle this
+      if (!rep) {
+        console.error(
+          "Translation report is null or undefined in response:",
+          response
+        );
+        throw new Error("Invalid report data received.");
+      }
+
       const r: DisplayResult = {
+        // Use rep._id if available, otherwise fallback to the id passed in
         report_id: rep._id ?? id,
         type: rep.type,
         translatedText: rep.translated_text,
@@ -165,15 +181,19 @@ const TranslationTool: React.FC = () => {
         target_lang: rep.target_lang,
         created_at: rep.timestamp,
       };
-      setFromEnglish(r.target_lang.toLowerCase() !== "arabic"); // If target is arabic, source was English, vice versa
-      setFile(null);
-      setDocUrl(null);
+
+      // Determine source lang based on target lang of the *report*
+      setFromEnglish(r.target_lang.toLowerCase() !== "arabic");
+      setFile(null); // Clear file state when loading report
+      setDocUrl(null); // Clear docUrl as we might download later
       setTranslatedText(r.translatedText ?? "");
       setSourceText(rep.source_text ?? ""); // Load source text from report
       setResult(r);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
+      // This catch block will now also handle the errors thrown above
       alert(e.message || "Failed to open translation report");
+      console.error("Error opening report:", e); // Log the error for debugging
     }
   }
 
@@ -233,6 +253,7 @@ const TranslationTool: React.FC = () => {
   const translateDisabled =
     (file ? false : !sourceText.trim()) || isTranslating || docProcessing;
 
+  // Determine if the main download link should be effectively disabled
   const isMainDownloadLinkDisabled =
     !docUrl && (!result?.resultDocId || !result?.translatedFilename);
 
@@ -554,9 +575,11 @@ const TranslationTool: React.FC = () => {
                               ? "cursor-pointer hover:underline"
                               : ""
                           }`}
+                          // Make history item filename clickable to open report
                           onClick={() => openReport(h.id)}
                         >
-                          {h.translated_filename || "Text Translation Report"}
+                          {h.translated_filename || "Text Translation Report"}{" "}
+                          {/* Clarified text */}
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">{`${sourceLang} → ${targetLang}`}</p>
