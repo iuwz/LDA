@@ -17,13 +17,11 @@ import {
   FaCheck,
   FaFileUpload,
   FaFileAlt,
-  FaInfoCircle,
   FaExchangeAlt,
   FaSearch,
   FaTrash,
   FaDownload,
   FaSpinner,
-  FaChevronDown,
   FaFilePdf,
   FaFileWord,
 } from "react-icons/fa";
@@ -43,26 +41,21 @@ interface DisplayResult {
 }
 
 const TranslationTool: React.FC = () => {
-  /* Fresh translate state */
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [fromEnglish, setFromEnglish] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  /* File translation state */
   const [file, setFile] = useState<File | null>(null);
   const [docProcessing, setDocProcessing] = useState(false);
   const [docUrl, setDocUrl] = useState<string | null>(null);
 
-  /* History */
   const [history, setHistory] = useState<TranslationHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
 
-  /* Current result */
   const [result, setResult] = useState<DisplayResult | null>(null);
 
-  /* Delete modal state */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -84,21 +77,13 @@ const TranslationTool: React.FC = () => {
   const srcLangLabel = fromEnglish ? "English" : "Arabic";
   const tgtLangLabel = fromEnglish ? "Arabic" : "English";
 
-  const FILE_ICON_SIZE = "text-5xl";
-  const DROPDOWN_ICON_SIZE = "text-xl";
-
-  const getFileIcon = (
-    filename: string | null | undefined,
-    sizeClassName: string
-  ) => {
-    if (!filename)
-      return <FaFileAlt className={`${sizeClassName} text-gray-500`} />;
+  const getFileIcon = (filename: string | null | undefined, size: string) => {
+    if (!filename) return <FaFileAlt className={`${size} text-gray-500`} />;
     const ext = filename.split(".").pop()?.toLowerCase();
-    if (ext === "pdf")
-      return <FaFilePdf className={`${sizeClassName} text-red-600`} />;
+    if (ext === "pdf") return <FaFilePdf className={`${size} text-red-600`} />;
     if (ext === "doc" || ext === "docx")
-      return <FaFileWord className={`${sizeClassName} text-blue-600`} />;
-    return <FaFileAlt className={`${sizeClassName} text-gray-500`} />;
+      return <FaFileWord className={`${size} text-blue-600`} />;
+    return <FaFileAlt className={`${size} text-gray-500`} />;
   };
 
   const handleTranslate = async () => {
@@ -200,7 +185,6 @@ const TranslationTool: React.FC = () => {
         setTranslatedText("");
         setFile(null);
         setDocUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     } catch (e: any) {
       alert(e.message || "Delete failed");
@@ -226,6 +210,7 @@ const TranslationTool: React.FC = () => {
     setResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0] ?? null;
@@ -281,7 +266,6 @@ const TranslationTool: React.FC = () => {
             setFile(null);
             setDocUrl(null);
             setResult(null);
-            if (fileInputRef.current) fileInputRef.current.value = "";
           }}
           className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
             fromEnglish
@@ -299,7 +283,6 @@ const TranslationTool: React.FC = () => {
             setFile(null);
             setDocUrl(null);
             setResult(null);
-            if (fileInputRef.current) fileInputRef.current.value = "";
           }}
           className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
             !fromEnglish
@@ -335,7 +318,7 @@ const TranslationTool: React.FC = () => {
           />
           {file ? (
             <>
-              {getFileIcon(file.name, FILE_ICON_SIZE)}
+              {getFileIcon(file.name, "text-5xl")}
               <p className="mt-2 font-medium text-gray-700 break-all text-sm">
                 {file.name}
               </p>
@@ -350,7 +333,6 @@ const TranslationTool: React.FC = () => {
                   setTranslatedText("");
                   setSourceText("");
                   setResult(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
                 disabled={isTranslating || docProcessing}
                 className="text-xs text-red-600 hover:underline disabled:opacity-50"
@@ -395,10 +377,8 @@ const TranslationTool: React.FC = () => {
               )
             ) : (
               <a
-                href={docUrl}
-                download={
-                  result?.translatedFilename || "translated_document.docx"
-                }
+                href={docUrl!}
+                download={result?.translatedFilename!}
                 className="inline-flex items-center gap-2 px-6 py-2 bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] rounded-md shadow-sm hover:bg-[color:var(--accent-dark)] hover:text-white transition-colors"
               >
                 <FaDownload /> Download Translated DOCX
@@ -435,7 +415,6 @@ const TranslationTool: React.FC = () => {
                   <button
                     onClick={handleCopy}
                     className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline disabled:opacity-50"
-                    disabled={!translatedText}
                   >
                     {copied ? <FaCheck /> : <FaCopy />}{" "}
                     {copied ? "Copied" : "Copy"}
@@ -467,7 +446,6 @@ const TranslationTool: React.FC = () => {
               setFile(null);
               setDocUrl(null);
               setResult(null);
-              if (fileInputRef.current) fileInputRef.current.value = "";
             }}
             className="flex items-center gap-2 rounded-md px-4 py-2 bg-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: isTranslating || docProcessing ? 1 : 1.05 }}
@@ -492,7 +470,7 @@ const TranslationTool: React.FC = () => {
                 <FaSpinner className="animate-spin" />
               ) : (
                 <FaLanguage />
-              )}
+              )}{" "}
               <span>
                 {isTranslating && !docProcessing ? "Translating…" : "Translate"}
               </span>
@@ -501,7 +479,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* History */}
+      {/* Previous Translations */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Translations
@@ -529,10 +507,7 @@ const TranslationTool: React.FC = () => {
                     <div className="mb-3 sm:mb-0 min-w-0 flex-1">
                       <p className="flex items-start text-sm font-semibold text-gray-800">
                         <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
-                          {getFileIcon(
-                            h.translated_filename,
-                            DROPDOWN_ICON_SIZE
-                          )}
+                          {getFileIcon(h.translated_filename, "text-xl")}
                         </span>
                         <span className="break-all">
                           {h.translated_filename || "Text Translation"}
