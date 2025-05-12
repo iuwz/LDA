@@ -381,7 +381,7 @@ const TranslationTool: React.FC = () => {
           fetchingDocs ? (
             <Spinner label="Loading documents…" />
           ) : (
-            <div className="space-y-8 p-6 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
+            <div className="space-y-8 p-6 md:grid md:grid-cols-2 md:gap-6 md:space-y-0 mb-8">
               {/* ───── existing docs picker ───── */}
               <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
                 <p className="text-gray-700">
