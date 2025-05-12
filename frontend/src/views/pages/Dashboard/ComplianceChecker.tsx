@@ -370,12 +370,22 @@ function ComplianceChecker() {
                     {" "}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
                       {" "}
-                      <FaFileAlt className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0" />{" "}
+                      {/* Applied styling to this span to match the layout */}
+                      <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
+                        {" "}
+                        {/* Wrapper for the icon */}
+                        {/* Call getFileIcon with filename and dropdown size */}
+                        {getFileIcon(
+                          h.report_filename || "",
+                          DROPDOWN_ICON_SIZE
+                        )}
+                      </span>
                       <span className="break-all">
                         {h.report_filename || "Compliance report"}
                       </span>{" "}
                     </p>
-                    <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                    {/* Removed ml-6 to align under the filename start */}
+                    <p className="mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
                       {" "}
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
@@ -517,6 +527,7 @@ function SelectArea({
   DROPDOWN_ICON_SIZE, // Use received size constants
 }: SelectProps) {
   if (analyzing || fetchingDocs) {
+    // Added padding to the Spinner container
     return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
 
@@ -569,7 +580,8 @@ function SelectArea({
 
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="mt-8 text-center text-gray-700">
+    // Added padding to the root div of the Spinner component
+    <div className="mt-8 text-center text-gray-700 py-12">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
       <p className="mt-2">{label}</p>
     </div>
@@ -601,7 +613,8 @@ function AnalyzeButton({
   );
 }
 
-function ExistingDocPicker(props: {
+/* ───────── ExistingDocPicker subcomponent ───────── */
+interface ExistingDocPickerProps {
   uploadedDocs: DocumentRecord[];
   selectedDocId: string | null;
   handleDocSelection: (id: string | null) => void;
@@ -612,7 +625,9 @@ function ExistingDocPicker(props: {
   isAnalyzeDisabled: boolean;
   analyzing: boolean;
   DROPDOWN_ICON_SIZE: string; // Receive size constant
-}) {
+}
+
+function ExistingDocPicker(props: ExistingDocPickerProps) {
   const {
     uploadedDocs,
     selectedDocId,
@@ -672,9 +687,12 @@ function ExistingDocPicker(props: {
                       setDocSelectOpen(false); // Close dropdown on selection
                     }}
                   >
-                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
-                    {/* Call with DROPDOWN_ICON_SIZE */}
-                    {doc.filename}
+                    {/* Modified structure to handle long filenames */}
+                    <div className="flex items-start gap-2">
+                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
+                      {/* Call with DROPDOWN_ICON_SIZE */}
+                      <span className="flex-1 break-all">{doc.filename}</span>
+                    </div>
                   </li>
                 ))
               ) : (
@@ -698,7 +716,8 @@ function ExistingDocPicker(props: {
   );
 }
 
-function UploadDropZone(props: {
+/* ───────── UploadDropZone subcomponent ───────── */
+interface UploadDropZoneProps {
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   isDisabled: boolean;
@@ -706,7 +725,9 @@ function UploadDropZone(props: {
   handleFileDrop: (f: File | null) => void;
   getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
   FILE_ICON_SIZE: string; // Receive size constant
-}) {
+}
+
+function UploadDropZone(props: UploadDropZoneProps) {
   const {
     fileToUpload,
     fileInputRef,
@@ -794,8 +815,10 @@ function ResultView({
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
-          <div>
-            <h3 className="font-medium text-gray-800">
+          {/* Added flex-1 and min-w-0 to the div containing filename and report ID */}
+          {/* Added break-words to the h3 for the filename */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-gray-800 break-words">
               {results.analyzedFilename}
             </h3>
             <p className="text-xs text-gray-500">
@@ -804,16 +827,18 @@ function ResultView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="text-center">
-            <p className="text-xs text-gray-500">Score</p>
-            <p className="text-lg font-bold text-gray-800">
-              {results.complianceScore}/100
-            </p>
-          </div>
+        {/* Flex container for buttons, centered on mobile */}
+        <div className="flex flex-wrap items-stretch gap-6 justify-center">
+          {" "}
+          {/* Added justify-center */}
+          {/* Removed flex-1 min-w-0 from these wrapping divs */}
           <motion.button
             onClick={handleDownloadReport}
-            className="flex items-center gap-1 rounded-md bg-[color:var(--accent-dark)] px-4 py-2 text-sm text-white hover:bg-[color:var(--accent-light)]"
+            // Applied the same classes and motion props as Analyze Another button
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -821,7 +846,10 @@ function ResultView({
           </motion.button>
           <motion.button
             onClick={reset}
-            className="flex items-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)]"
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -833,32 +861,43 @@ function ResultView({
       {/* detailed list */}
       <div className="space-y-4 p-6">
         {results.issues.map((it, i) => (
+          // Applied styling and structure similar to Risk Assessment cards
+          // Regenerated the div structure for cleanliness around potential error lines
           <div
             key={`${results.report_id}-${it.rule_id}-${i}`}
-            className="rounded-lg border p-4 transition-shadow hover:shadow-md"
+            className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
           >
-            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <p className="font-medium text-gray-800">
+            {/* Headline (Description + Rule ID) + Status Badge */}
+            <div className="mb-2 flex items-start justify-between gap-4">
+              <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
+                {" "}
+                {/* Added flex and min-width for text wrapping */}
                 {it.description}
-                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 flex-shrink-0">
+                  {" "}
+                  {/* Added flex-shrink-0 to prevent shrinking */}
                   Rule ID: {it.rule_id}
                 </span>
-              </p>
+              </h4>
               <ComplianceStatus status={it.status} />
             </div>
-            {it.status.toLowerCase() !== "ok" && (
-              <div className="flex gap-2 rounded-md border border-[color:var(--accent-dark)]/50 bg-[color:var(--accent-light)]/50 p-3 text-sm">
-                <FaInfoCircle className="mt-1 text-[color:var(--accent-dark)]" />
-                <div className="space-y-2 text-[color:var(--accent-dark)]">
-                  <p>{it.description}</p>
-                  {it.extracted_text_snippet && (
-                    <p className="rounded border bg-white p-2 italic">
-                      “{it.extracted_text_snippet}”
-                    </p>
-                  )}
-                </div>
-              </div>
+
+            {/* Clarify the quote source */}
+            {it.extracted_text_snippet && (
+              <p className="text-xs text-gray-500 mb-1">
+                Original text snippet:
+              </p>
             )}
+
+            {/* Quote (Extracted Snippet) */}
+            {it.extracted_text_snippet && (
+              <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
+                “{it.extracted_text_snippet}”
+              </blockquote>
+            )}
+
+            {/* Removed the orange explanation/recommendation box */}
+            {/* The orange box containing the explanation/recommendation has been removed as requested */}
           </div>
         ))}
         {results.issues.length === 0 && (
