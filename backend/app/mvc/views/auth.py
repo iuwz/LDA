@@ -44,7 +44,8 @@ async def register(user: User, request: Request):
             httponly=True,
             secure=True,
             samesite="None",
-            max_age=30 * 24 * 60 * 60,  # 30 days
+            max_age = 1 * 60 * 60  # 3 600 seconds = 1 hour
+
         )
         return resp
 
@@ -68,7 +69,7 @@ async def login(payload: LoginRequest, req: Request):
             httponly=True,
             secure=True,
             samesite="None",
-            max_age=30 * 24 * 60 * 60,  # 30 days
+            max_age= 2 * 24 * 60 * 60,  # 30 days
         )
         return resp
 
