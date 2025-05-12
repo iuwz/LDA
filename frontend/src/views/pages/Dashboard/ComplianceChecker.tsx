@@ -179,7 +179,6 @@ function ComplianceChecker() {
         complianceScore: score,
         analyzedFilename: rep.report_filename || rep.report_id,
       });
-      // Auto-scroll to top when viewing a report
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       alert(e.message || "Failed to open report");
@@ -207,9 +206,10 @@ function ComplianceChecker() {
     }
   }
 
-  const FILE_ICON_SIZE = "text-5xl";
-  const DROPDOWN_ICON_SIZE = "text-xl";
+  const FILE_ICON_SIZE = "text-5xl"; // Kept for large icons
+  const DROPDOWN_ICON_SIZE = "text-xl"; // New size for dropdown icons
 
+  // Modified getFileIcon to accept a size class
   const getFileIcon = (filename: string, sizeClassName: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (ext === "pdf") {
@@ -330,21 +330,21 @@ function ComplianceChecker() {
             handleDocSelection={handleDocSelection}
             docSelectOpen={docSelectOpen}
             setDocSelectOpen={setDocSelectOpen}
-            getFileIcon={getFileIcon}
+            getFileIcon={getFileIcon} // Pass the original getFileIcon function
             fileToUpload={fileToUpload}
             fileInputRef={fileInputRef}
             onFileChange={onFileChange}
             handleFileDrop={handleFileDrop}
             handleAnalyze={handleAnalyze}
             error={error}
-            FILE_ICON_SIZE={FILE_ICON_SIZE}
-            DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
+            FILE_ICON_SIZE={FILE_ICON_SIZE} // Pass size constants
+            DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE} // Pass size constants
           />
         ) : (
           <ResultView
             results={results}
             ComplianceStatus={ComplianceStatus}
-            getFileIcon={(filename) => getFileIcon(filename, FILE_ICON_SIZE)}
+            getFileIcon={(filename) => getFileIcon(filename, FILE_ICON_SIZE)} // Pass getFileIcon with FILE_ICON_SIZE
             handleDownloadReport={handleDownloadReport}
             reset={reset}
           />
@@ -367,8 +367,14 @@ function ComplianceChecker() {
                   className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="mb-3 sm:mb-0 min-w-0 flex-1">
+                    {" "}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
+                      {" "}
+                      {/* Applied styling to this span to match the layout */}
                       <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
+                        {" "}
+                        {/* Wrapper for the icon */}
+                        {/* Call getFileIcon with filename and dropdown size */}
                         {getFileIcon(
                           h.report_filename || "",
                           DROPDOWN_ICON_SIZE
@@ -376,9 +382,11 @@ function ComplianceChecker() {
                       </span>
                       <span className="break-all">
                         {h.report_filename || "Compliance report"}
-                      </span>
+                      </span>{" "}
                     </p>
+                    {/* Removed ml-6 to align under the filename start */}
                     <p className="mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
+                      {" "}
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -487,15 +495,15 @@ interface SelectProps {
   handleDocSelection: (id: string | null) => void;
   docSelectOpen: boolean;
   setDocSelectOpen: (v: boolean) => void;
-  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Now accepts size
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
   handleAnalyze: () => void;
   error: string | null;
-  FILE_ICON_SIZE: string;
-  DROPDOWN_ICON_SIZE: string;
+  FILE_ICON_SIZE: string; // Receive size constants
+  DROPDOWN_ICON_SIZE: string; // Receive size constants
 }
 
 function SelectArea({
@@ -508,17 +516,18 @@ function SelectArea({
   handleDocSelection,
   docSelectOpen,
   setDocSelectOpen,
-  getFileIcon,
+  getFileIcon, // Receive the original getFileIcon function
   fileToUpload,
   fileInputRef,
   onFileChange,
   handleFileDrop,
   handleAnalyze,
   error,
-  FILE_ICON_SIZE,
-  DROPDOWN_ICON_SIZE,
+  FILE_ICON_SIZE, // Use received size constants
+  DROPDOWN_ICON_SIZE, // Use received size constants
 }: SelectProps) {
   if (analyzing || fetchingDocs) {
+    // Added padding to the Spinner container
     return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
   }
 
@@ -531,11 +540,11 @@ function SelectArea({
           handleDocSelection={handleDocSelection}
           docSelectOpen={docSelectOpen}
           setDocSelectOpen={setDocSelectOpen}
-          getFileIcon={getFileIcon}
+          getFileIcon={getFileIcon} // Pass the original getFileIcon
           handleAnalyze={handleAnalyze}
           isAnalyzeDisabled={isAnalyzeDisabled}
           analyzing={analyzing}
-          DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
+          DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE} // Pass size constant
         />
 
         <UploadDropZone
@@ -544,8 +553,8 @@ function SelectArea({
           isDisabled={isFileInputDisabled}
           onFileChange={onFileChange}
           handleFileDrop={handleFileDrop}
-          getFileIcon={getFileIcon}
-          FILE_ICON_SIZE={FILE_ICON_SIZE}
+          getFileIcon={getFileIcon} // Pass the original getFileIcon
+          FILE_ICON_SIZE={FILE_ICON_SIZE} // Pass size constant
         />
       </div>
 
@@ -571,6 +580,7 @@ function SelectArea({
 
 function Spinner({ label }: { label: string }) {
   return (
+    // Added padding to the root div of the Spinner component
     <div className="mt-8 text-center text-gray-700 py-12">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
       <p className="mt-2">{label}</p>
@@ -610,25 +620,27 @@ interface ExistingDocPickerProps {
   handleDocSelection: (id: string | null) => void;
   docSelectOpen: boolean;
   setDocSelectOpen: (v: boolean) => void;
-  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
   handleAnalyze: () => void;
   isAnalyzeDisabled: boolean;
   analyzing: boolean;
-  DROPDOWN_ICON_SIZE: string;
+  DROPDOWN_ICON_SIZE: string; // Receive size constant
 }
 
-function ExistingDocPicker({
-  uploadedDocs,
-  selectedDocId,
-  handleDocSelection,
-  docSelectOpen,
-  setDocSelectOpen,
-  getFileIcon,
-  handleAnalyze,
-  isAnalyzeDisabled,
-  analyzing,
-  DROPDOWN_ICON_SIZE,
-}: ExistingDocPickerProps) {
+function ExistingDocPicker(props: ExistingDocPickerProps) {
+  const {
+    uploadedDocs,
+    selectedDocId,
+    handleDocSelection,
+    docSelectOpen,
+    setDocSelectOpen,
+    getFileIcon, // Use the received getFileIcon
+    handleAnalyze,
+    isAnalyzeDisabled,
+    analyzing,
+    DROPDOWN_ICON_SIZE, // Use received size constant
+  } = props;
+
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
       <p className="text-gray-700">Analyze a previously uploaded document:</p>
@@ -672,11 +684,13 @@ function ExistingDocPicker({
                     }`}
                     onClick={() => {
                       handleDocSelection(doc._id);
-                      setDocSelectOpen(false);
+                      setDocSelectOpen(false); // Close dropdown on selection
                     }}
                   >
+                    {/* Modified structure to handle long filenames */}
                     <div className="flex items-start gap-2">
-                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
+                      {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
+                      {/* Call with DROPDOWN_ICON_SIZE */}
                       <span className="flex-1 break-all">{doc.filename}</span>
                     </div>
                   </li>
@@ -709,19 +723,21 @@ interface UploadDropZoneProps {
   isDisabled: boolean;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
-  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
-  FILE_ICON_SIZE: string;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
+  FILE_ICON_SIZE: string; // Receive size constant
 }
 
-function UploadDropZone({
-  fileToUpload,
-  fileInputRef,
-  isDisabled,
-  onFileChange,
-  handleFileDrop,
-  getFileIcon,
-  FILE_ICON_SIZE,
-}: UploadDropZoneProps) {
+function UploadDropZone(props: UploadDropZoneProps) {
+  const {
+    fileToUpload,
+    fileInputRef,
+    isDisabled,
+    onFileChange,
+    handleFileDrop,
+    getFileIcon, // Use the received getFileIcon prop
+    FILE_ICON_SIZE, // Use received size constant
+  } = props;
+
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
@@ -752,7 +768,8 @@ function UploadDropZone({
 
       {fileToUpload ? (
         <>
-          {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}
+          {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}{" "}
+          {/* Call with FILE_ICON_SIZE */}
           <p className="mt-2">{fileToUpload.name}</p>
           <p className="text-xs text-gray-500">
             {(fileToUpload.size / 1048576).toFixed(2)} MB
@@ -773,7 +790,7 @@ function UploadDropZone({
 interface ResultProps {
   results: DisplayAnalysisResult;
   ComplianceStatus: React.FC<{ status: string }>;
-  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // This prop expects a function that takes filename and size
   handleDownloadReport: () => void;
   reset: () => void;
 }
@@ -781,10 +798,11 @@ interface ResultProps {
 function ResultView({
   results,
   ComplianceStatus,
-  getFileIcon,
+  getFileIcon, // Use the received getFileIcon prop
   handleDownloadReport,
   reset,
 }: ResultProps) {
+  // Define FILE_ICON_SIZE here or pass it down if ResultView needed different sizes
   const FILE_ICON_SIZE = "text-5xl";
 
   return (
@@ -793,10 +811,12 @@ function ResultView({
       <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {results.analyzedFilename ? (
-            getFileIcon(results.analyzedFilename, FILE_ICON_SIZE)
+            getFileIcon(results.analyzedFilename, FILE_ICON_SIZE) // Call with FILE_ICON_SIZE
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
+          {/* Added flex-1 and min-w-0 to the div containing filename and report ID */}
+          {/* Added break-words to the h3 for the filename */}
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-gray-800 break-words">
               {results.analyzedFilename}
@@ -807,9 +827,17 @@ function ResultView({
           </div>
         </div>
 
+        {/* Flex container for buttons, centered on mobile */}
         <div className="flex flex-wrap items-stretch gap-6 justify-center">
+          {" "}
+          {/* Added justify-center */}
+          {/* Removed flex-1 min-w-0 from these wrapping divs */}
           <motion.button
             onClick={handleDownloadReport}
+            // Applied the same classes and motion props as Analyze Another button
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
             className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -818,6 +846,9 @@ function ResultView({
           </motion.button>
           <motion.button
             onClick={reset}
+            // Reduced vertical padding from py-2 to py-1.5
+            // Removed h-full to let content dictate height
+            // Added fixed width and height
             className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -830,31 +861,43 @@ function ResultView({
       {/* detailed list */}
       <div className="space-y-4 p-6">
         {results.issues.map((it, i) => (
+          // Applied styling and structure similar to Risk Assessment cards
+          // Regenerated the div structure for cleanliness around potential error lines
           <div
             key={`${results.report_id}-${it.rule_id}-${i}`}
-            className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg"
+            className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
           >
+            {/* Headline (Description + Rule ID) + Status Badge */}
             <div className="mb-2 flex items-start justify-between gap-4">
               <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
+                {" "}
+                {/* Added flex and min-width for text wrapping */}
                 {it.description}
                 <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 flex-shrink-0">
+                  {" "}
+                  {/* Added flex-shrink-0 to prevent shrinking */}
                   Rule ID: {it.rule_id}
                 </span>
               </h4>
               <ComplianceStatus status={it.status} />
             </div>
 
+            {/* Clarify the quote source */}
             {it.extracted_text_snippet && (
               <p className="text-xs text-gray-500 mb-1">
                 Original text snippet:
               </p>
             )}
 
+            {/* Quote (Extracted Snippet) */}
             {it.extracted_text_snippet && (
               <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
                 “{it.extracted_text_snippet}”
               </blockquote>
             )}
+
+            {/* Removed the orange explanation/recommendation box */}
+            {/* The orange box containing the explanation/recommendation has been removed as requested */}
           </div>
         ))}
         {results.issues.length === 0 && (
