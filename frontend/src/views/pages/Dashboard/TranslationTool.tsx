@@ -127,7 +127,6 @@ const TranslationTool: React.FC = () => {
     setDocUrl(null);
     setTranslatedText("");
 
-    /* ---- FILE ---- */
     if (file) {
       setDocProcessing(true);
       try {
@@ -161,7 +160,6 @@ const TranslationTool: React.FC = () => {
       return;
     }
 
-    /* ---- TEXT ---- */
     if (!sourceText.trim()) {
       setIsTranslating(false);
       return;
@@ -276,7 +274,7 @@ const TranslationTool: React.FC = () => {
   /* ---------- render ---------- */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* ---------- header ---------- */}
+      {/* header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div
           className="h-2"
@@ -305,7 +303,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* ---------- direction toggle ---------- */}
+      {/* direction toggle */}
       <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <button
           onClick={() => {
@@ -343,7 +341,7 @@ const TranslationTool: React.FC = () => {
         </button>
       </div>
 
-      {/* ---------- upload zone ---------- */}
+      {/* upload zone */}
       <div className="rounded-xl border bg-white shadow-sm p-6">
         <div
           className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
@@ -399,7 +397,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ---------- editor / file actions ---------- */}
+      {/* editor / file actions */}
       <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
         {file ? (
           <div className="p-6 text-center space-y-4">
@@ -549,7 +547,7 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* ---------- history ---------- */}
+      {/* history */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium" style={{ color: BRAND.dark }}>
           Previous Translations
@@ -626,15 +624,6 @@ const TranslationTool: React.FC = () => {
                         </motion.button>
                       )}
 
-                      {!hasFile && (
-                        <button
-                          onClick={() => openReport(h.id)}
-                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                        >
-                          <FaSearch /> View
-                        </button>
-                      )}
-
                       <button
                         onClick={() => removeReport(h.id)}
                         className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
@@ -660,7 +649,7 @@ const TranslationTool: React.FC = () => {
         )}
       </section>
 
-      {/* ---------- delete confirmation modal ---------- */}
+      {/* delete confirmation modal */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
