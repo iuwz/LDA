@@ -35,11 +35,11 @@ export interface Change {
 }
 
 const STYLE_OPTIONS = [
-  { id: "formal" as const, label: "Formal" },
-  { id: "clear" as const, label: "Clear" },
-  { id: "persuasive" as const, label: "Persuasive" },
-  { id: "concise" as const, label: "Concise" },
-];
+  { id: "formal", label: "Formal" },
+  { id: "clear", label: "Clear" },
+  { id: "persuasive", label: "Persuasive" },
+  { id: "concise", label: "Concise" },
+] as const;
 type StyleId = (typeof STYLE_OPTIONS)[number]["id"];
 
 const FILE_ICON_SIZE = "text-5xl";
@@ -77,9 +77,6 @@ const RephrasingTool: React.FC = () => {
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayedHistory = showAllHistory ? history : history.slice(0, 5);
-  const displayedChanges = showAllChanges ? changes : changes.slice(0, 5);
-
   useEffect(() => {
     fetchUploadedDocuments();
     loadHistory();
@@ -92,14 +89,20 @@ const RephrasingTool: React.FC = () => {
     }
   }, [copied]);
 
+  const filteredHistory = history.filter(
+    (h) => !(h.type === "doc" && h.filename?.toLowerCase().endsWith(".txt"))
+  );
+  const displayedHistory = showAllHistory
+    ? filteredHistory
+    : filteredHistory.slice(0, 5);
+  const displayedChanges = showAllChanges ? changes : changes.slice(0, 5);
+
   async function fetchUploadedDocuments() {
     setFetchingDocs(true);
     setError(null);
     try {
       const docs = await listDocuments();
       setUploadedDocs(docs);
-    } catch {
-      setError("Failed to load uploaded documents.");
     } finally {
       setFetchingDocs(false);
     }
@@ -229,8 +232,6 @@ const RephrasingTool: React.FC = () => {
     try {
       await deleteRephraseReport(pendingDeleteId);
       setHistory((h) => h.filter((r) => r.id !== pendingDeleteId));
-    } catch (err: any) {
-      alert(err.message || "Delete failed");
     } finally {
       setIsDeletingHistory(false);
       setPendingDeleteId(null);
@@ -506,7 +507,7 @@ const RephrasingTool: React.FC = () => {
         <h2 className="mb-4 font-medium text-[var(--brand-dark)]">
           Previous Rephrasings
         </h2>
-        {history.length === 0 ? (
+        {filteredHistory.length === 0 ? (
           <p className="text-sm italic text-gray-500">No history yet.</p>
         ) : (
           <>
@@ -536,7 +537,7 @@ const RephrasingTool: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex gap-3 self-end sm:self-center">
-                    {h.type === "doc" && h.result_doc_id && h.filename ? (
+                    {h.type === "doc" && h.result_doc_id && h.filename && (
                       <motion.button
                         onClick={() =>
                           downloadDocumentById(h.result_doc_id!, h.filename!)
@@ -547,7 +548,8 @@ const RephrasingTool: React.FC = () => {
                       >
                         <FaDownload /> Download
                       </motion.button>
-                    ) : h.type === "text" && h.result_text ? (
+                    )}
+                    {h.type === "text" && h.result_text && (
                       <motion.button
                         onClick={() => handleDownloadText(h.result_text!)}
                         className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10"
@@ -556,7 +558,7 @@ const RephrasingTool: React.FC = () => {
                       >
                         <FaDownload /> Download
                       </motion.button>
-                    ) : null}
+                    )}
                     <button
                       onClick={() => setPendingDeleteId(h.id)}
                       className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
@@ -567,7 +569,7 @@ const RephrasingTool: React.FC = () => {
                 </li>
               ))}
             </ul>
-            {history.length > 5 && (
+            {filteredHistory.length > 5 && (
               <div className="mt-4 text-center">
                 <button
                   onClick={() => setShowAllHistory(!showAllHistory)}
@@ -575,7 +577,7 @@ const RephrasingTool: React.FC = () => {
                 >
                   {showAllHistory
                     ? "Show Less"
-                    : `Show ${history.length - 5} More`}
+                    : `Show ${filteredHistory.length - 5} More`}
                 </button>
               </div>
             )}
