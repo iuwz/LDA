@@ -1,6 +1,5 @@
-// ──────────────────────────────────────────────────────────────
 // src/views/pages/Dashboard/TranslationTool.tsx
-// ──────────────────────────────────────────────────────────────
+
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
   translateText,
@@ -9,10 +8,7 @@ import {
   deleteTranslationReport,
   getTranslationReport,
   downloadDocumentById,
-  listDocuments,
-  fetchDocumentBlob,
   TranslationHistoryItem,
-  DocumentRecord,
 } from "../../../api";
 
 import {
@@ -28,195 +24,93 @@ import {
   FaSpinner,
   FaFilePdf,
   FaFileWord,
-  FaChevronDown,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-/* ────── colour helpers ────── */
 const BRAND = { dark: "var(--brand-dark)" } as const;
 const ACCENT = { dark: "var(--accent-dark)", light: "var(--accent-light)" };
 
-/* ────── utility ────── */
-const getFileIcon = (filename: string | null | undefined, size: string) => {
-  if (!filename) return <FaFileAlt className={`${size} text-gray-500`} />;
-  const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return <FaFilePdf className={`${size} text-red-600`} />;
-  if (ext === "doc" || ext === "docx")
-    return <FaFileWord className={`${size} text-blue-600`} />;
-  return <FaFileAlt className={`${size} text-gray-500`} />;
-};
+interface DisplayResult {
+  report_id: string;
+  type: "text" | "doc";
+  translatedText?: string;
+  translatedFilename?: string | null;
+  resultDocId?: string | null;
+  target_lang: string;
+  created_at?: string;
+}
 
-/* ────── tiny UI atoms ────── */
-const Spinner = ({ label }: { label?: string }) => (
-  <div className="flex flex-col items-center gap-2 py-12">
-    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--accent-dark)]" />
-    {label && <p className="text-gray-700">{label}</p>}
-  </div>
-);
-
-const TranslateButton = ({
-  onClick,
-  disabled,
-  busy,
-  label,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  busy: boolean;
-  label: string;
-}) => (
-  <motion.button
-    onClick={onClick}
-    disabled={disabled}
-    className="flex items-center gap-2 rounded-md bg-[rgb(193,120,41)] px-6 py-2 text-white hover:bg-[rgb(173,108,37)] disabled:bg-gray-400 disabled:cursor-not-allowed"
-    whileHover={{ scale: disabled ? 1 : 1.05 }}
-    whileTap={{ scale: disabled ? 1 : 0.95 }}
-  >
-    {busy ? <FaSpinner className="animate-spin" /> : <FaLanguage />}
-    {busy ? "Translating…" : label}
-  </motion.button>
-);
-
-/* ═════════════════════════ COMPONENT ═════════════════════════ */
 const TranslationTool: React.FC = () => {
-  /* ───────── text state ───────── */
+  /* ─────────── state ─────────── */
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [fromEnglish, setFromEnglish] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  /* ───────── document state ───────── */
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
-  const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [fetchingDocs, setFetchingDocs] = useState(false);
-  const [docSelectOpen, setDocSelectOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [file, setFile] = useState<File | null>(null);
   const [docProcessing, setDocProcessing] = useState(false);
   const [docUrl, setDocUrl] = useState<string | null>(null);
 
-  /* ───────── history & modal ───────── */
   const [history, setHistory] = useState<TranslationHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
+
+  const [result, setResult] = useState<DisplayResult | null>(null);
+
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── open report result ───────── */
-  const [result, setResult] = useState<{
-    report_id: string;
-    type: "text" | "doc";
-    translatedText?: string;
-    translatedFilename?: string | null;
-    resultDocId?: string | null;
-    target_lang: string;
-  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* ───────── lifecycle ───────── */
+  /* ─────────── lifecycle ─────────── */
   useEffect(() => {
     loadHistory();
-    fetchDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadHistory = async () => setHistory(await listTranslationHistory());
-  const fetchDocuments = async () => {
-    setFetchingDocs(true);
+  async function loadHistory() {
     try {
-      setUploadedDocs(await listDocuments());
-    } finally {
-      setFetchingDocs(false);
+      const items = await listTranslationHistory();
+      setHistory(items);
+    } catch (e) {
+      console.error("Translation history failed", e);
     }
-  };
+  }
 
-  /* ───────── derived data ───────── */
+  /* ─────────── helpers ─────────── */
   const srcLangLabel = fromEnglish ? "English" : "Arabic";
   const tgtLangLabel = fromEnglish ? "Arabic" : "English";
-  const translateDisabled =
-    (!fileToUpload && !selectedDocId && !sourceText.trim()) ||
-    isTranslating ||
-    docProcessing;
 
-  const resetFileInputs = () => {
-    setFileToUpload(null);
-    setSelectedDocId(null);
-    setDocUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const getFileIcon = (filename: string | null | undefined, size: string) => {
+    if (!filename) return <FaFileAlt className={`${size} text-gray-500`} />;
+    const ext = filename.split(".").pop()?.toLowerCase();
+    if (ext === "pdf") return <FaFilePdf className={`${size} text-red-600`} />;
+    if (ext === "doc" || ext === "docx")
+      return <FaFileWord className={`${size} text-blue-600`} />;
+    return <FaFileAlt className={`${size} text-gray-500`} />;
   };
 
-  /* ───────── helper the compiler needed ───────── */
-  const handleDocSelection = (id: string | null) => {
-    setSelectedDocId(id);
-    setFileToUpload(null);
-    setSourceText("");
-    setTranslatedText("");
-    setResult(null);
-    setDocUrl(null);
-    setDocSelectOpen(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  /* ───────── translate handler ───────── */
+  /* ─────────── translate (text or file) ─────────── */
   const handleTranslate = async () => {
-    if (translateDisabled) return;
-
     setIsTranslating(true);
     setResult(null);
     setDocUrl(null);
     setTranslatedText("");
 
-    /* ───── CASE 1: existing uploaded doc ───── */
-    if (selectedDocId) {
+    /* —— FILE —— */
+    if (file) {
       setDocProcessing(true);
       try {
-        const blob = await fetchDocumentBlob(selectedDocId);
-        const meta = uploadedDocs.find((d) => d._id === selectedDocId);
-        const tmpFile = new File([blob], meta?.filename || "document.bin");
-
-        const {
-          blob: outBlob,
-          filename,
-          report_id,
-          result_doc_id,
-        } = (await translateFile(tmpFile, tgtLangLabel.toLowerCase())) as {
-          blob: Blob;
-          filename: string;
-          report_id: string;
-          result_doc_id?: string;
-        };
-
-        setDocUrl(URL.createObjectURL(outBlob));
-        setResult({
-          report_id,
-          type: "doc",
-          translatedFilename: filename,
-          resultDocId: result_doc_id ?? report_id,
-          target_lang: tgtLangLabel.toLowerCase(),
-        });
-        await loadHistory();
-      } catch (e: any) {
-        alert(e.message || "File translation failed");
-      } finally {
-        setDocProcessing(false);
-        setIsTranslating(false);
-      }
-      return;
-    }
-
-    /* ───── CASE 2: freshly-uploaded doc ───── */
-    if (fileToUpload) {
-      setDocProcessing(true);
-      try {
+        setSourceText("");
         const { blob, filename, report_id, result_doc_id } =
-          (await translateFile(fileToUpload, tgtLangLabel.toLowerCase())) as {
+          (await translateFile(file, tgtLangLabel.toLowerCase())) as {
             blob: Blob;
             filename: string;
             report_id: string;
             result_doc_id?: string;
           };
 
-        setDocUrl(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        setDocUrl(url);
         setResult({
           report_id,
           type: "doc",
@@ -225,17 +119,22 @@ const TranslationTool: React.FC = () => {
           target_lang: tgtLangLabel.toLowerCase(),
         });
         await loadHistory();
-        fetchDocuments(); // show new upload in dropdown later
-      } catch (e: any) {
-        alert(e.message || "File translation failed");
-      } finally {
-        setDocProcessing(false);
-        setIsTranslating(false);
+      } catch (e) {
+        console.error(e);
+        alert(
+          `File translation failed: ${(e as any).message || "Unknown error"}`
+        );
       }
+      setDocProcessing(false);
+      setIsTranslating(false);
       return;
     }
 
-    /* ───── CASE 3: raw text ───── */
+    /* —— TEXT —— */
+    if (!sourceText.trim()) {
+      setIsTranslating(false);
+      return;
+    }
     try {
       const { translated_text, report_id } = await translateText(
         sourceText,
@@ -249,38 +148,56 @@ const TranslationTool: React.FC = () => {
         target_lang: tgtLangLabel.toLowerCase(),
       });
       loadHistory();
-    } catch (e: any) {
-      alert(e.message || "Text translation failed");
-    } finally {
-      setIsTranslating(false);
+    } catch (e) {
+      console.error(e);
+      alert(
+        `Text translation failed: ${(e as any).message || "Unknown error"}`
+      );
     }
+    setIsTranslating(false);
   };
 
-  /* ───────── open stored report ───────── */
-  const openReport = async (id: string) => {
+  /* ─────────── report loader ─────────── */
+  async function openReport(id: string) {
     try {
-      const rep = (await getTranslationReport(id)).translation_report;
-      setFromEnglish(rep.target_lang.toLowerCase() !== "arabic");
+      const response = await getTranslationReport(id);
 
-      resetFileInputs();
-      setSourceText(rep.source_text ?? "");
-      setTranslatedText(rep.translated_text ?? "");
-      setResult({
+      if (!response || !response.translation_report) {
+        console.error("Invalid response structure:", response);
+        throw new Error("Failed to load report data.");
+      }
+
+      const rep = response.translation_report;
+
+      const r: DisplayResult = {
         report_id: rep._id ?? id,
         type: rep.type,
         translatedText: rep.translated_text,
         translatedFilename: rep.translated_filename,
         resultDocId: rep.result_doc_id,
         target_lang: rep.target_lang,
-      });
+        created_at: rep.timestamp,
+      };
+
+      setFromEnglish(r.target_lang.toLowerCase() !== "arabic");
+      setFile(null);
+      setDocUrl(null);
+      setTranslatedText(r.translatedText ?? "");
+      setSourceText(rep.source_text ?? "");
+      setResult(r);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       alert(e.message || "Failed to open translation report");
+      console.error("Error opening report:", e);
     }
-  };
+  }
 
-  /* ───────── delete flow ───────── */
-  const confirmDelete = async () => {
+  /* ─────────── delete flow ─────────── */
+  function removeReport(id: string) {
+    setPendingDeleteId(id);
+  }
+
+  async function confirmDelete() {
     if (!pendingDeleteId) return;
     setIsDeleting(true);
     try {
@@ -290,6 +207,8 @@ const TranslationTool: React.FC = () => {
         setResult(null);
         setSourceText("");
         setTranslatedText("");
+        setFile(null);
+        setDocUrl(null);
       }
     } catch (e: any) {
       alert(e.message || "Delete failed");
@@ -297,29 +216,47 @@ const TranslationTool: React.FC = () => {
       setIsDeleting(false);
       setPendingDeleteId(null);
     }
+  }
+
+  /* ─────────── misc UI helpers ─────────── */
+  const handleCopy = () => {
+    if (!result?.translatedText) return;
+    navigator.clipboard.writeText(result.translatedText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  /* ───────── drag-and-drop helpers ───────── */
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
-    if (!f) return;
-    setFileToUpload(f);
-    handleDocSelection(null);
-  };
-  const onFileDrop = (f: File | null) => {
-    if (!f) return;
-    setFileToUpload(f);
-    handleDocSelection(null);
+    setFile(f);
+    setDocUrl(null);
+    setTranslatedText("");
+    setSourceText("");
+    setResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  /* ───────── constants for icons ───────── */
-  const FILE_ICON_SIZE = "text-5xl";
-  const DROPDOWN_ICON_SIZE = "text-xl";
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0] ?? null;
+    setFile(f);
+    setDocUrl(null);
+    setTranslatedText("");
+    setSourceText("");
+    setResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-  /* ═════════════════════ JSX ═════════════════════ */
+  const translateDisabled =
+    (file ? false : !sourceText.trim()) || isTranslating || docProcessing;
+
+  const isMainDownloadLinkDisabled =
+    !docUrl && (!result?.resultDocId || !result?.translatedFilename);
+
+  /* ─────────── render ─────────── */
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8">
-      {/* ───────── header ───────── */}
+      {/* ───────────────── header ───────────────── */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div
           className="h-2 bg-gradient-to-r"
@@ -348,272 +285,254 @@ const TranslationTool: React.FC = () => {
         </div>
       </header>
 
-      {/* ───────── direction toggle ───────── */}
-      <div className="flex space-x-2 rounded-xl bg-white shadow-sm overflow-hidden">
-        {[
-          { label: "English → Arabic", val: true },
-          { label: "Arabic → English", val: false },
-        ].map(({ label, val }) => (
-          <button
-            key={label}
-            onClick={() => {
-              setFromEnglish(val);
-              setSourceText("");
-              resetFileInputs();
-              setTranslatedText("");
-              setResult(null);
-            }}
-            className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
-              fromEnglish === val
-                ? "bg-[color:var(--accent-dark)] text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* ───────────────── direction toggle ───────────────── */}
+      <div className="flex space-x-2 bg-white rounded-xl shadow-sm overflow-hidden">
+        <button
+          onClick={() => {
+            setFromEnglish(true);
+            setSourceText("");
+            setTranslatedText("");
+            setFile(null);
+            setDocUrl(null);
+            setResult(null);
+          }}
+          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
+            fromEnglish
+              ? "bg-[color:var(--accent-dark)] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          English → Arabic
+        </button>
+        <button
+          onClick={() => {
+            setFromEnglish(false);
+            setSourceText("");
+            setTranslatedText("");
+            setFile(null);
+            setDocUrl(null);
+            setResult(null);
+          }}
+          className={`flex-1 px-4 py-2 text-center text-sm font-medium transition ${
+            !fromEnglish
+              ? "bg-[color:var(--accent-dark)] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Arabic → English
+        </button>
       </div>
 
-      {/* ───────── select / upload section ───────── */}
-      <section className="rounded-xl border bg-white shadow-sm">
-        {/* Only show when no file is currently chosen */}
-        {!fileToUpload && !selectedDocId ? (
-          fetchingDocs ? (
-            <Spinner label="Loading documents…" />
-          ) : (
-            <div className="space-y-8 p-6 md:grid md:grid-cols-2 md:gap-6 md:space-y-0 mb-8">
-              {/* ───── existing docs picker ───── */}
-              <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
-                <p className="text-gray-700">
-                  Translate a previously uploaded document:
-                </p>
-
-                <div className="relative w-full">
-                  <button
-                    className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
-                    onClick={() => setDocSelectOpen(!docSelectOpen)}
-                  >
-                    {selectedDocId
-                      ? uploadedDocs.find((d) => d._id === selectedDocId)
-                          ?.filename
-                      : "Choose Document"}
-                    <FaChevronDown
-                      className={`ml-2 transition-transform ${
-                        docSelectOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  <AnimatePresence>
-                    {docSelectOpen && (
-                      <motion.ul
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                      >
-                        {selectedDocId && (
-                          <li
-                            className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => handleDocSelection(null)}
-                          >
-                            Clear Selection
-                          </li>
-                        )}
-
-                        {uploadedDocs.length ? (
-                          uploadedDocs.map((doc) => (
-                            <li
-                              key={doc._id}
-                              className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                                selectedDocId === doc._id ? "bg-gray-100" : ""
-                              }`}
-                              onClick={() => handleDocSelection(doc._id)}
-                            >
-                              {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}
-                              <span className="flex-1 break-all">
-                                {doc.filename}
-                              </span>
-                            </li>
-                          ))
-                        ) : (
-                          <li className="px-4 py-2 text-sm italic text-gray-500">
-                            No documents uploaded yet.
-                          </li>
-                        )}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {selectedDocId && (
-                  <TranslateButton
-                    onClick={handleTranslate}
-                    disabled={translateDisabled}
-                    busy={isTranslating || docProcessing}
-                    label="Translate Selected"
-                  />
-                )}
-              </div>
-
-              {/* ───── upload drop-zone ───── */}
-              <div
-                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
-                  isTranslating || docProcessing
-                    ? "cursor-not-allowed opacity-60"
-                    : "cursor-pointer hover:border-[color:var(--accent-dark)]"
-                }`}
-                onClick={() =>
-                  !(isTranslating || docProcessing) &&
-                  fileInputRef.current?.click()
-                }
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "copy";
+      {/* ───────────────── upload zone ───────────────── */}
+      <div className="rounded-xl border bg-white shadow-sm p-6">
+        <div
+          className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+            isTranslating || docProcessing
+              ? "cursor-not-allowed opacity-60 border-gray-300"
+              : "cursor-pointer hover:border-[color:var(--accent-dark)] border-gray-300"
+          }`}
+          onClick={() =>
+            !(isTranslating || docProcessing) && fileInputRef.current?.click()
+          }
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={onDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            className="hidden"
+            onChange={onFileChange}
+            disabled={isTranslating || docProcessing}
+          />
+          {file ? (
+            <>
+              {getFileIcon(file.name, "text-5xl")}
+              <p className="mt-2 font-medium text-gray-700 break-all text-sm">
+                {file.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  setDocUrl(null);
+                  setTranslatedText("");
+                  setSourceText("");
+                  setResult(null);
                 }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (isTranslating || docProcessing) return;
-                  onFileDrop(e.dataTransfer.files?.[0] || null);
-                }}
+                disabled={isTranslating || docProcessing}
+                className="text-xs text-red-600 hover:underline disabled:opacity-50"
               >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  className="hidden"
-                  disabled={isTranslating || docProcessing}
-                  onChange={onFileChange}
-                />
+                Clear File
+              </button>
+            </>
+          ) : (
+            <>
+              <FaFileUpload className="text-5xl text-gray-400" />
+              <p className="mt-2 text-gray-700">Upload Document</p>
+              <p className="text-xs text-gray-400">PDF, DOCX, TXT</p>
+            </>
+          )}
+        </div>
+      </div>
 
-                {fileToUpload ? (
-                  /* —— cast once to keep TS happy —— */
-                  (() => {
-                    const f = fileToUpload as File;
-                    return (
-                      <>
-                        {getFileIcon(f.name, FILE_ICON_SIZE)}
-                        <p className="mt-2">{f.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(f.size / 1_048_576).toFixed(2)} MB
-                        </p>
-                        <TranslateButton
-                          onClick={handleTranslate}
-                          disabled={translateDisabled}
-                          busy={isTranslating || docProcessing}
-                          label="Translate Uploaded"
-                        />
-                      </>
-                    );
-                  })()
-                ) : (
-                  <>
-                    <FaFileUpload className="text-5xl text-gray-400" />
-                    <p className="mt-2">Drag & drop or click to upload</p>
-                    <p className="text-xs text-gray-400">
-                      Accepted: PDF, DOCX, TXT
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          )
-        ) : null}
-
-        {/* ───────── raw text editor ───────── */}
-        {!fileToUpload && !selectedDocId && (
-          <>
-            <div className="grid divide-y divide-gray-200 md:grid-cols-2 md:divide-x md:divide-y-0">
-              {/* source */}
-              <div className="p-6">
-                <h2
-                  className="mb-2 font-semibold"
-                  style={{ color: BRAND.dark }}
-                >
-                  Source Text ({srcLangLabel})
-                </h2>
-                <textarea
-                  className="h-56 w-full resize-none rounded-md border p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-dark)]"
-                  placeholder={`Type or paste ${srcLangLabel} here…`}
-                  value={sourceText}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  disabled={isTranslating}
-                />
-              </div>
-
-              {/* translated */}
-              <div className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-semibold" style={{ color: BRAND.dark }}>
-                    Translated ({tgtLangLabel})
-                  </h2>
-                  {translatedText && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(translatedText);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline"
-                    >
-                      {copied ? <FaCheck /> : <FaCopy />}{" "}
-                      {copied ? "Copied" : "Copy"}
-                    </button>
-                  )}
-                </div>
-                <div className="h-56 overflow-y-auto whitespace-pre-wrap rounded-md border bg-gray-50 p-4 text-gray-800">
-                  {isTranslating ? (
-                    <Spinner />
-                  ) : translatedText ? (
-                    translatedText
-                  ) : (
-                    <p className="italic text-gray-400">
-                      Translated text will appear here…
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 flex justify-end">
-              <TranslateButton
+      {/* ───────────────── editor / file actions ───────────────── */}
+      <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+        {file ? (
+          <div className="p-6 text-center space-y-4">
+            {/* —— FILE states —— */}
+            {isTranslating || docProcessing ? (
+              <Spinner text="Translating document…" />
+            ) : !docUrl && !result?.resultDocId ? (
+              <motion.button
                 onClick={handleTranslate}
+                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
+                  translateDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)] text-white"
+                }`}
+                whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
+                whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
                 disabled={translateDisabled}
-                busy={isTranslating}
-                label="Translate"
+              >
+                {isTranslating || docProcessing ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <FaSearch />
+                )}
+                {isTranslating || docProcessing
+                  ? "Translating…"
+                  : "Translate Document"}
+              </motion.button>
+            ) : (
+              /* —— download translated —— */
+              <a
+                href={docUrl || "#"}
+                onClick={(e) => {
+                  if (isMainDownloadLinkDisabled) {
+                    e.preventDefault();
+                  } else if (
+                    !docUrl &&
+                    result?.resultDocId &&
+                    result?.translatedFilename
+                  ) {
+                    e.preventDefault();
+                    downloadDocumentById(
+                      result.resultDocId,
+                      result.translatedFilename
+                    );
+                  }
+                }}
+                download={result?.translatedFilename || "translated_document"}
+                className={`inline-flex items-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
+                  isMainDownloadLinkDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-dark)] hover:text-white"
+                }`}
+              >
+                <FaDownload /> Download Translated Document
+              </a>
+            )}
+          </div>
+        ) : (
+          /* —— TEXT editor —— */
+          <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+            {/* source */}
+            <div className="p-6">
+              <h2 className="font-semibold mb-2" style={{ color: BRAND.dark }}>
+                Source Text ({srcLangLabel})
+              </h2>
+              <textarea
+                className="w-full h-56 border rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-dark)] resize-none"
+                placeholder={`Type or paste ${srcLangLabel} here…`}
+                value={sourceText}
+                onChange={(e) => {
+                  setSourceText(e.target.value);
+                  setTranslatedText("");
+                  setResult(null);
+                }}
+                disabled={isTranslating || docProcessing}
               />
             </div>
-          </>
-        )}
 
-        {/* ───────── download link after doc translation ───────── */}
-        {(fileToUpload || selectedDocId) && docUrl && result && (
-          <div className="p-6 text-center space-y-4">
-            <a
-              href={docUrl || "#"}
-              onClick={(e) => {
-                if (
-                  !docUrl &&
-                  result.resultDocId &&
-                  result.translatedFilename
-                ) {
-                  e.preventDefault();
-                  downloadDocumentById(
-                    result.resultDocId,
-                    result.translatedFilename!
-                  );
-                }
-              }}
-              download={result.translatedFilename || "translated_document"}
-              className="inline-flex items-center gap-2 rounded-md bg-[color:var(--accent-light)] px-6 py-2 text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-dark)] hover:text-white"
-            >
-              <FaDownload /> Download Translated Document
-            </a>
+            {/* translated */}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-semibold" style={{ color: BRAND.dark }}>
+                  Translated ({tgtLangLabel})
+                </h2>
+                {translatedText && (
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1 text-sm text-[color:var(--accent-dark)] hover:underline disabled:opacity-50"
+                  >
+                    {copied ? <FaCheck /> : <FaCopy />}{" "}
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                )}
+              </div>
+              <div className="h-56 border rounded-md p-4 bg-gray-50 overflow-y-auto whitespace-pre-wrap text-gray-800">
+                {isTranslating && !docProcessing ? (
+                  <Spinner />
+                ) : translatedText ? (
+                  translatedText
+                ) : (
+                  <p className="text-gray-400 italic">
+                    Translated text will appear here…
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
-      </section>
 
-      {/* ───────── history list ───────── */}
+        {/* actions bar */}
+        <div className="bg-gray-50 p-4 flex justify-between items-center">
+          <motion.button
+            onClick={() => {
+              setFromEnglish(!fromEnglish);
+              setSourceText("");
+              setTranslatedText("");
+              setFile(null);
+              setDocUrl(null);
+              setResult(null);
+            }}
+            className="flex items-center gap-2 rounded-md px-4 py-2 bg-white shadow-sm hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: isTranslating || docProcessing ? 1 : 1.05 }}
+            whileTap={{ scale: isTranslating || docProcessing ? 1 : 0.95 }}
+            disabled={isTranslating || docProcessing}
+          >
+            <FaExchangeAlt /> Swap Directions
+          </motion.button>
+          {!file && (
+            <motion.button
+              onClick={handleTranslate}
+              disabled={translateDisabled}
+              className={`flex items-center gap-2 rounded-md px-6 py-2 text-white transition-colors ${
+                translateDisabled
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)]"
+              }`}
+              whileHover={{ scale: translateDisabled ? 1 : 1.05 }}
+              whileTap={{ scale: translateDisabled ? 1 : 0.95 }}
+            >
+              {isTranslating && !docProcessing ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                <FaLanguage />
+              )}{" "}
+              <span>
+                {isTranslating && !docProcessing ? "Translating…" : "Translate"}
+              </span>
+            </motion.button>
+          )}
+        </div>
+      </div>
+
+      {/* ───────────────── history ───────────────── */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
           Previous Translations
@@ -632,6 +551,7 @@ const TranslationTool: React.FC = () => {
                   h.target_lang.toLowerCase() === "arabic"
                     ? "Arabic"
                     : "English";
+
                 const isDoc =
                   h.type === "doc" && h.result_doc_id && h.translated_filename;
 
@@ -642,7 +562,7 @@ const TranslationTool: React.FC = () => {
                   >
                     <div className="mb-3 sm:mb-0 min-w-0 flex-1">
                       <p className="flex items-start text-sm font-semibold text-gray-800">
-                        <span className="mr-2 mt-0.5 flex-shrink-0 text-[#c17829]">
+                        <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
                           {getFileIcon(h.translated_filename, "text-xl")}
                         </span>
                         <span
@@ -673,7 +593,7 @@ const TranslationTool: React.FC = () => {
                               h.translated_filename!
                             )
                           }
-                          className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10"
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -682,15 +602,15 @@ const TranslationTool: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => openReport(h.id)}
-                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline"
+                          className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
                         >
                           <FaSearch /> View
                         </button>
                       )}
 
                       <button
-                        onClick={() => setPendingDeleteId(h.id)}
-                        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                        onClick={() => removeReport(h.id)}
+                        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                       >
                         <FaTrash /> Delete
                       </button>
@@ -699,7 +619,6 @@ const TranslationTool: React.FC = () => {
                 );
               })}
             </ul>
-
             {history.length > 5 && (
               <div className="mt-4 text-center">
                 <button
@@ -714,7 +633,7 @@ const TranslationTool: React.FC = () => {
         )}
       </section>
 
-      {/* ───────── delete confirmation modal ───────── */}
+      {/* ───────────────── delete confirmation ───────────────── */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -752,10 +671,10 @@ const TranslationTool: React.FC = () => {
                     disabled={isDeleting}
                     className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
-                    {isDeleting && (
+                    {isDeleting ? (
                       <FaSpinner className="mr-2 inline-block animate-spin" />
-                    )}
-                    {isDeleting ? "Deleting…" : "Delete"}
+                    ) : null}
+                    {isDeleting ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
@@ -766,5 +685,13 @@ const TranslationTool: React.FC = () => {
     </div>
   );
 };
+
+/* ─────────── simple spinner ─────────── */
+const Spinner: React.FC<{ text?: string }> = ({ text }) => (
+  <div className="flex flex-col items-center gap-2">
+    <div className="animate-spin h-8 w-8 border-b-2 border-[color:var(--accent-dark)] rounded-full" />
+    {text && <p className="mt-2 text-gray-700">{text}</p>}
+  </div>
+);
 
 export default TranslationTool;
