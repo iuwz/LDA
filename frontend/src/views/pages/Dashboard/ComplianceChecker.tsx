@@ -819,7 +819,9 @@ function ResultView({
             <motion.button
               onClick={handleDownloadReport}
               // Applied the same classes and motion props as Analyze Another button
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full h-full" // Added h-full
+              // Reduced vertical padding from py-2 to py-1.5
+              // Removed h-full to let content dictate height
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -829,7 +831,9 @@ function ResultView({
           <div className="flex-1 min-w-0">
             <motion.button
               onClick={reset}
-              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-2 text-sm text-white hover:bg-[rgb(173,108,37)] w-full h-full" // Added h-full
+              // Reduced vertical padding from py-2 to py-1.5
+              // Removed h-full to let content dictate height
+              className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-full"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
