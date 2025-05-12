@@ -6,6 +6,8 @@ from backend.app.mvc.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import Body 
 from pydantic import BaseModel
+from backend.app.mvc.controllers.documents import delete_document
+import logging
 
 class RoleUpdate(BaseModel):
     new_role: str
@@ -55,18 +57,35 @@ async def delete_user(
     admin: UserInDB = Depends(require_admin),
 ):
     db: AsyncIOMotorDatabase = request.app.state.db
-    # Delete auth record
+ 
+    # 1) delete the auth record first
     auth_del = await db.users.delete_one({"email": email})
     if auth_del.deleted_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
-    # Purge user-related data
-    colls = [
-        "risk_assessments", "compliance_reports", "translation_reports",
-        "rephrase_reports", "chatbot_sessions", "documents"
-    ]
-    for coll in colls:
+ 
+    # 2) purge normal “by-user” collections ---------------------------
+    for coll in [
+        "risk_assessments",
+        "compliance_reports",
+        "translation_reports",
+        "rephrase_reports",
+        "chatbot_sessions",
+    ]:
         await db[coll].delete_many({"user_id": email})
-    return {"detail": f"User {email} and all their data have been deleted"}
+ 
+    # 3) delete **documents** properly  -------------------------------
+    #    – iterate so we can remove the associated GridFS files, too
+    docs_cursor = db.documents.find({"owner_id": email})
+    async for doc in docs_cursor:
+        try:
+            await delete_document(db, str(doc["_id"]))
+        except Exception as exc:            # keep going even if one fails
+            logging.warning(
+                "Could not delete document %s for %s: %s",
+                doc.get("_id"), email, exc, exc_info=True
+            )
+ 
+    return {"detail": f"User {email} and ALL their data have been deleted"}
 
 @router.get("/metrics/users")
 async def user_metrics(
