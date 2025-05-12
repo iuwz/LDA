@@ -572,11 +572,14 @@ export function deleteTranslationReport(id: string) {
         .then(r => { if (!r.ok) throw new Error("Delete failed"); });
 }
 
+/* ───────── TRANSLATION: one stored report ───────── */
 export function getTranslationReport(id: string) {
-    return fetch(`${API_BASE}/translate/${id}`, { ...common, method: "GET" })
-        .then(r => handleResponse<{ translation_report: any }>(r))
-        .then(d => d.translation_report);
+  return fetch(`${API_BASE}/translate/${id}`, {
+    ...common,
+    method: "GET",
+  }).then(r => handleResponse<{ translation_report: any }>(r));   // ← no unwrapping
 }
+
 export function forgotPassword(email: string) {
     return fetch(`${API_BASE}/auth/forgot-password`, {
         ...common,
