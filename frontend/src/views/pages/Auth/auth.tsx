@@ -114,7 +114,7 @@ function SignInForm({
 
           <Button
             type="submit"
-            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823]"
+            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823] mt-6"
           >
             Sign In
           </Button>
@@ -291,54 +291,43 @@ function SignUpForm({
             )}
           </div>
 
-          {/* Password + checklist */}
-          <div className="relative">
-            <input
-              type={showPw ? "text" : "password"}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-4 flex items-center text-gray-400"
-              onClick={() => setShowPw((s) => !s)}
-              aria-label={showPw ? "Hide password" : "Show password"}
-            >
-              {showPw ? <FaEyeSlash /> : <FaEye />}
-            </button>
-
-            <ul className="mt-2 text-sm space-y-0.5">
-              <li
-                className={`flex items-center ${hasUppercase ? "text-green-600" : "text-gray-500"
-                  }`}
+          {/* Password — fixed */}
+          <div>
+            <div className="relative">
+              <input
+                type={showPw ? "text" : "password"}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-4 flex items-center text-gray-400"
+                onClick={() => setShowPw((s) => !s)}
+                aria-label={showPw ? "Hide password" : "Show password"}
               >
+                {showPw ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+
+            {/* checklist now outside the relative box */}
+            <ul className="mt-2 text-sm space-y-0.5">
+              <li className={`flex items-center ${hasUppercase ? "text-green-600" : "text-gray-500"}`}>
                 <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
                 Uppercase letter
               </li>
-              <li
-                className={`flex items-center ${hasNumber ? "text-green-600" : "text-gray-500"
-                  }`}
-              >
+              <li className={`flex items-center ${hasNumber ? "text-green-600" : "text-gray-500"}`}>
                 <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
                 Number
               </li>
-              <li
-                className={`flex items-center ${hasSymbol ? "text-green-600" : "text-gray-500"
-                  }`}
-              >
+              <li className={`flex items-center ${hasSymbol ? "text-green-600" : "text-gray-500"}`}>
                 <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
                 Special character
               </li>
-              <li
-                className={`flex items-center ${hasMinLength ? "text-green-600" : "text-gray-500"
-                  }`}
-              >
-                <span className="mr-2">
-                  {hasMinLength ? "✓" : "○"}
-                </span>
+              <li className={`flex items-center ${hasMinLength ? "text-green-600" : "text-gray-500"}`}>
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
                 ≥ 8 characters
               </li>
             </ul>
