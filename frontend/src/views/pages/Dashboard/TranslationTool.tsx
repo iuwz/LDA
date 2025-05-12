@@ -559,64 +559,76 @@ const TranslationTool: React.FC = () => {
         ) : (
           <>
             <ul className="space-y-3">
-              {(showAllHistory ? history : history.slice(0, 5)).map((h) => (
-                <li
-                  key={h.id}
-                  className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="mb-3 sm:mb-0 min-w-0 flex-1">
-                    <p className="flex items-start text-sm font-semibold text-gray-800">
-                      <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
-                        {getFileIcon(h.translated_filename, DROPDOWN_ICON_SIZE)}
-                      </span>
-                      <span className="break-all">
-                        {h.translated_filename || `Text (${h.target_lang})`}{" "}
-                        {/* Display filename or text indication */}
-                      </span>
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {/* Display date */}
-                      {h.created_at
-                        ? new Date(h.created_at).toLocaleString()
-                        : "Date not available"}
-                    </p>
-                  </div>
-                  <div className="flex gap-3 self-end sm:self-center">
-                    {/* View button */}
-                    <button
-                      onClick={() => openReport(h.id)}
-                      className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
-                    >
-                      <FaSearch /> View
-                    </button>
-                    {/* Download button (only for file translations with doc ID) */}
-                    {h.type === "doc" &&
-                      h.result_doc_id &&
-                      h.translated_filename && (
-                        <motion.button
-                          onClick={() =>
-                            downloadDocumentById(
-                              h.result_doc_id!,
-                              h.translated_filename!
-                            )
-                          }
-                          className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <FaDownload /> Download
-                        </motion.button>
-                      )}
-                    {/* Delete button */}
-                    <button
-                      onClick={() => removeReport(h.id)}
-                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
-                    >
-                      <FaTrash /> Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {(showAllHistory ? history : history.slice(0, 5)).map((h) => {
+                const sourceLang =
+                  h.target_lang.toLowerCase() === "arabic"
+                    ? "English"
+                    : "Arabic";
+                const targetLang =
+                  h.target_lang.toLowerCase() === "arabic"
+                    ? "Arabic"
+                    : "English";
+
+                return (
+                  <li
+                    key={h.id}
+                    className="flex flex-col rounded-lg border border-[#c17829]/30 bg-white p-4 shadow-sm transition-shadow hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="mb-3 sm:mb-0 min-w-0 flex-1">
+                      <p className="flex items-start text-sm font-semibold text-gray-800">
+                        <span className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0">
+                          {getFileIcon(
+                            h.translated_filename,
+                            DROPDOWN_ICON_SIZE
+                          )}
+                        </span>
+                        <span className="break-all">
+                          {h.translated_filename || `Text Translation`}{" "}
+                          {/* Display filename or text indication */}
+                        </span>
+                      </p>
+                      {/* Replaced date with language direction */}
+                      <p className="mt-1 text-xs text-gray-500">
+                        {`${sourceLang} → ${targetLang}`}
+                      </p>
+                    </div>
+                    <div className="flex gap-3 self-end sm:self-center">
+                      {/* View button */}
+                      <button
+                        onClick={() => openReport(h.id)}
+                        className="flex items-center gap-1 text-sm text-[#c17829] hover:text-[#a66224] hover:underline disabled:opacity-50"
+                      >
+                        <FaSearch /> View
+                      </button>
+                      {/* Download button (only for file translations with doc ID) */}
+                      {h.type === "doc" &&
+                        h.result_doc_id &&
+                        h.translated_filename && (
+                          <motion.button
+                            onClick={() =>
+                              downloadDocumentById(
+                                h.result_doc_id!,
+                                h.translated_filename!
+                              )
+                            }
+                            className="flex items-center gap-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 rounded-md px-3 py-1"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <FaDownload /> Download
+                          </motion.button>
+                        )}
+                      {/* Delete button */}
+                      <button
+                        onClick={() => removeReport(h.id)}
+                        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
             {history.length > 5 && (
               <div className="mt-4 text-center">
