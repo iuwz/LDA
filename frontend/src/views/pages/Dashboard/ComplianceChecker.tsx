@@ -817,9 +817,10 @@ function ResultView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-stretch gap-6">
+        {/* Flex container for buttons, centered on mobile */}
+        <div className="flex flex-wrap items-stretch gap-6 justify-center">
           {" "}
-          {/* Changed items-center to items-stretch */}
+          {/* Added justify-center */}
           {/* Removed flex-1 min-w-0 from these wrapping divs */}
           <motion.button
             onClick={handleDownloadReport}
@@ -827,7 +828,7 @@ function ResultView({
             // Reduced vertical padding from py-2 to py-1.5
             // Removed h-full to let content dictate height
             // Added fixed width and height
-            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]" // Updated width to 159px
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -838,7 +839,7 @@ function ResultView({
             // Reduced vertical padding from py-2 to py-1.5
             // Removed h-full to let content dictate height
             // Added fixed width and height
-            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]" // Updated width to 159px
+            className="flex items-center justify-center gap-1 rounded-md bg-[rgb(193,120,41)] px-4 py-1.5 text-sm text-white hover:bg-[rgb(173,108,37)] w-[159px] h-[36px]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -851,16 +852,20 @@ function ResultView({
       <div className="space-y-4 p-6">
         {results.issues.map((it, i) => (
           // Applied styling and structure similar to Risk Assessment cards
-          // Regenerated the div structure for cleanliness around line 874/876
+          // Regenerated the div structure for cleanliness around potential error lines
           <div
             key={`${results.report_id}-${it.rule_id}-${i}`}
             className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg" // Changed hover shadow
           >
             {/* Headline (Description + Rule ID) + Status Badge */}
             <div className="mb-2 flex items-start justify-between gap-4">
-              <h4 className="font-semibold text-gray-900 break-words">
+              <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
+                {" "}
+                {/* Added flex and min-width for text wrapping */}
                 {it.description}
-                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 flex-shrink-0">
+                  {" "}
+                  {/* Added flex-shrink-0 to prevent shrinking */}
                   Rule ID: {it.rule_id}
                 </span>
               </h4>
