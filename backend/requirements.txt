@@ -5,7 +5,7 @@ python-jose
 pymongo
 motor
 python-dotenv
-passlib[bcrypt]
+passlib
 pyjwt
 openai
 python-docx
