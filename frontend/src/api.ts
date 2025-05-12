@@ -84,130 +84,114 @@ export function logout() {
 
 
 /* ═══════════════════════════ RISK  ════════════════════════════ */
-
 export interface RiskItemBackend {
-  section: string;
-  clause?: string;
-  risk_description: string;
-  severity: "Low" | "Medium" | "High";
-  recommendation?: string;
+    section: string;
+    clause?: string;
+    risk_description: string;
+    severity: "Low" | "Medium" | "High";
+    recommendation?: string;
 }
 export interface RiskAnalysisResponse {
-  id: string;
-  risks: RiskItemBackend[];
-  /** ↓ these are added later when a PDF is uploaded */
-  report_doc_id?: string | null;
-  filename?: string | null;
+    id: string;
+    risks: RiskItemBackend[];
+    /** ↓ these are added later when a PDF is uploaded */
+    report_doc_id?: string | null;
+    filename?: string | null;
 }
 
 /* analyse raw text */
-export function analyzeRisk(
-  document_text: string
-): Promise<RiskAnalysisResponse> {
-  return fetch(`${API_BASE}/risk`, {
-    // <-- endpoint is just /risk  (POST)
-    ...common,
-    method: "POST",
-    body: JSON.stringify({ document_text }),
-  })
-    .then((r) => handleResponse<{ analysis_result: RiskAnalysisResponse }>(r))
-    .then((d) => d.analysis_result);
+export function analyzeRisk(document_text: string): Promise<RiskAnalysisResponse> {
+    return fetch(`${API_BASE}/risk`, {
+        ...common,
+        method: "POST",
+        body: JSON.stringify({ document_text }),
+    })
+        .then(r => handleResponse<{ analysis_result: RiskAnalysisResponse }>(r))
+        .then(d => d.analysis_result);
 }
 
-/* analyse uploaded file */
+/* analyse uploaded file (direct upload) */
 export function analyzeRiskFile(file: File): Promise<RiskAnalysisResponse> {
-  const form = new FormData();
-  form.append("file", file);
-  return fetch(`${API_BASE}/risk/analyze-file`, {
-    credentials: "include",
-    method: "POST",
-    body: form,
-  })
-    .then((r) => handleResponse<{ analysis_result: RiskAnalysisResponse }>(r))
-    .then((d) => d.analysis_result);
+    const form = new FormData();
+    form.append("file", file);
+    return fetch(`${API_BASE}/risk/analyze-file`, {
+        credentials: "include",
+        method: "POST",
+        body: form,
+    })
+        .then(r => handleResponse<{ analysis_result: RiskAnalysisResponse }>(r))
+        .then(d => d.analysis_result);
+}
+
+/* NEW ▶ analyse a previously‑uploaded document by doc_id */
+export async function analyzeRiskDoc(doc_id: string): Promise<RiskAnalysisResponse> {
+    /* 1) fetch plaintext we stored in GridFS */
+    const document_text = await getDocumentContent(doc_id);
+    /* 2) reuse existing text‑based risk endpoint */
+    return analyzeRisk(document_text);
 }
 
 /* upload jsPDF generated on the client */
 export function uploadRiskPdf(reportId: string, blob: Blob, filename: string) {
-  const form = new FormData();
-  form.append("file", blob, filename);
-  return fetch(`${API_BASE}/risk/${reportId}/upload-pdf`, {
-    credentials: "include",
-    method: "POST",
-    body: form,
-  }).then((r) =>
-    handleResponse<{ report_doc_id: string; filename: string }>(r)
-  );
+    const form = new FormData();
+    form.append("file", blob, filename);
+    return fetch(`${API_BASE}/risk/${reportId}/upload-pdf`, {
+        credentials: "include",
+        method: "POST",
+        body: form,
+    }).then(r => handleResponse<{ report_doc_id: string; filename: string }>(r));
 }
 
 /* history list */
 export interface RiskHistoryItem {
-  id: string;
-  created_at: string;
-  num_risks: number;
-  filename?: string | null;
-  report_filename?: string | null;
-  report_doc_id?: string | null;
+    id: string;
+    created_at: string;
+    num_risks: number;
+    filename?: string | null;
+    report_filename?: string | null;
+    report_doc_id?: string | null;
 }
 export function listRiskHistory() {
-  return fetch(`${API_BASE}/risk/history`, {
-    ...common,
-    method: "GET",
-  })
-    .then((r) => handleResponse<{ history: RiskHistoryItem[] }>(r))
-    .then((d) => d.history);
+    return fetch(`${API_BASE}/risk/history`, { ...common, method: "GET" })
+        .then(r => handleResponse<{ history: RiskHistoryItem[] }>(r))
+        .then(d => d.history);
 }
 
 /* fetch ONE stored risk report */
 export function getRiskReport(id: string): Promise<RiskAnalysisResponse> {
-  return fetch(`${API_BASE}/risk/${id}`, {
-    ...common,
-    method: "GET",
-  })
-    .then((r) => handleResponse<{ risk_report: RiskAnalysisResponse }>(r))
-    .then((d) => d.risk_report);
+    return fetch(`${API_BASE}/risk/${id}`, { ...common, method: "GET" })
+        .then(r => handleResponse<{ risk_report: RiskAnalysisResponse }>(r))
+        .then(d => d.risk_report);
 }
 
 /* delete */
 export function deleteRiskReport(id: string) {
-  return fetch(`${API_BASE}/risk/${id}`, {
-    ...common,
-    method: "DELETE",
-  }).then((r) => {
-    if (!r.ok) throw new Error("Delete failed");
-  });
+    return fetch(`${API_BASE}/risk/${id}`, { ...common, method: "DELETE" })
+        .then(r => { if (!r.ok) throw new Error("Delete failed"); });
 }
 
 /* PDF download helper – talks to /risk/file/{file_id} */
-export async function downloadRiskReport(
-  fileId: string,
-  filename: string
-): Promise<void> {
-  const res = await fetch(`${API_BASE}/risk/file/${fileId}`, {
-    credentials: "include",
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => res.statusText);
-    throw new Error(`Download failed: ${detail}`);
-  }
-
-  /* honour filename from Content-Disposition if backend sets it */
-  const cd = res.headers.get("Content-Disposition") || "";
-  let effectiveFilename = filename;
-  const m = cd.match(/filename\*?=UTF-8''(.+)$/);
-  if (m && m[1]) effectiveFilename = decodeURIComponent(m[1]);
-  else {
-    const m2 = cd.match(/filename="(.+)"/);
-    if (m2 && m2[1]) effectiveFilename = m2[1].replace(/['"]/g, "");
-  }
-
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = effectiveFilename;
-  a.click();
-  URL.revokeObjectURL(url);
+export async function downloadRiskReport(fileId: string, filename: string) {
+    const res = await fetch(`${API_BASE}/risk/file/${fileId}`, { credentials: "include" });
+    if (!res.ok) {
+        const detail = await res.text().catch(() => res.statusText);
+        throw new Error(`Download failed: ${detail}`);
+    }
+    const cd = res.headers.get("Content-Disposition") || "";
+    let effectiveFilename = filename;
+    const m = cd.match(/filename\*?=UTF-8''(.+)$/);
+    if (m && m[1]) effectiveFilename = decodeURIComponent(m[1]);
+    else {
+        const m2 = cd.match(/filename="(.+)"/);
+        if (m2 && m2[1]) effectiveFilename = m2[1].replace(/['"]/g, "");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = effectiveFilename;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 /* ═══════════════════════════ CHATBOT ══════════════════════════ */
