@@ -537,18 +537,6 @@ const TranslationTool: React.FC = () => {
         </div>
       </div>
 
-      {/* Notice - KEPT SAME */}
-      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
-        <FaInfoCircle className="text-yellow-500 mt-1 flex-shrink-0" />{" "}
-        {/* Added flex-shrink-0 */}
-        <div>
-          <h4 className="font-medium text-yellow-800">Important Notice</h4>
-          <p className="text-sm text-yellow-700">
-            Machine translation is for reference only. Review with a
-            professional before use.
-          </p>
-        </div>
-      </div>
       {/* ───── History - ADAPTED STYLING FROM COMPLIANCECHECKER */}
       <section className="rounded-xl border bg-white shadow-sm p-6">
         <h2 className="mb-4 font-medium text-[color:var(--brand-dark)]">
