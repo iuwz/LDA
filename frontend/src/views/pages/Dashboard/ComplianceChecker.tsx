@@ -206,17 +206,19 @@ function ComplianceChecker() {
     }
   }
 
-  const FILE_ICON_SIZE = "text-5xl";
+  const FILE_ICON_SIZE = "text-5xl"; // Kept for large icons
+  const DROPDOWN_ICON_SIZE = "text-xl"; // New size for dropdown icons
 
-  const getFileIcon = (filename: string) => {
+  // Modified getFileIcon to accept a size class
+  const getFileIcon = (filename: string, sizeClassName: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (ext === "pdf") {
-      return <FaFilePdf className={`${FILE_ICON_SIZE} text-red-600`} />;
+      return <FaFilePdf className={`${sizeClassName} text-red-600`} />;
     }
     if (ext === "doc" || ext === "docx") {
-      return <FaFileWord className={`${FILE_ICON_SIZE} text-blue-600`} />;
+      return <FaFileWord className={`${sizeClassName} text-blue-600`} />;
     }
-    return <FaFileAlt className={`${FILE_ICON_SIZE} text-gray-500`} />;
+    return <FaFileAlt className={`${sizeClassName} text-gray-500`} />;
   };
 
   /* fresh analysis */
@@ -328,19 +330,21 @@ function ComplianceChecker() {
             handleDocSelection={handleDocSelection}
             docSelectOpen={docSelectOpen}
             setDocSelectOpen={setDocSelectOpen}
-            getFileIcon={getFileIcon}
+            getFileIcon={getFileIcon} // Pass the original getFileIcon function
             fileToUpload={fileToUpload}
             fileInputRef={fileInputRef}
             onFileChange={onFileChange}
             handleFileDrop={handleFileDrop}
             handleAnalyze={handleAnalyze}
             error={error}
+            FILE_ICON_SIZE={FILE_ICON_SIZE} // Pass size constants
+            DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE} // Pass size constants
           />
         ) : (
           <ResultView
             results={results}
             ComplianceStatus={ComplianceStatus}
-            getFileIcon={getFileIcon}
+            getFileIcon={(filename) => getFileIcon(filename, FILE_ICON_SIZE)} // Pass getFileIcon with FILE_ICON_SIZE
             handleDownloadReport={handleDownloadReport}
             reset={reset}
           />
@@ -364,20 +368,15 @@ function ComplianceChecker() {
                 >
                   <div className="mb-3 sm:mb-0 min-w-0 flex-1">
                     {" "}
-                    {/* Added flex-1 to allow this div to take available space and enable wrapping for its children */}
                     <p className="flex items-start text-sm font-semibold text-gray-800">
                       {" "}
-                      {/* Changed items-center to items-start */}
                       <FaFileAlt className="mr-2 mt-0.5 text-[#c17829] flex-shrink-0" />{" "}
-                      {/* Added mt-0.5 for slight top margin to better align with first line of text, flex-shrink-0 */}
                       <span className="break-all">
                         {h.report_filename || "Compliance report"}
                       </span>{" "}
-                      {/* Added break-all and wrapped text in span */}
                     </p>
                     <p className="ml-6 mt-1 text-xs text-gray-500 sm:ml-0 sm:pl-0">
                       {" "}
-                      {/* Consider adjusting margin if icon size/alignment changes significantly */}
                       {h.num_issues} issue{h.num_issues !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -486,13 +485,15 @@ interface SelectProps {
   handleDocSelection: (id: string | null) => void;
   docSelectOpen: boolean;
   setDocSelectOpen: (v: boolean) => void;
-  getFileIcon: (f: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Now accepts size
   fileToUpload: File | null;
   fileInputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
   handleAnalyze: () => void;
   error: string | null;
+  FILE_ICON_SIZE: string; // Receive size constants
+  DROPDOWN_ICON_SIZE: string; // Receive size constants
 }
 
 function SelectArea({
@@ -505,13 +506,15 @@ function SelectArea({
   handleDocSelection,
   docSelectOpen,
   setDocSelectOpen,
-  getFileIcon,
+  getFileIcon, // Receive the original getFileIcon function
   fileToUpload,
   fileInputRef,
   onFileChange,
   handleFileDrop,
   handleAnalyze,
   error,
+  FILE_ICON_SIZE, // Use received size constants
+  DROPDOWN_ICON_SIZE, // Use received size constants
 }: SelectProps) {
   if (analyzing || fetchingDocs) {
     return <Spinner label={analyzing ? "Analyzing…" : "Loading documents…"} />;
@@ -526,10 +529,11 @@ function SelectArea({
           handleDocSelection={handleDocSelection}
           docSelectOpen={docSelectOpen}
           setDocSelectOpen={setDocSelectOpen}
-          getFileIcon={getFileIcon}
+          getFileIcon={getFileIcon} // Pass the original getFileIcon
           handleAnalyze={handleAnalyze}
           isAnalyzeDisabled={isAnalyzeDisabled}
           analyzing={analyzing}
+          DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE} // Pass size constant
         />
 
         <UploadDropZone
@@ -538,7 +542,8 @@ function SelectArea({
           isDisabled={isFileInputDisabled}
           onFileChange={onFileChange}
           handleFileDrop={handleFileDrop}
-          getFileIcon={getFileIcon}
+          getFileIcon={getFileIcon} // Pass the original getFileIcon
+          FILE_ICON_SIZE={FILE_ICON_SIZE} // Pass size constant
         />
       </div>
 
@@ -602,10 +607,11 @@ function ExistingDocPicker(props: {
   handleDocSelection: (id: string | null) => void;
   docSelectOpen: boolean;
   setDocSelectOpen: (v: boolean) => void;
-  getFileIcon: (f: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
   handleAnalyze: () => void;
   isAnalyzeDisabled: boolean;
   analyzing: boolean;
+  DROPDOWN_ICON_SIZE: string; // Receive size constant
 }) {
   const {
     uploadedDocs,
@@ -613,10 +619,11 @@ function ExistingDocPicker(props: {
     handleDocSelection,
     docSelectOpen,
     setDocSelectOpen,
-    getFileIcon,
+    getFileIcon, // Use the received getFileIcon
     handleAnalyze,
     isAnalyzeDisabled,
     analyzing,
+    DROPDOWN_ICON_SIZE, // Use received size constant
   } = props;
 
   return (
@@ -660,9 +667,13 @@ function ExistingDocPicker(props: {
                     className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
                       selectedDocId === doc._id ? "bg-gray-100" : ""
                     }`}
-                    onClick={() => handleDocSelection(doc._id)}
+                    onClick={() => {
+                      handleDocSelection(doc._id);
+                      setDocSelectOpen(false); // Close dropdown on selection
+                    }}
                   >
-                    {getFileIcon(doc.filename)}
+                    {getFileIcon(doc.filename, DROPDOWN_ICON_SIZE)}{" "}
+                    {/* Call with DROPDOWN_ICON_SIZE */}
                     {doc.filename}
                   </li>
                 ))
@@ -693,7 +704,8 @@ function UploadDropZone(props: {
   isDisabled: boolean;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (f: File | null) => void;
-  getFileIcon: (f: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // Receives the original getFileIcon
+  FILE_ICON_SIZE: string; // Receive size constant
 }) {
   const {
     fileToUpload,
@@ -701,7 +713,8 @@ function UploadDropZone(props: {
     isDisabled,
     onFileChange,
     handleFileDrop,
-    getFileIcon,
+    getFileIcon, // Use the received getFileIcon prop
+    FILE_ICON_SIZE, // Use received size constant
   } = props;
 
   return (
@@ -734,7 +747,8 @@ function UploadDropZone(props: {
 
       {fileToUpload ? (
         <>
-          {getFileIcon(fileToUpload.name)}
+          {getFileIcon(fileToUpload.name, FILE_ICON_SIZE)}{" "}
+          {/* Call with FILE_ICON_SIZE */}
           <p className="mt-2">{fileToUpload.name}</p>
           <p className="text-xs text-gray-500">
             {(fileToUpload.size / 1048576).toFixed(2)} MB
@@ -755,7 +769,7 @@ function UploadDropZone(props: {
 interface ResultProps {
   results: DisplayAnalysisResult;
   ComplianceStatus: React.FC<{ status: string }>;
-  getFileIcon: (f: string) => JSX.Element;
+  getFileIcon: (filename: string, sizeClassName: string) => JSX.Element; // This prop expects a function that takes filename and size
   handleDownloadReport: () => void;
   reset: () => void;
 }
@@ -763,17 +777,20 @@ interface ResultProps {
 function ResultView({
   results,
   ComplianceStatus,
-  getFileIcon,
+  getFileIcon, // Use the received getFileIcon prop
   handleDownloadReport,
   reset,
 }: ResultProps) {
+  // Define FILE_ICON_SIZE here or pass it down if ResultView needed different sizes
+  const FILE_ICON_SIZE = "text-5xl";
+
   return (
     <>
       {/* header bar */}
       <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {results.analyzedFilename ? (
-            getFileIcon(results.analyzedFilename)
+            getFileIcon(results.analyzedFilename, FILE_ICON_SIZE) // Call with FILE_ICON_SIZE
           ) : (
             <FaFileAlt className="text-5xl text-gray-500" />
           )}
