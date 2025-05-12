@@ -1,10 +1,6 @@
 /*  src/views/pages/Dashboard/RiskAssessmentTool.tsx
     ──────────────────────────────────────────────────────────────
     Single-file implementation of the Risk-Assessment front end.
-
-    2025-05-12  • Added “analyze existing document” picker
-               • History list styling now mirrors Compliance page
-               • Generates PDF summary and re-uploads to server
 */
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
@@ -27,24 +23,21 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import {
-  /* analysis & reports */
   analyzeRiskDoc,
   uploadRiskPdf,
   listRiskHistory,
   deleteRiskReport,
   getRiskReport,
   downloadRiskReport,
-  /* raw-doc helpers */
   uploadDocument,
   listDocuments,
-  /* types */
   RiskAnalysisResponse,
   RiskItemBackend,
   RiskHistoryItem,
   DocumentRecord,
 } from "../../../api";
 
-/* ─────────────── local helpers & types ─────────────── */
+/* ─────────────── helpers & types ─────────────── */
 type Severity = "high" | "medium" | "low";
 
 interface RiskItem {
@@ -61,6 +54,18 @@ const palette = {
   medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
   low: "bg-green-100 text-green-700 border-green-200",
 } as const;
+
+const FILE_ICON_SIZE = "text-5xl";
+const DROPDOWN_ICON_SIZE = "text-xl";
+
+const getFileIcon = (filename: string, sizeClass: string) => {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  if (ext === "pdf")
+    return <FaFilePdf className={`${sizeClass} text-red-600`} />;
+  if (ext === "doc" || ext === "docx")
+    return <FaFileWord className={`${sizeClass} text-blue-600`} />;
+  return <FaFileAlt className={`${sizeClass} text-gray-500`} />;
+};
 
 function RiskLevel({ level }: { level: Severity }) {
   return (
@@ -81,38 +86,21 @@ function Spinner({ label }: { label: string }) {
   );
 }
 
-/* ─────────────── Uploaded-file icon helper ─────────────── */
-const FILE_ICON_SIZE = "text-5xl";
-const DROPDOWN_ICON_SIZE = "text-xl";
-
-const getFileIcon = (filename: string, sizeClass: string) => {
-  const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext === "pdf")
-    return <FaFilePdf className={`${sizeClass} text-red-600`} />;
-  if (ext === "doc" || ext === "docx")
-    return <FaFileWord className={`${sizeClass} text-blue-600`} />;
-  return <FaFileAlt className={`${sizeClass} text-gray-500`} />;
-};
-
 /* ═════════════════════════  MAIN COMPONENT  ═════════════════════════ */
 function RiskAssessmentTool() {
-  /* ------------ raw document state ------------ */
   const [uploadedDocs, setUploadedDocs] = useState<DocumentRecord[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [fetchingDocs, setFetchingDocs] = useState(false);
   const [docSelectOpen, setDocSelectOpen] = useState(false);
 
-  /* ------------ file upload ------------ */
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* ------------ history ------------ */
   const [history, setHistory] = useState<RiskHistoryItem[]>([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeletingHistory, setIsDeletingHistory] = useState(false);
 
-  /* ------------ analysis state ------------ */
   const [results, setResults] = useState<{
     id: string;
     riskItems: RiskItem[];
@@ -121,10 +109,9 @@ function RiskAssessmentTool() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* misc */
   const [activeSection, setActiveSection] = useState("all");
 
-  /* ------------ initial load ------------ */
+  /* ------------ lifecycle ------------ */
   useEffect(() => {
     fetchDocuments();
     loadHistory();
@@ -154,11 +141,11 @@ function RiskAssessmentTool() {
       );
       setHistory(h);
     } catch {
-      /* history isn’t critical */
+      /* ignore */
     }
   }
 
-  /* ------------ mapping helper ------------ */
+  /* ------------ helpers ------------ */
   const mapRisks = (raw: RiskItemBackend[]): RiskItem[] =>
     (raw ?? []).map((r, idx) => ({
       id: idx + 1,
@@ -173,19 +160,29 @@ function RiskAssessmentTool() {
       recommendation: r.recommendation ?? "No recommendation provided.",
     }));
 
-  /* ------------ PDF helper ------------ */
+  /* ----- PDF builder ----- */
   const buildPdfBlob = (items: RiskItem[], srcName?: string): Blob => {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
+
+    const title = srcName
+      ? `Risk Assessment Report for ${srcName}`
+      : "Risk Assessment Report";
+
     doc.setFontSize(18);
-    doc.text(
-      srcName
-        ? `Risk Assessment Report for ${srcName}`
-        : "Risk Assessment Report",
-      40,
-      50
-    );
+    const usableWidth = 612 - 80;
+    const titleLines = doc.splitTextToSize(title, usableWidth) as string[];
+
+    const topMargin = 50;
+    const lineHeight = 24;
+
+    titleLines.forEach((line: string, idx: number) => {
+      doc.text(line, 40, topMargin + idx * lineHeight);
+    });
+
+    const tableStartY = topMargin + titleLines.length * lineHeight + 20;
+
     autoTable(doc, {
-      startY: 80,
+      startY: tableStartY,
       head: [["ID", "Section", "Risk", "Quote", "Recommendation"]],
       body: items.map((i) => [
         i.id.toString(),
@@ -197,11 +194,15 @@ function RiskAssessmentTool() {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [193, 120, 41] },
       columnStyles: { 3: { cellWidth: 180 }, 4: { cellWidth: 180 } },
+      theme: "grid",
+      tableWidth: "wrap",
+      margin: { left: 40, right: 40 },
     });
+
     return doc.output("blob");
   };
 
-  /* ------------ analyze handler ------------ */
+  /* ------------ actions ------------ */
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setError(null);
@@ -210,17 +211,14 @@ function RiskAssessmentTool() {
 
     try {
       let resp: RiskAnalysisResponse;
-
-      /* A) new upload */
       if (fileToUpload) {
         const { doc_id } = await uploadDocument(fileToUpload);
         filename = fileToUpload.name;
         resp = await analyzeRiskDoc(doc_id);
-        fetchDocuments(); // refresh list
+        fetchDocuments();
       } else if (selectedDocId) {
-      /* B) existing doc */
-        const doc = uploadedDocs.find((d) => d._id === selectedDocId);
-        filename = doc?.filename || "";
+        const docRec = uploadedDocs.find((d) => d._id === selectedDocId);
+        filename = docRec?.filename || "";
         resp = await analyzeRiskDoc(selectedDocId);
       } else {
         setError("Please select or upload a document.");
@@ -235,7 +233,6 @@ function RiskAssessmentTool() {
       });
       setActiveSection("all");
 
-      /* build + upload PDF */
       const pdfBlob = buildPdfBlob(mapped, filename);
       const niceName =
         (filename.replace(/\.[^.]+$/, "") || "report") + "_risk_report.pdf";
@@ -250,7 +247,6 @@ function RiskAssessmentTool() {
     }
   };
 
-  /* ------------ open a finished report ------------ */
   const openReport = async (id: string) => {
     setIsAnalyzing(true);
     setError(null);
@@ -273,7 +269,6 @@ function RiskAssessmentTool() {
     }
   };
 
-  /* ------------ delete helpers ------------ */
   const confirmDelete = async () => {
     if (!pendingDeleteId) return;
     setIsDeletingHistory(true);
@@ -281,15 +276,12 @@ function RiskAssessmentTool() {
       await deleteRiskReport(pendingDeleteId);
       setHistory((h) => h.filter((r) => r.id !== pendingDeleteId));
       if (results?.id === pendingDeleteId) reset();
-    } catch {
-      /* ignore */
     } finally {
       setIsDeletingHistory(false);
       setPendingDeleteId(null);
     }
   };
 
-  /* ------------ reset UI ------------ */
   const reset = () => {
     setSelectedDocId(null);
     setFileToUpload(null);
@@ -299,7 +291,21 @@ function RiskAssessmentTool() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  /* ------------ derived values ------------ */
+  const reportHistoryItem = results
+    ? history.find((h) => h.id === results.id)
+    : null;
+  const handleDownloadReport = () => {
+    if (reportHistoryItem?.report_doc_id) {
+      downloadRiskReport(
+        reportHistoryItem.report_doc_id as string,
+        reportHistoryItem.report_filename || "risk_report.pdf"
+      );
+    } else {
+      alert("PDF not available yet. Please try again in a moment.");
+    }
+  };
+
+  /* ------------ derived ------------ */
   const filtered = results
     ? results.riskItems.filter(
         (i) =>
@@ -321,7 +327,6 @@ function RiskAssessmentTool() {
   /* ═══════════════════  RENDER  ═══════════════════ */
   return (
     <div className="space-y-8 p-6">
-      {/* ───────── Header ───────── */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
@@ -334,11 +339,9 @@ function RiskAssessmentTool() {
         </div>
       </header>
 
-      {/* ───────── Main panel ───────── */}
       <section className="rounded-xl border bg-white shadow-sm">
         {!results ? (
           <SelectArea
-            /* picker props */
             uploadedDocs={uploadedDocs}
             selectedDocId={selectedDocId}
             handleDocSelection={(id) => {
@@ -350,14 +353,12 @@ function RiskAssessmentTool() {
             }}
             docSelectOpen={docSelectOpen}
             setDocSelectOpen={setDocSelectOpen}
-            /* upload props */
             fileToUpload={fileToUpload}
             fileInputRef={fileInputRef}
             onFileChange={(e: ChangeEvent<HTMLInputElement>) =>
               setFileToUpload(e.target.files?.[0] || null)
             }
             handleFileDrop={(f) => setFileToUpload(f)}
-            /* common */
             isAnalyzeDisabled={isAnalyzeDisabled}
             isFileInputDisabled={isFileInputDisabled}
             analyzing={isAnalyzing}
@@ -373,11 +374,11 @@ function RiskAssessmentTool() {
             activeSection={activeSection}
             setActiveSection={setActiveSection}
             reset={reset}
+            handleDownloadReport={handleDownloadReport}
           />
         )}
       </section>
 
-      {/* ───────── History ───────── */}
       <HistoryPane
         history={history}
         showAll={showAllHistory}
@@ -392,7 +393,6 @@ function RiskAssessmentTool() {
         DROPDOWN_ICON_SIZE={DROPDOWN_ICON_SIZE}
       />
 
-      {/* ───────── Delete modal ───────── */}
       <AnimatePresence>
         {pendingDeleteId && (
           <>
@@ -447,7 +447,6 @@ function RiskAssessmentTool() {
 
 /* ───────────────────────────────────────────────── SUB COMPONENTS ───────────────────────────────────────────────── */
 
-/* SelectArea — two-column picker (existing-doc picker + upload) */
 function SelectArea(props: {
   uploadedDocs: DocumentRecord[];
   selectedDocId: string | null;
@@ -490,7 +489,6 @@ function SelectArea(props: {
   return (
     <div className="space-y-8 p-6">
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Existing doc picker */}
         <div className="flex flex-col items-center gap-4 rounded-lg border bg-gray-50 p-6">
           <p className="text-gray-700">
             Analyze a previously uploaded document:
@@ -561,7 +559,6 @@ function SelectArea(props: {
           )}
         </div>
 
-        {/* Upload area */}
         <UploadDropZone
           fileToUpload={fileToUpload}
           fileInputRef={fileInputRef}
@@ -628,7 +625,6 @@ function UploadDropZone(props: {
     onFileChange,
     handleFileDrop,
   } = props;
-
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
@@ -676,7 +672,6 @@ function UploadDropZone(props: {
   );
 }
 
-/* ───────────────  Result pane  ─────────────── */
 function ResultPane(props: {
   results: { id: string; riskItems: RiskItem[]; analyzedFilename?: string };
   counts: Record<Severity, number>;
@@ -684,9 +679,17 @@ function ResultPane(props: {
   activeSection: string;
   setActiveSection: React.Dispatch<React.SetStateAction<string>>;
   reset: () => void;
+  handleDownloadReport: () => void;
 }) {
-  const { results, counts, filtered, activeSection, setActiveSection, reset } =
-    props;
+  const {
+    results,
+    counts,
+    filtered,
+    activeSection,
+    setActiveSection,
+    reset,
+    handleDownloadReport,
+  } = props;
 
   const [showAll, setShowAll] = useState(false);
   useEffect(() => setShowAll(false), [filtered]);
@@ -694,7 +697,6 @@ function ResultPane(props: {
 
   return (
     <>
-      {/* header bar */}
       <div className="flex flex-col gap-4 border-b bg-gray-50 p-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {results.analyzedFilename ? (
@@ -706,16 +708,26 @@ function ResultPane(props: {
             {results.analyzedFilename || "Report"}
           </h3>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={reset}
-          className="rounded-md bg-[#c17829] px-4 py-2 text-sm text-white hover:bg-[#a66224]"
-        >
-          Analyze Another
-        </motion.button>
+        <div className="flex flex-wrap items-stretch gap-6 justify-center">
+          <motion.button
+            onClick={handleDownloadReport}
+            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FaDownload /> PDF
+          </motion.button>
+          <motion.button
+            onClick={reset}
+            className="flex items-center justify-center gap-1 rounded-md bg-[#c17829] px-4 py-1.5 text-sm text-white hover:bg-[#a66224] w-[159px] h-[36px]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Analyze Another
+          </motion.button>
+        </div>
       </div>
 
-      {/* counts */}
       <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
         {Object.entries(counts).map(([lvl, c]) => (
           <div
@@ -730,7 +742,6 @@ function ResultPane(props: {
         ))}
       </div>
 
-      {/* section filter */}
       <div className="overflow-x-auto px-6">
         <div className="flex flex-wrap gap-2 border-b pb-4 pt-2">
           {["all", ...new Set(results.riskItems.map((i) => i.section))].map(
@@ -751,7 +762,6 @@ function ResultPane(props: {
         </div>
       </div>
 
-      {/* risk cards */}
       <div className="space-y-4 p-6">
         {filtered.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
@@ -764,20 +774,15 @@ function ResultPane(props: {
               key={item.id}
               className="rounded-lg border bg-white p-4 transition-shadow hover:shadow-lg"
             >
-              {/* headline + severity */}
               <div className="mb-2 flex items-start justify-between gap-4">
                 <h4 className="font-semibold text-gray-900 break-words flex-1 min-w-0">
                   {item.title}
                 </h4>
                 <RiskLevel level={item.risk} />
               </div>
-
-              {/* quote */}
               <blockquote className="mb-3 border-l-4 border-gray-300 pl-3 text-sm italic text-gray-700">
                 “{item.quote}”
               </blockquote>
-
-              {/* suggestion */}
               <div className="flex gap-2 rounded-md border border-[#c17829]/50 bg-[#c17829]/10 p-3 text-sm">
                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#c17829] text-white">
                   <FaInfoCircle size={14} />
@@ -806,7 +811,6 @@ function ResultPane(props: {
   );
 }
 
-/* ─────────────── History pane (mirrors Compliance styling) ─────────────── */
 function HistoryPane(props: {
   history: RiskHistoryItem[];
   showAll: boolean;
