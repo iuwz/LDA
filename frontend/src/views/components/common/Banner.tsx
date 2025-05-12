@@ -54,9 +54,6 @@ const Banner: React.FC = () => {
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[color:var(--brand-dark)] leading-tight">
               Welcome back, {firstName}
             </h1>
-            <p className="mt-1 text-sm sm:text-base text-gray-600">
-              Here’s today’s overview of your legal-doc activity.
-            </p>
           </div>
         </div>
       </div>

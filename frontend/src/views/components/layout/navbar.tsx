@@ -1,7 +1,13 @@
 // src/views/components/Navbar.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
-import { FaBalanceScale, FaBars, FaTimes, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaBalanceScale,
+  FaBars,
+  FaTimes,
+  FaSignOutAlt,
+  FaUser,
+} from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
@@ -18,6 +24,7 @@ const Navbar: React.FC = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
@@ -184,16 +191,15 @@ const Navbar: React.FC = () => {
                         navigate("/dashboard/profile");
                         setIsProfileDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
                     >
-                      Profile
+                      <FaUser className="mr-2" size={14} /> Profile
                     </button>
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center"
                     >
-                      <FaSignOutAlt className="mr-2" size={getIconSize()} />{" "}
-                      Logout
+                      <FaSignOutAlt className="mr-2" size={14} /> Logout
                     </button>
                   </div>
                 )}
@@ -289,19 +295,19 @@ const Navbar: React.FC = () => {
           ) : isAuthenticated ? (
             <>
               <button
-                className="text-xl"
+                className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg hover:bg-gray-100"
                 onClick={() => {
                   navigate("/dashboard/profile");
                   setIsMobileMenuOpen(false);
                 }}
               >
-                Profile
+                <FaUser className="mr-2" /> Profile
               </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg font-medium text-red-600 hover:bg-gray-100"
               >
-                <FaSignOutAlt className="mr-2" size={getIconSize()} /> Logout
+                <FaSignOutAlt className="mr-2" /> Logout
               </button>
             </>
           ) : (
