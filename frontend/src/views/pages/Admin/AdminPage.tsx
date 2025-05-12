@@ -90,12 +90,10 @@ const AdminPage: React.FC = () => {
     setActionLoading(true);
     try {
       const res = await fetch(
-        `${API_BASE}/admin/users/${pendingRole.email}/role`,
+        `${API_BASE}/admin/users/${pendingRole.email}/role?new_role=${pendingRole.role}`,
         {
           method: "PUT",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ new_role: pendingRole.role }),   // ← update
         }
       );
       if (!res.ok) throw new Error("Failed to update role");
