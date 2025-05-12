@@ -95,7 +95,7 @@ const AdminPage: React.FC = () => {
           method: "PUT",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(pendingRole.role),
+          body: JSON.stringify({ new_role: pendingRole.role }),   // ← update
         }
       );
       if (!res.ok) throw new Error("Failed to update role");
@@ -302,8 +302,8 @@ const AdminPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === "admin"
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-green-100 text-green-800"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-green-100 text-green-800"
                           }`}
                       >
                         {user.role}

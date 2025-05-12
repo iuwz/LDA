@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from backend.app.utils.security import require_admin
 from backend.app.mvc.models.user import UserInDB
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from fastapi import Body 
+from pydantic import BaseModel
 
+class RoleUpdate(BaseModel):
+    new_role: str
 router = APIRouter( tags=["Admin"])
 
 @router.get("/users")
@@ -77,3 +81,24 @@ async def user_metrics(
     ]:
         counts[coll] = await db[coll].count_documents({})
     return counts
+@router.put("/users/{email}/role")
+async def change_role(
+    email: str,
+    request: Request,
+    _admin: UserInDB = Depends(require_admin),
+    payload: RoleUpdate = Body(...),
+):
+    new_role = payload.new_role.lower()
+
+    if new_role not in {"admin", "user"}:
+        raise HTTPException(400, detail="Role must be 'admin' or 'user'")
+
+    db: AsyncIOMotorDatabase = request.app.state.db
+    result = await db.users.update_one(
+        {"email": email},
+        {"$set": {"role": new_role}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, detail="User not found")
+
+    return {"detail": f"{email} is now a(n) {new_role}"}
