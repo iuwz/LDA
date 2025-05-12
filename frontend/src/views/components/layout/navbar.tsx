@@ -6,7 +6,7 @@ import {
   FaBars,
   FaTimes,
   FaSignOutAlt,
-  FaUser,
+  FaUserCircle,
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -191,7 +191,8 @@ const Navbar: React.FC = () => {
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
                     >
-                      <FaUser className="mr-2" size={14} /> Profile
+                      <FaUserCircle className="mr-2 text-[#2C2C4A]" size={14} />{" "}
+                      Profile
                     </button>
                     <button
                       onClick={handleLogout}
@@ -299,13 +300,14 @@ const Navbar: React.FC = () => {
                   setIsMobileMenuOpen(false);
                 }}
               >
-                <FaUser className="mr-2" /> Profile
+                <FaUserCircle className="mr-2 text-[#2C2C4A]" size={18} />{" "}
+                Profile
               </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg font-medium text-red-600 hover:bg-gray-100"
               >
-                <FaSignOutAlt className="mr-2" /> Logout
+                <FaSignOutAlt className="mr-2" size={18} /> Logout
               </button>
             </>
           ) : (
