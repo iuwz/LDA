@@ -1,37 +1,55 @@
 # backend/app/utils/email_utils.py
-import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
+import os, logging
+from mailersend import emails                # ← NEW
 
-# Load environment variables
-load_dotenv()
+API_TOKEN = os.getenv("MAILERSEND_API_TOKEN")
+FROM_EMAIL = os.getenv("FROM_EMAIL")
 
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
+if not API_TOKEN or not FROM_EMAIL:
+    raise RuntimeError(
+        "MAILERSEND_API_TOKEN and FROM_EMAIL must be set in the environment."
+    )
 
-def send_reset_email(to_email: str, reset_link: str):
-    subject = "Password Reset Request"
-    body = f"""
-    <p>Hello,</p>
-    <p>You requested a password reset. Click the link below to reset your password:</p>
-    <p><a href="{reset_link}">{reset_link}</a></p>
-    <p>If you did not request this, please ignore this email.</p>
+_mailer = emails.NewEmail(API_TOKEN)          # auth happens here
+
+def send_reset_email(to_email: str, reset_link: str) -> None:
     """
+    Deliver a password-reset message via MailerSend HTTP API.
+    Raises RuntimeError on failure so /forgot-password can return 500.
+    """
+    mail = {
+        "from": {"email": FROM_EMAIL, "name": "Legal Doc Analyzer"},
+        "to":   [{"email": to_email}],
+        "subject": "Password Reset Request",
+    }
 
-    msg = MIMEMultipart()
-    msg["From"] = SMTP_USER
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "html"))
+    if TEMPLATE_ID:             # use a stored template with a variable
+        mail["template_id"] = TEMPLATE_ID
+        mail["variables"] = [
+            {
+                "email": to_email,
+                "substitutions": [
+                    {"var": "reset_link", "value": reset_link}
+                ],
+            }
+        ]
+    else:                       # plain HTML / text fallback
+        html = (
+            "<p>Hello,</p>"
+            "<p>You requested a password reset. Click the link below:</p>"
+            f'<p><a href="{reset_link}">{reset_link}</a></p>'
+            "<p>If you did not request this, please ignore this email.</p>"
+        )
+        mail["html"] = html
+        mail["text"] = (
+            "Hello,\n\n"
+            "You requested a password reset.\n"
+            f"Reset link: {reset_link}\n\n"
+            "If you did not request this, please ignore this email."
+        )
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SMTP_USER, to_email, msg.as_string())
-    except Exception as e:
-        print(f"Error sending email: {e}")
+        _mailer.send(mail)      # MailerSend returns 202 on success
+    except Exception as exc:
+        logging.exception("MailerSend error")
+        raise RuntimeError("Email service unavailable") from exc
