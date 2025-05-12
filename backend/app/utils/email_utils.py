@@ -4,7 +4,7 @@ from typing import Optional
 from mailersend import emails
 from random import randint
 from datetime import datetime, timedelta
-from passlib import CryptContext
+from passlib.context import CryptContext
 
 _pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
