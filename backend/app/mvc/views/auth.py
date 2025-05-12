@@ -1,5 +1,6 @@
 # backend/app/mvc/views/auth.py
 
+import logging
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
@@ -113,8 +114,11 @@ async def forgot_password(payload: ForgotPasswordRequest, request: Request):
     token = generate_reset_token(payload.email)
     frontend_url = "https://lda-1-dcto.onrender.com"  # Or your deployed frontend URL
     reset_link = f"{frontend_url}/reset-password?token={token}"
-    send_reset_email(payload.email, reset_link)
-    return {"message": "If that email exists, a reset link has been sent."}
+    try:
+        await send_reset_email(payload.email, reset_link)
+    except RuntimeError:
+        logging.exception("Password-reset email failed")
+    return {"message": f"Password reset link has been sent to {payload.email}"}
 
 
 @router.post("/reset-password")
