@@ -420,7 +420,6 @@ export default function Home() {
             <motion.a
             href="#services"
             onClick={(e) => {
-              e.preventDefault();
               document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
             }}
             className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
