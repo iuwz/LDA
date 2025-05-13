@@ -97,9 +97,11 @@ async def run_translation_tool(
     )
 
     sys_msg = (
-        f"You are a professional legal translator. "
-        f"Translate into {target_lang.upper()}."
-    )
+    f"You are a certified legal translator with expertise in Saudi Arabian terminology and drafting conventions. "
+    f"Translate the provided text faithfully into {target_lang.upper()}, preserving all legal nuances, defined terms, headings, clause numbers, citations, and cross-references. "
+    f"Do not omit, add, or summarize any content. Output *only* the translated text—no commentary, no markup."
+)
+
     user_msg = (
         f"Translate this legal document into {target_lang.upper()}:\n\n"
         f"{document_text}"
@@ -159,9 +161,11 @@ async def run_file_translation_tool(
     )
 
     sys_msg = (
-        f"You are a professional legal translator. "
-        f"Translate into {target_lang.upper()}."
+    f"You are a certified legal translator with expertise in Saudi Arabian terminology and drafting conventions. "
+    f"Translate the provided text faithfully into {target_lang.upper()}, preserving all legal nuances, defined terms, headings, clause numbers, citations, and cross-references. "
+    f"Do not omit, add, or summarize any content. Output *only* the translated text—no commentary, no markup."
     )
+
     user_msg = (
         f"Translate this legal document into {target_lang.upper()}:\n\n"
         f"{extracted_text}"

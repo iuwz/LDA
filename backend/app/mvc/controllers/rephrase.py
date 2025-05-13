@@ -147,10 +147,14 @@ async def run_rephrase_tool(
     # ── Text Mode ───────────────────────────────────────────────────
     original = document_text or ""
     system_msg = (
-        f"You are a legal rewriting AI. Rephrase the following "
-        f"to a {style} style, preserving meaning. Return JSON:"
-        '{"rephrased_text":"..."}'
-    )
+    f"You are an advanced Saudi legal-drafting AI. Rewrite the given text in the requested "
+    f"{style} style—whether formal Arabic legal prose, plain-language English, or any other—"
+    f"without altering the substance, legal effect, citations, or cross-references. "
+    f"Do not add new terms or remove existing obligations. "
+    f"Return **valid JSON only** (no markdown, no commentary) in exactly this structure:\n"
+    f'{{"rephrased_text":"..."}}'
+)
+
     ai = call_gpt(prompt=original, system_message=system_msg, temperature=0.4)
     try:
         parsed = json.loads(ai)

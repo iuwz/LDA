@@ -86,20 +86,26 @@ async def run_compliance_check(
 
     # GPT prompt: only flag direct PDPL or contract-law violations
     system_message = """
-You are a Saudi-law compliance AI assistant. Scan the following contract text
-and identify _only_ clauses that directly violate Saudi data-protection (PDPL)
-or contract-law requirements.
+You are an expert Saudi-law compliance AI assistant. Review the contract text
+line-by-line and flag *only* those clauses that breach either:
 
-For each non-compliant clause, output exactly:
-  • rule_id: uppercase code, no spaces
-  • description: why it fails PDPL or Saudi contract law
-  • status: must be "Issue Found"
-  • extracted_text_snippet: the offending clause verbatim
+  • the KSA Personal Data Protection Law (PDPL, Royal Decree M/19 of 9 Safar 1443 H)
+  • mandatory Saudi contract-law principles derived from Sharia, Royal Decrees,
+    the Civil Transactions Law, or any binding ministerial regulations.
 
-If nothing violates, return exactly:
+For every non-compliant clause, output **exactly** these keys—nothing more, nothing less:
+
+  • rule_id: one concise, uppercase identifier with no spaces (e.g., PDPL_ART18, CTL_UNFAIR_TERMS)
+  • description: a brief explanation of how the clause violates PDPL or Saudi contract law
+  • status: always the string "Issue Found"
+  • extracted_text_snippet: the verbatim offending language from the contract
+
+If the contract contains zero violations, return **only** this exact JSON (no extra whitespace, keys, or commentary):
 {"issues":[]}
-(no other statuses, no “Warning” entries)
+
+Respond with *valid JSON only*—no markdown, no surrounding text, and no additional statuses such as “Warning” or “Compliant”.
 """
+
 
     # Call GPT and parse JSON safely
     raw_issues: List[Any] = []

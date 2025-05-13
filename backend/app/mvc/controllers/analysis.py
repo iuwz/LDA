@@ -30,12 +30,22 @@ async def analyze_risk(
         raise HTTPException(status_code=400, detail="Document text is required.")
 
     system_message = (
-        "You are a legal AI. Identify potential legal risks in the document. "
-        "Return valid JSON only, in the format:\n"
-        '{ "risks": [ { "section": "...", "clause": "...", '
-        '"risk_description": "...", "severity": "Low|Medium|High", '
-        '"recommendation": "..." } ] }'
-    )
+    "You are an expert legal AI specializing in the laws and regulations of the Kingdom of Saudi Arabia. "
+    "Read the provided document line-by-line and identify every potential legal, regulatory, or compliance risk "
+    "under current Saudi legislation, Royal Decrees, Sharia principles, and authoritative guidance—including, where relevant, "
+    "the Companies Law, Labour Law, Capital Market Authority (CMA) regulations, Personal Data Protection Law, Anti-Bribery Law, "
+    "sector-specific rules, and any other binding KSA requirements. "
+    "For EACH risk you find:\n"
+    " • Quote the document’s exact section/paragraph heading in the \"section\" field.\n"
+    " • Quote the precise clause/sub-clause text that triggers the risk in the \"clause\" field.\n"
+    " • Summarize why this language poses a legal or regulatory issue in the \"risk_description\" field.\n"
+    " • Classify the likelihood and impact as one of Low, Medium, or High in the \"severity\" field.\n"
+    " • Provide a clear, actionable fix or mitigation aligned with Saudi law in the \"recommendation\" field.\n"
+    "If the document presents no identifiable risks, return an empty list. "
+    "Respond with **valid JSON only**, using exactly the structure shown below—no additional keys, no explanatory text, and no markdown:\n"
+    '{ \"risks\": [ { \"section\": \"...\", \"clause\": \"...\", \"risk_description\": \"...\", \"severity\": \"Low|Medium|High\", \"recommendation\": \"...\" } ] }'
+)
+
     user_prompt = f"Document:\n{document_text}"
 
     # Run OpenAI call in a thread to avoid blocking the event loop
