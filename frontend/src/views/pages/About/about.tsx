@@ -108,10 +108,10 @@ export default function About() {
             Our Story
           </h2>
           <p className="text-base sm:text-lg leading-relaxed">
-            Founded on the belief that legal processes can be reimagined through
-            technology, our team merged legal expertise with cutting-edge AI.
-            Today, we simplify workflows, mitigate risks, and empower legal
-            professionals around the globe.
+            Founded on the belief that legal processes can be re-imagined
+            through technology, our team merged legal expertise with
+            cutting-edge AI. Today, we simplify workflows, mitigate risks, and
+            empower legal professionals around the globe.
           </p>
         </motion.div>
       </section>
@@ -186,12 +186,13 @@ export default function About() {
           {teamMembers.map((m, i) => (
             <motion.div
               key={i}
-              className="group bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition"
+              className="relative group bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
               <div className="flex flex-col items-center">
                 <img
                   src={m.avatarUrl}
