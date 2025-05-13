@@ -19,6 +19,7 @@ import logging
 from fastapi.concurrency import run_in_threadpool
 from passlib.context import CryptContext
 from backend.app.utils.email_utils import send_verification_email
+import re
 router = APIRouter()
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 _pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -150,10 +151,11 @@ class SendCodeRequest(BaseModel):
 async def send_code(payload: SendCodeRequest, request: Request):
     db = request.app.state.db
 
-    # don't allow if account already exists
+    # Don’t allow sign-up if e-mail already exists
     if await db["users"].find_one({"email": payload.email}):
         raise HTTPException(400, "Email already registered")
 
+    # Build & store the verification record first
     code = f"{randint(0, 999_999):06d}"
     hashed = _pwd_ctx.hash(code)
     expires = datetime.utcnow() + timedelta(minutes=10)
@@ -169,18 +171,30 @@ async def send_code(payload: SendCodeRequest, request: Request):
      # Off-load the blocking network call and handle any delivery error
      # gracefully so the API never crashes with 500.
      # ------------------------------------------------------------------
+    # ─── Send the e-mail in a thread and handle failures ───────────────
     try:
         await run_in_threadpool(send_verification_email, payload.email, code)
     except RuntimeError as exc:
-        # Roll back – user never received the code, so don’t leave a
-        # useless (or abusable) record dangling in the DB.
+        # Always roll back the stored record – code never arrived
         await db["email_verifications"].delete_one({"email": payload.email})
-        logging.exception("Verification e-mail could not be delivered")
+
+        msg = str(exc)
+
+        # Trial-quota reached → 429
+        if re.search(r"unique recipients limit", msg, re.I):
+            logging.warning("MailerSend quota hit: %s", msg)
+            raise HTTPException(
+                status_code=429,
+                detail="E-mail quota reached.  Please contact support.",
+            ) from exc
+
+        # Generic mail failure → 503
+        logging.exception("Verification e-mail failed")
         raise HTTPException(
             status_code=503,
-            detail="E-mail delivery failed.  Please try again later.",
+            detail="E-mail service unavailable.  Try again later.",
         ) from exc
- 
+
     return {"message": "Code sent"}
 
 # ─── POST /auth/verify-code ───────────────────────────────────────

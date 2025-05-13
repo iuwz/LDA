@@ -76,7 +76,7 @@ function SignInForm({
             <input
               type="email"
               className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
-                              ${credError ? "border-red-500" : "border-gray-300"}`}
+                          border ${credError ? "border-red-500" : "border-gray-300"}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -99,7 +99,7 @@ function SignInForm({
               <input
                 type={showPw ? "text" : "password"}
                 className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
-                                ${credError ? "border-red-500" : "border-gray-300"}`}
+                            border ${credError ? "border-red-500" : "border-gray-300"}`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -260,7 +260,7 @@ function SignUpForm({
                 }}
                 placeholder="Email"
                 className={`flex-1 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base
-                                ${emailError ? "border-red-500" : "border-gray-300"}`}
+                  border ${emailError ? "border-red-500" : "border-gray-300"}`}
                 required
               />
               <Button
@@ -432,7 +432,11 @@ export default function Auth() {
       await sendVerificationCode(email);
       setCodeSent(true);
     } catch (e: any) {
-      setCodeError(e.message);
+      if (e.status === 429) {
+        setCodeError("E-mail quota reached – please try again tomorrow.");
+      } else {
+        setCodeError(e.message || "Could not send e-mail.");
+      }
     }
   };
 
