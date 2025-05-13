@@ -52,9 +52,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://lda-legal.com/",
-            "https://www.lda-legal.com/",
-            "https://api.lda-legal.com/",
+            "https://lda-legal.com",
+            "https://www.lda-legal.com",
+            "https://api.lda-legal.com",
             "https://lda-new-backend.onrender.com",
             "https://lda-1-dcto.onrender.com"
         ],
