@@ -375,7 +375,7 @@ function SignUpForm({
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
-
+  const [isSending, setIsSending] = useState(false);
   /* user details */
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -436,15 +436,16 @@ export default function Auth() {
   /* NEW: send / verify code */
   const handleSendCode = async () => {
     setCodeError(null);
+    setCodeError(null);
+    setIsSending(true);
     try {
       await sendVerificationCode(email);
       setCodeSent(true);
     } catch (e: any) {
-      if (e.status === 429) {
-        setCodeError("E-mail quota reached – please try again tomorrow.");
-      } else {
-        setCodeError(e.message || "Could not send e-mail.");
-      }
+      if (e.status === 429) setCodeError("E-mail quota reached – please try again tomorrow.");
+      else setCodeError(e.message || "Could not send e-mail.");
+    } finally {
+      setIsSending(false);
     }
   };
 
