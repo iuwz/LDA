@@ -105,9 +105,7 @@ function SignInForm({
                 placeholder="Password"
                 required
               />
-              {credError && (
-                <p className="text-red-600 text-sm mt-1">{credError}</p>
-              )}
+
               <button
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
@@ -117,6 +115,9 @@ function SignInForm({
                 {showPw ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+            {credError && (
+              <p className="text-red-600 text-sm mt-1">{credError}</p>
+            )}
           </div>
 
           <Button
