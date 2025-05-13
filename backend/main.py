@@ -45,6 +45,9 @@ class UpdateMe(BaseModel):
 def create_app() -> FastAPI:
     app = FastAPI(title="Legal Document Analyzer (LDA)")
 
+# JWT Middleware
+    app.add_middleware(JWTMiddleware)
+
     # CORS Middleware
     app.add_middleware(
         CORSMiddleware,
@@ -61,8 +64,7 @@ def create_app() -> FastAPI:
         expose_headers=["Content-Disposition"],
     )
 
-    # JWT Middleware
-    app.add_middleware(JWTMiddleware)
+    
 
     @app.on_event("startup")
     async def on_startup():
