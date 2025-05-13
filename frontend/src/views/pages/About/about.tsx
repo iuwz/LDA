@@ -70,6 +70,7 @@ export default function About() {
         </svg>
       </div>
 
+      {/* ── STORY ───────────────────────────────────────────── */}
       <section
         id="our-story"
         className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
@@ -93,6 +94,7 @@ export default function About() {
         </motion.div>
       </section>
 
+      {/* ── MISSION ─────────────────────────────────────────── */}
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
         <BubbleGenerator />
         <motion.div
@@ -112,41 +114,33 @@ export default function About() {
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: FaLightbulb, title: "Innovation" },
-              { icon: FaHandshake, title: "Integrity" },
-              { icon: FaGlobe, title: "Global Reach" },
-              { icon: FaUserTie, title: "Expertise" },
-            ].map(({ icon: Icon, title }, idx) => (
+            {[FaLightbulb, FaHandshake, FaGlobe, FaUserTie].map((Icon, idx) => (
               <motion.div
                 key={idx}
-                className="relative bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow overflow-hidden"
+                className="relative bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition"
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
               >
-                <div
-                  className="absolute top-0 left-0 w-full h-1"
-                  style={{
-                    background: `linear-gradient(90deg, #C17829, #2C2C4A)`,
-                  }}
-                />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
                 <div className="flex justify-center mb-4">
                   <Icon className="text-3xl text-[#C17829]" />
                 </div>
-                <h3 className="font-serif text-xl font-semibold text-[#2C2C4A] mb-2 text-center">
-                  {title}
+                <h3 className="font-serif text-xl font-semibold text-[#2C2C4A] text-center capitalize">
+                  {
+                    ["Innovation", "Integrity", "Global Reach", "Expertise"][
+                      idx
+                    ]
+                  }
                 </h3>
-                <p className="text-sm text-gray-600 text-center">
-                  Committed to {title.toLowerCase()} in everything we do.
-                </p>
               </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
+      {/* ── TEAM ────────────────────────────────────────────── */}
       <section className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <motion.div
           className="max-w-7xl mx-auto text-center mb-12"
@@ -164,34 +158,32 @@ export default function About() {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-7xl mx-auto">
-          {teamMembers.map((member, i) => (
+          {teamMembers.map((m, i) => (
             <motion.div
               key={i}
-              className="group bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow relative"
+              className="group bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <div className="absolute top-0 left-0 h-full w-1 bg-[#C17829] group-hover:w-2 transition-all" />
-
               <div className="flex flex-col items-center">
                 <img
-                  src={member.avatarUrl}
-                  alt={member.name}
-                  className="w-24 h-24 rounded-full mb-4 object-cover border-2 border-[#2C2C4A]"
+                  src={m.avatarUrl}
+                  alt={m.name}
+                  className="w-24 h-24 rounded-full mb-4 object-cover"
                 />
                 <h3 className="font-serif text-xl text-[#2C2C4A] font-semibold mb-1 text-center">
-                  {member.name}
+                  {m.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-2 text-center">
-                  {member.role}
+                  {m.role}
                 </p>
                 <p className="text-gray-700 text-xs italic text-center mb-4">
-                  “{member.bio}”
+                  “{m.bio}”
                 </p>
                 <a
-                  href={member.linkedin}
+                  href={m.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] hover:bg-[#C17829] hover:text-white transition-colors"
