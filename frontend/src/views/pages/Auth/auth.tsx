@@ -75,8 +75,9 @@ function SignInForm({
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <input
               type="email"
-              className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
-                          border ${credError ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base
+                               focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                               ${credError ? "border-red-500" : ""}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -98,8 +99,9 @@ function SignInForm({
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
-                className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
-                            border ${credError ? "border-red-500" : "border-gray-300"}`}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base
+                                 focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                                 ${credError ? "border-red-500" : ""}`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -233,7 +235,8 @@ function SignUpForm({
           <div className="flex gap-3">
             <input
               type="text"
-              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg text-base
+              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="First name"
@@ -241,7 +244,8 @@ function SignUpForm({
             />
             <input
               type="text"
-              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+              className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg text-base
+              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Last name"
@@ -260,8 +264,9 @@ function SignUpForm({
                   setCode("");
                 }}
                 placeholder="Email"
-                className={`flex-1 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base
-                  border ${emailError ? "border-red-500" : "border-gray-300"}`}
+                className={`flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
+                       focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                       ${emailError ? "border-red-500" : ""}`}
                 required
               />
               <Button
@@ -285,7 +290,8 @@ function SignUpForm({
                   onChange={(e) => setCode(e.target.value)}
                   maxLength={6}
                   placeholder="6-digit code"
-                  className="flex-1 px-4 py-3 border rounded-lg text-base"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
+              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
                 <Button
                   type="button"
@@ -311,7 +317,8 @@ function SignUpForm({
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base
+              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
