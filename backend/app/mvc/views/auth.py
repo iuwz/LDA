@@ -15,6 +15,8 @@ from backend.app.mvc.models.user import User
 from backend.app.mvc.controllers.auth import register_user, login_user
 from datetime import datetime, timedelta
 from random import randint
+import logging
+from fastapi.concurrency import run_in_threadpool
 from passlib.context import CryptContext
 from backend.app.utils.email_utils import send_verification_email
 router = APIRouter()
@@ -163,6 +165,22 @@ async def send_code(payload: SendCodeRequest, request: Request):
     )
 
     send_verification_email(payload.email, code)
+    # ------------------------------------------------------------------
+     # Off-load the blocking network call and handle any delivery error
+     # gracefully so the API never crashes with 500.
+     # ------------------------------------------------------------------
+    try:
+        await run_in_threadpool(send_verification_email, payload.email, code)
+    except RuntimeError as exc:
+        # Roll back – user never received the code, so don’t leave a
+        # useless (or abusable) record dangling in the DB.
+        await db["email_verifications"].delete_one({"email": payload.email})
+        logging.exception("Verification e-mail could not be delivered")
+        raise HTTPException(
+            status_code=503,
+            detail="E-mail delivery failed.  Please try again later.",
+        ) from exc
+ 
     return {"message": "Code sent"}
 
 # ─── POST /auth/verify-code ───────────────────────────────────────

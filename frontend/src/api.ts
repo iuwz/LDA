@@ -16,12 +16,15 @@ const common: RequestInit = {
 /* generic helpers ------------------------------------------------------- */
 async function handleResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
-        try {
-            const body = await res.json();
-            throw new Error((body as any).detail || res.statusText);
-        } catch {
-            throw new Error(res.statusText);
+        /* try JSON → fallback to plain-text → finally statusText */
+        const ct = res.headers.get("content-type") ?? "";
+        if (ct.includes("application/json")) {
+            const data = await res.json().catch(() => null);
+            if (data?.detail) throw new Error(data.detail);
+            if (data?.message) throw new Error(data.message);
         }
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || res.statusText);
     }
     const text = await res.text();
     return text ? (JSON.parse(text) as T) : ({} as T);

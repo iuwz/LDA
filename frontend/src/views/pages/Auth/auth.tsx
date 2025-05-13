@@ -28,6 +28,7 @@ interface SignInFormProps {
   setPassword: (v: string) => void;
   onSubmit: () => void;
   error?: string | null;
+  credError?: string | null;
 }
 
 function SignInForm({
@@ -37,6 +38,7 @@ function SignInForm({
   setPassword,
   onSubmit,
   error,
+  credError,
 }: SignInFormProps) {
   const [showPw, setShowPw] = useState(false);
 
@@ -73,7 +75,8 @@ function SignInForm({
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <input
               type="email"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
+              className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
+                              ${credError ? "border-red-500" : "border-gray-300"}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -95,12 +98,16 @@ function SignInForm({
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base"
+                className={`w-full px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-[#C17829] text-base
+                                ${credError ? "border-red-500" : "border-gray-300"}`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 required
               />
+              {credError && (
+                <p className="text-red-600 text-sm mt-1">{credError}</p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
@@ -153,6 +160,7 @@ interface SignUpFormProps {
   /* submit + error */
   onSubmit: () => void;
   error?: string | null;
+  emailError?: string | null;
 
   /* password-rule flags */
   hasUppercase: boolean;
@@ -181,6 +189,7 @@ function SignUpForm({
   handleVerifyCode,
   onSubmit,
   error,
+  emailError,
   hasUppercase,
   hasNumber,
   hasSymbol,
@@ -250,7 +259,8 @@ function SignUpForm({
                   setCode("");
                 }}
                 placeholder="Email"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base"
+                className={`flex-1 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#C17829] text-base
+                                ${emailError ? "border-red-500" : "border-gray-300"}`}
                 required
               />
               <Button
@@ -261,6 +271,9 @@ function SignUpForm({
               >
                 {codeSent ? "Resend" : "Send"}
               </Button>
+              {emailError && (
+                <p className="text-red-600 text-sm mt-1">{emailError}</p>
+              )}
             </div>
 
             {codeSent && !codeVerified && (
@@ -361,7 +374,8 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
+  const [loginCredError, setLoginCredError] = useState<string | null>(null);
+  const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
   /* NEW verification state */
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
@@ -377,16 +391,23 @@ export default function Auth() {
   /* ───── handlers ───── */
   const handleSignIn = async () => {
     setError(null);
+    setLoginCredError(null);
     try {
       await login({ email, password });
       navigate("/dashboard");
     } catch (e: any) {
-      setError(e.message);
+      /* backend always returns the same sentence for bad creds */
+      if (e.message?.toLowerCase().includes("invalid email or password")) {
+        setLoginCredError("Invalid e-mail / password combination");
+      } else {
+        setError(e.message);
+      }
     }
   };
 
   const handleSignUp = async () => {
     setError(null);
+    setSignupEmailError(null);
     try {
       await register({
         first_name: firstName,
@@ -396,7 +417,11 @@ export default function Auth() {
       });
       navigate("/dashboard");
     } catch (e: any) {
-      setError(e.message);
+      if (e.message?.toLowerCase().includes("email already registered")) {
+        setSignupEmailError("That e-mail is already registered");
+      } else {
+        setError(e.message);
+      }
     }
   };
 
@@ -492,6 +517,7 @@ export default function Auth() {
                       handleVerifyCode={handleVerifyCode}
                       onSubmit={handleSignUp}
                       error={error}
+                      emailError={signupEmailError}
                       hasUppercase={hasUppercase}
                       hasNumber={hasNumber}
                       hasSymbol={hasSymbol}
@@ -514,6 +540,7 @@ export default function Auth() {
                       setPassword={setPassword}
                       onSubmit={handleSignIn}
                       error={error}
+                      credError={loginCredError}
                     />
                   </motion.div>
                 )}

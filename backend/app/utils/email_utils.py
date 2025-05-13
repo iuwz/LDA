@@ -53,6 +53,8 @@ def _send_and_assert(payload: dict) -> None:
             status = resp.strip()
         elif hasattr(resp, "status_code"):
             status = str(resp.status_code).strip()
+        elif hasattr(resp, "status"):
+            status = str(resp.status).strip()    
         elif isinstance(resp, int):
             status = str(resp)
         else:
