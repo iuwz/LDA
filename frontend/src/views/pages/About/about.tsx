@@ -1,6 +1,13 @@
+// src/views/pages/About/About.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { FaUserTie, FaLightbulb, FaHandshake, FaGlobe } from "react-icons/fa";
+import {
+  FaUserTie,
+  FaLightbulb,
+  FaHandshake,
+  FaGlobe,
+  FaLinkedinIn,
+} from "react-icons/fa";
 import Hero from "../../components/common/Hero";
 import aboutHero from "../../../assets/images/about-hero.jpeg";
 import teamPlaceholder from "../../../assets/images/icon.jpg";
@@ -8,25 +15,32 @@ import { BubbleGenerator } from "../Home/home";
 
 const teamMembers = [
   {
-    name: "Alice Johnson",
-    role: "CEO & Co-Founder",
-    bio: "A visionary leader with a passion for transforming legal tech.",
+    name: "Mazen Alkhodairi",
+    role: "Software Engineer",
+    bio: "Passionate about building seamless user experiences and integrating AI.",
     avatarUrl: teamPlaceholder,
-    link: "#",
+    linkedin: "https://www.linkedin.com/in/mazen-alkhodairi/",
   },
   {
-    name: "Brian Smith",
-    role: "CTO & Co-Founder",
-    bio: "Innovative mind driving our AI technology to new heights.",
+    name: "Abdulaziz Alali",
+    role: "Backend Engineer",
+    bio: "Focuses on scalable cloud infrastructure and robust APIs.",
     avatarUrl: teamPlaceholder,
-    link: "#",
+    linkedin: "https://www.linkedin.com/in/abdulaziz-f-alali/",
   },
   {
-    name: "Clara Lee",
-    role: "Head of Legal Innovation",
-    bio: "Bringing legal expertise and creativity to our solutions.",
+    name: "Ibrahim Alfayez",
+    role: "AI Engineer",
+    bio: "Turns complex problems into elegant machine-learning solutions.",
     avatarUrl: teamPlaceholder,
-    link: "#",
+    linkedin: "https://www.linkedin.com/in/ibrahimalfayez29/",
+  },
+  {
+    name: "Rayan Alghamdi",
+    role: "Front-end Developer",
+    bio: "Crafts accessible, high-performance interfaces with modern frameworks.",
+    avatarUrl: teamPlaceholder,
+    linkedin: "https://www.linkedin.com/in/rayan-alghamdi04/",
   },
 ];
 
@@ -144,18 +158,17 @@ export default function About() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {teamMembers.map((member, i) => (
-            <motion.a
+            <motion.div
               key={i}
-              href={member.link}
-              className="group block bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow relative"
+              className="group bg-white rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow relative"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <div className="absolute top-0 left-0 h-full w-1 bg-[#C17829] group-hover:w-2 transition-all"></div>
+              <div className="absolute top-0 left-0 h-full w-1 bg-[#C17829] group-hover:w-2 transition-all" />
 
               <div className="flex flex-col items-center">
                 <img
@@ -163,15 +176,25 @@ export default function About() {
                   alt={member.name}
                   className="w-24 h-24 rounded-full mb-4 object-cover border-2 border-[#2C2C4A]"
                 />
-                <h3 className="font-serif text-xl text-[#2C2C4A] font-semibold mb-1">
+                <h3 className="font-serif text-xl text-[#2C2C4A] font-semibold mb-1 text-center">
                   {member.name}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">{member.role}</p>
-                <p className="text-gray-700 text-xs italic text-center">
+                <p className="text-sm text-gray-600 mb-2 text-center">
+                  {member.role}
+                </p>
+                <p className="text-gray-700 text-xs italic text-center mb-4">
                   “{member.bio}”
                 </p>
+                <a
+                  href={member.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] hover:bg-[#C17829] hover:text-white transition-colors"
+                >
+                  <FaLinkedinIn />
+                </a>
               </div>
-            </motion.a>
+            </motion.div>
           ))}
         </div>
       </section>
