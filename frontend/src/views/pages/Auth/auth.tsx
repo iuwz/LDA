@@ -16,7 +16,7 @@ import {
   verifyEmailCode,       // NEW
 } from "../../../api";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
@@ -149,7 +149,7 @@ interface SignUpFormProps {
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
-
+  isSending: boolean;
   /* verification */
   codeSent: boolean;
   code: string;
@@ -188,6 +188,7 @@ function SignUpForm({
   codeVerified,
   codeError,
   canSend,
+  isSending,
   handleSendCode,
   handleVerifyCode,
   onSubmit,
@@ -271,11 +272,14 @@ function SignUpForm({
               />
               <Button
                 type="button"
-                disabled={!canSend}
+                disabled={!canSend || isSending}
                 onClick={handleSendCode}
                 className="shrink-0 px-4 py-3 bg-[#C17829] text-white rounded-lg text-sm disabled:opacity-40"
               >
-                {codeSent ? "Resend" : "Send"}
+                {isSending
+                  ? <FaSpinner className="animate-spin" />
+                  : (codeSent ? "Resend" : "Send")
+                }
               </Button>
               {emailError && (
                 <p className="text-red-600 text-sm mt-1">{emailError}</p>
@@ -472,8 +476,6 @@ export default function Auth() {
   }, [location]);
 
   /* validators */
-  const isValidEmail = (val: string) =>
-    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(val.trim());
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
@@ -526,6 +528,7 @@ export default function Auth() {
                       codeVerified={codeVerified}
                       codeError={codeError}
                       canSend={canSend}
+                      isSending={isSending}
                       handleSendCode={handleSendCode}
                       handleVerifyCode={handleVerifyCode}
                       onSubmit={handleSignUp}
