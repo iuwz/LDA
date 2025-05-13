@@ -75,17 +75,15 @@ const values = [
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      <div className="relative z-20">
-        <Hero
-          title="About Us"
-          subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
-          ctaText="Our Journey →"
-          ctaLink="#our-story"
-          bgImage={aboutHero}
-        />
-      </div>
+      <Hero
+        title="About Us"
+        subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
+        ctaText="Our Journey →"
+        ctaLink="#our-story"
+        bgImage={aboutHero}
+      />
 
-      <div className="relative z-30 overflow-hidden leading-[0]">
+      <div className="overflow-hidden leading-[0]">
         <svg
           className="-mt-1 w-full h-12"
           viewBox="0 0 1440 54"
@@ -119,7 +117,15 @@ export default function About() {
       </section>
 
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
-        <BubbleGenerator />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-y-0 left-0 w-1/2">
+            <BubbleGenerator />
+          </div>
+          <div className="absolute inset-y-0 right-0 w-1/2">
+            <BubbleGenerator />
+          </div>
+        </div>
+
         <motion.div
           className="max-w-7xl mx-auto text-center relative z-10"
           initial={{ opacity: 0, y: 20 }}
