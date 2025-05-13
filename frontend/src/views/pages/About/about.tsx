@@ -10,7 +10,12 @@ import {
 } from "react-icons/fa";
 import Hero from "../../components/common/Hero";
 import aboutHero from "../../../assets/images/about-hero.jpeg";
-import teamPlaceholder from "../../../assets/images/icon.jpg";
+
+import Mazen from "../../../assets/images/mazen.jpg";
+import Rayan from "../../../assets/images/rayan.jpg";
+import Abdulaziz from "../../../assets/images/azoz.jpg";
+import Ibrahim from "../../../assets/images/ibra.jpg";
+
 import { BubbleGenerator } from "../Home/home";
 
 const teamMembers = [
@@ -18,28 +23,28 @@ const teamMembers = [
     name: "Mazen Alkhodairi",
     role: "Software Engineer",
     bio: "Passionate about building seamless user experiences and integrating AI.",
-    avatarUrl: teamPlaceholder,
+    avatarUrl: Mazen,
     linkedin: "https://www.linkedin.com/in/mazen-alkhodairi/",
   },
   {
     name: "Abdulaziz Alali",
     role: "Backend Engineer",
     bio: "Focuses on scalable cloud infrastructure and robust APIs.",
-    avatarUrl: teamPlaceholder,
+    avatarUrl: Abdulaziz,
     linkedin: "https://www.linkedin.com/in/abdulaziz-f-alali/",
   },
   {
     name: "Ibrahim Alfayez",
     role: "AI Engineer",
     bio: "Turns complex problems into elegant machine-learning solutions.",
-    avatarUrl: teamPlaceholder,
+    avatarUrl: Ibrahim,
     linkedin: "https://www.linkedin.com/in/ibrahimalfayez29/",
   },
   {
     name: "Rayan Alghamdi",
     role: "Front-end Developer",
     bio: "Crafts accessible, high-performance interfaces with modern frameworks.",
-    avatarUrl: teamPlaceholder,
+    avatarUrl: Rayan,
     linkedin: "https://www.linkedin.com/in/rayan-alghamdi04/",
   },
 ];
