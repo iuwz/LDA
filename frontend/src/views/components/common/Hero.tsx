@@ -32,6 +32,7 @@ const Hero: React.FC<HeroProps> = ({
       >
         {title}
       </motion.h1>
+
       <motion.p
         className="text-white text-sm sm:text-base md:text-lg max-w-prose mb-5"
         initial={{ opacity: 0, y: 10 }}
@@ -40,8 +41,18 @@ const Hero: React.FC<HeroProps> = ({
       >
         {subtitle}
       </motion.p>
+
       <motion.a
         href={ctaLink}
+        onClick={(e) => {
+          // smooth-scroll for internal anchors (same as the Home page button)
+          if (ctaLink.startsWith("#")) {
+            e.preventDefault();
+            document
+              .getElementById(ctaLink.slice(1))
+              ?.scrollIntoView({ behavior: "smooth" });
+          }
+        }}
         className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
