@@ -42,7 +42,7 @@ const Hero: React.FC<HeroProps> = ({
       </motion.p>
       <motion.a
         href={ctaLink}
-        className="inline-block bg-[#C17829] text-white px-5 py-3 sm:px-6 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold shadow hover:bg-[#ad6823] transition-all"
+        className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.4 }}
