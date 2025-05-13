@@ -13,12 +13,13 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 
-import team1 from "../../../assets/images/icon.jpg";
-import team2 from "../../../assets/images/icon.jpg";
-import team3 from "../../../assets/images/icon.jpg";
-import team4 from "../../../assets/images/icon.jpg";
-import team5 from "../../../assets/images/icon.jpg";
-import team6 from "../../../assets/images/icon.jpg";
+// Updated avatar imports
+import male1 from "../../../assets/images/male1.png";
+import male2 from "../../../assets/images/male2.png";
+import male3 from "../../../assets/images/male3.png";
+import female1 from "../../../assets/images/female1.png";
+import female2 from "../../../assets/images/female2.png";
+import female3 from "../../../assets/images/female3.png";
 
 const SERVICES = [
   {
@@ -79,8 +80,8 @@ function ServicesSection() {
           Our Services
         </h2>
         <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
-          Discover the features that set us apart in delivering modern,
-          AI-driven solutions for your legal workflow.
+          Discover the features that set us apart in delivering modern, AI-driven
+          solutions for your legal workflow.
         </p>
       </div>
 
@@ -230,9 +231,7 @@ function WhyChooseUs() {
         </h2>
         <p className="text-gray-800 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
           We combine cutting-edge AI with deep legal insights to streamline
-          document analysis, ensuring both{" "}
-          <span className="text-[#C17829] font-semibold">speed</span> and{" "}
-          <span className="text-[#C17829] font-semibold">accuracy</span>.
+          document analysis, ensuring both <span className="text-[#C17829] font-semibold">speed</span> and <span className="text-[#C17829] font-semibold">accuracy</span>.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -260,48 +259,43 @@ function WhyChooseUs() {
   );
 }
 
+// Updated testimonials with proper male/female avatars
 const TESTIMONIALS = [
   {
     name: "Adam Wilson",
     role: "Senior Lawyer, West Law Group",
-    quote:
-      "LDA's AI tools have revolutionized our review process, saving us countless hours.",
-    avatarUrl: team1,
+    quote: "LDA's AI tools have revolutionized our review process, saving us countless hours.",
+    avatarUrl: male1,
   },
   {
     name: "Sarah Ahmed",
     role: "Compliance Officer, FinReg Solutions",
-    quote:
-      "The compliance checker is unbelievably quick—we catch issues almost immediately now!",
-    avatarUrl: team2,
+    quote: "The compliance checker is unbelievably quick—we catch issues almost immediately now!",
+    avatarUrl: female1,
   },
   {
     name: "David Chen",
     role: "Attorney, Chen & Associates",
-    quote:
-      "The risk assessment feature helped us identify pitfalls before they became real issues.",
-    avatarUrl: team3,
+    quote: "The risk assessment feature helped us identify pitfalls before they became real issues.",
+    avatarUrl: male2,
   },
   {
     name: "Emily Ross",
     role: "Partner, Ross Legal",
-    quote:
-      "I appreciate how user-friendly the interface is; no steep learning curve for my team.",
-    avatarUrl: team4,
+    quote: "I appreciate how user-friendly the interface is; no steep learning curve for my team.",
+    avatarUrl: female2,
   },
   {
     name: "Michael Scott",
     role: "Manager, Dundie Law Firm",
-    quote:
-      "We integrated the chatbot and saw immediate improvements in client responsiveness!",
-    avatarUrl: team5,
+    quote: "We integrated the chatbot and saw immediate improvements in client responsiveness!",
+    avatarUrl: male3,
   },
   {
     name: "Olivia Zhang",
     role: "Paralegal, Allied Global",
-    quote:
-      "The document rephrasing feature is a lifesaver—saves me hours of tedious manual edits.",
-    avatarUrl: team6,
+    quote: "The document rephrasing feature is a lifesaver—saves me hours of tedious manual edits.",
+    avatarUrl: female3,
   },
 ];
 
@@ -332,8 +326,7 @@ function Testimonials() {
           Our Clients
         </h2>
         <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
-          Hear what our satisfied clients have to say about their experience
-          with LDA.
+          Hear what our satisfied clients have to say about their experience with LDA.
         </p>
       </div>
 
@@ -374,9 +367,7 @@ function Testimonials() {
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
               </div>
-              <p className="text-gray-700 italic leading-relaxed">
-                "{t.quote}"
-              </p>
+              <p className="text-gray-700 italic leading-relaxed">"{t.quote}"</p>
             </motion.div>
           ))}
         </div>
@@ -408,7 +399,7 @@ export default function Home() {
           transition={{ duration: 0.8 }}
         >
           <motion.h1
-            className="font-serif       text-5xl sm:text-6xl font-extrabold text-[#2C2C4A] mb-6 leading-tight"
+            className="font-serif text-5xl sm:text-6xl font-extrabold text-[#2C2C4A] mb-6 leading-tight"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
