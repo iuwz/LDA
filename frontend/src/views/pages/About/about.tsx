@@ -49,6 +49,29 @@ const teamMembers = [
   },
 ];
 
+const values = [
+  {
+    icon: FaLightbulb,
+    title: "Innovation",
+    desc: "Committed to innovation in everything we do.",
+  },
+  {
+    icon: FaHandshake,
+    title: "Integrity",
+    desc: "Committed to integrity in everything we do.",
+  },
+  {
+    icon: FaGlobe,
+    title: "Global Reach",
+    desc: "Committed to global reach in everything we do.",
+  },
+  {
+    icon: FaUserTie,
+    title: "Expertise",
+    desc: "Committed to expertise in everything we do.",
+  },
+];
+
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
@@ -70,7 +93,6 @@ export default function About() {
         </svg>
       </div>
 
-      {/* ── STORY ───────────────────────────────────────────── */}
       <section
         id="our-story"
         className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
@@ -94,7 +116,6 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* ── MISSION ─────────────────────────────────────────── */}
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
         <BubbleGenerator />
         <motion.div
@@ -114,7 +135,7 @@ export default function About() {
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {[FaLightbulb, FaHandshake, FaGlobe, FaUserTie].map((Icon, idx) => (
+            {values.map(({ icon: Icon, title, desc }, idx) => (
               <motion.div
                 key={idx}
                 className="relative bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition"
@@ -127,20 +148,16 @@ export default function About() {
                 <div className="flex justify-center mb-4">
                   <Icon className="text-3xl text-[#C17829]" />
                 </div>
-                <h3 className="font-serif text-xl font-semibold text-[#2C2C4A] text-center capitalize">
-                  {
-                    ["Innovation", "Integrity", "Global Reach", "Expertise"][
-                      idx
-                    ]
-                  }
+                <h3 className="font-serif text-xl font-semibold text-[#2C2C4A] text-center">
+                  {title}
                 </h3>
+                <p className="text-sm text-gray-600 text-center mt-2">{desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
-      {/* ── TEAM ────────────────────────────────────────────── */}
       <section className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <motion.div
           className="max-w-7xl mx-auto text-center mb-12"
