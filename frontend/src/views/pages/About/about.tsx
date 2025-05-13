@@ -74,7 +74,7 @@ const values = [
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      {/* ── HERO (clean, no bubbles) ───────────────────────── */}
+      {/* HERO (clean — no bubbles) */}
       <section className="relative w-full h-[60vh] sm:h-[70vh] overflow-hidden flex items-center justify-center">
         <img
           src={aboutHero}
@@ -114,7 +114,6 @@ export default function About() {
         </svg>
       </div>
 
-      {/* ── STORY ──────────────────────────────────────────── */}
       <section
         id="our-story"
         className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
@@ -138,7 +137,6 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* ── MISSION ────────────────────────────────────────── */}
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
         <BubbleGenerator />
         <motion.div
@@ -181,7 +179,6 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* ── TEAM ───────────────────────────────────────────── */}
       <section className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <motion.div
           className="max-w-7xl mx-auto text-center mb-12"
