@@ -8,6 +8,7 @@ export default function Contact() {
     <main className="bg-white font-sans">
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
+
         <motion.div
           className="max-w-7xl mx-auto px-4 relative z-10 text-center"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -22,6 +23,7 @@ export default function Contact() {
           >
             Get in Touch
           </motion.h1>
+
           <motion.p
             className="text-gray-700 text-sm sm:text-base md:text-lg max-w-md mx-auto mb-6 leading-relaxed"
             initial={{ opacity: 0, y: 10 }}
@@ -31,8 +33,15 @@ export default function Contact() {
             Whether you have questions, feedback, or need support, drop us a
             message and we’ll reply within 24 hours.
           </motion.p>
+
           <motion.a
             href="#contact-form"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("contact-form")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
             className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -67,6 +76,7 @@ export default function Contact() {
           <h3 className="font-serif text-2xl sm:text-3xl text-brand-dark font-semibold mb-6">
             Send Us a Message
           </h3>
+
           <form className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <label className="block">
@@ -77,6 +87,7 @@ export default function Contact() {
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-accent-dark focus:ring-accent-dark/30 outline-none"
                 />
               </label>
+
               <label className="block">
                 <span className="text-gray-800 font-medium">Email</span>
                 <input
