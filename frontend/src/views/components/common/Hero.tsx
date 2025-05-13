@@ -21,7 +21,9 @@ const Hero: React.FC<HeroProps> = ({
     className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] bg-center bg-cover bg-no-repeat"
     style={{ backgroundImage: bgImage ? `url(${bgImage})` : undefined }}
   >
-    <div className="absolute inset-0 bg-black/50" />
+    {/* dark + radial overlay with blur */}
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.55)_75%)]" />
 
     <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 sm:px-6 lg:px-8 text-center">
       <motion.h1
@@ -45,7 +47,6 @@ const Hero: React.FC<HeroProps> = ({
       <motion.a
         href={ctaLink}
         onClick={(e) => {
-          // smooth-scroll for internal anchors (same as the Home page button)
           if (ctaLink.startsWith("#")) {
             e.preventDefault();
             document
