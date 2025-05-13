@@ -75,15 +75,17 @@ const values = [
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      <Hero
-        title="About Us"
-        subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
-        ctaText="Our Journey →"
-        ctaLink="#our-story"
-        bgImage={aboutHero}
-      />
+      <div className="relative z-20">
+        <Hero
+          title="About Us"
+          subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
+          ctaText="Our Journey →"
+          ctaLink="#our-story"
+          bgImage={aboutHero}
+        />
+      </div>
 
-      <div className="overflow-hidden leading-[0]">
+      <div className="relative z-30 overflow-hidden leading-[0]">
         <svg
           className="-mt-1 w-full h-12"
           viewBox="0 0 1440 54"
