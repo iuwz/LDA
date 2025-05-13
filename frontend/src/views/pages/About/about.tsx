@@ -8,8 +8,9 @@ import {
   FaGlobe,
   FaLinkedinIn,
 } from "react-icons/fa";
-
+import Hero from "../../components/common/Hero";
 import aboutHero from "../../../assets/images/about-hero.jpeg";
+
 import Mazen from "../../../assets/images/mazen.jpg";
 import Rayan from "../../../assets/images/rayan.jpg";
 import Abdulaziz from "../../../assets/images/azoz.jpg";
@@ -74,35 +75,13 @@ const values = [
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      {/* HERO (clean — no bubbles) */}
-      <section className="relative w-full h-[60vh] sm:h-[70vh] overflow-hidden flex items-center justify-center">
-        <img
-          src={aboutHero}
-          alt="About"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2C2C4A]/80 to-[#2C2C4A]/20" />
-        <motion.div
-          className="relative z-10 max-w-3xl text-center px-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl text-white font-bold mb-4">
-            About&nbsp;Us
-          </h1>
-          <p className="text-gray-200 text-base sm:text-lg md:text-xl mb-6 leading-relaxed">
-            We’re reshaping the legal landscape with AI solutions that empower
-            professionals worldwide.
-          </p>
-          <a
-            href="#our-story"
-            className="inline-block px-8 py-3 bg-[#C17829] hover:bg-[#a4621e] text-white rounded-full font-semibold shadow-lg transition"
-          >
-            Our Journey →
-          </a>
-        </motion.div>
-      </section>
+      <Hero
+        title="About Us"
+        subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
+        ctaText="Our Journey →"
+        ctaLink="#our-story"
+        bgImage={aboutHero}
+      />
 
       <div className="overflow-hidden leading-[0]">
         <svg
