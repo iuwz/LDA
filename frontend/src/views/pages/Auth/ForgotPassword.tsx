@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "../../../api";
 import { Button } from "../../components/common/button";
 import { FaSpinner } from "react-icons/fa";
@@ -9,6 +10,7 @@ export default function ForgotPassword() {
     const [sent, setSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,8 +27,8 @@ export default function ForgotPassword() {
     };
 
     return (
-        <div className="min-h-[440px] flex flex-col justify-between bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto mt-24">
-            <div>
+        <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen flex items-center justify-center py-12">
+            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
                 <div className="text-center mb-8">
                     <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
                         Forgot Password
@@ -40,7 +42,7 @@ export default function ForgotPassword() {
                     <motion.div
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-green-600 text-center"
+                        className="text-green-600 text-center mb-8"
                     >
                         If that email exists, a reset link has been sent.
                     </motion.div>
@@ -50,7 +52,7 @@ export default function ForgotPassword() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4 }}
                         onSubmit={handleSubmit}
-                        className="space-y-5"
+                        className="space-y-5 mb-8"
                     >
                         <div>
                             <label className="block text-gray-700 text-sm mb-2">
@@ -88,7 +90,19 @@ export default function ForgotPassword() {
                         </Button>
                     </motion.form>
                 )}
+
+                <div className="text-center mt-4">
+                    <p className="text-gray-600 text-sm">
+                        Remembered your password?{' '}
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="text-[#C17829] hover:text-[#ad6823] font-medium"
+                        >
+                            Sign In
+                        </button>
+                    </p>
+                </div>
             </div>
-        </div>
+        </main>
     );
 }
