@@ -27,31 +27,27 @@ const Navbar: React.FC = () => {
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
-  // Desktop link styles
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
-  const inactiveLink = "hover:text-[#C17829] transition-colors";
+  const inactiveLink = "text-[#2C2C4A] hover:text-[#C17829] transition-colors";
 
-  // Button styles
   const loginButtonStyle =
     "inline-flex items-center justify-center w-[105px] h-[40px] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
   const registerButtonStyle =
     "inline-flex items-center justify-center w-[105px] h-[40px] bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
 
-  // Fetch auth state
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((u) => {
         setIsAuthenticated(true);
         setInitials(
-          `${u.first_name[0].toUpperCase()}${u.last_name[0].toUpperCase()}`
+          `${u.first_name[0].toUpperCase()}${u.last_name[0].toUpperCase()}`,
         );
       })
       .catch(() => setIsAuthenticated(false))
       .finally(() => setAuthChecked(true));
   }, []);
 
-  // Click outside to close profile dropdown
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (
@@ -66,7 +62,6 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", onClick);
   }, [isProfileDropdownOpen]);
 
-  // Prevent body scroll when drawer open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -75,7 +70,8 @@ const Navbar: React.FC = () => {
   }, [isMobileMenuOpen]);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
-  const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
+  const toggleProfileDropdown = () =>
+    setIsProfileDropdownOpen((v) => !v);
 
   const handleLoginClick = () => {
     navigate("/auth?form=login");
@@ -97,10 +93,8 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* Top Navbar */}
+    <div className="relative" ref={profileDropdownRef}>
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
-        {/* Logo */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -112,9 +106,7 @@ const Navbar: React.FC = () => {
             </span>
           </NavLink>
         </div>
-
-        {/* Desktop Links */}
-        <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
+        <div className="hidden lg:flex flex-1 justify-center space-x-8">
           <NavLink
             to="/"
             end
@@ -126,18 +118,18 @@ const Navbar: React.FC = () => {
           >
             Home
           </NavLink>
-
           {authChecked && isAuthenticated && (
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+                `relative px-1 pb-1 ${
+                  isActive ? activeLink : inactiveLink
+                }`
               }
             >
               Dashboard
             </NavLink>
           )}
-
           <Link
             to="/#services"
             className={`relative px-1 pb-1 ${
@@ -146,28 +138,28 @@ const Navbar: React.FC = () => {
           >
             Services
           </Link>
-
           <NavLink
             to="/about"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+              `relative px-1 pb-1 ${
+                isActive ? activeLink : inactiveLink
+              }`
             }
           >
             About
           </NavLink>
-
           <NavLink
             to="/contact"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+              `relative px-1 pb-1 ${
+                isActive ? activeLink : inactiveLink
+              }`
             }
           >
             Contact
           </NavLink>
         </div>
-
-        {/* Desktop Auth / Profile */}
-        <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
+        <div className="hidden lg:flex flex-1 justify-end items-center space-x-4">
           {authChecked ? (
             isAuthenticated ? (
               <div className="relative">
@@ -186,8 +178,7 @@ const Navbar: React.FC = () => {
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
                     >
-                      <FaUserCircle className="mr-2 text-[#2C2C4A]" size={14} />{" "}
-                      Profile
+                      <FaUserCircle className="mr-2" size={14} /> Profile
                     </button>
                     <button
                       onClick={handleLogout}
@@ -225,8 +216,6 @@ const Navbar: React.FC = () => {
             <div className="h-8 w-32" />
           )}
         </div>
-
-        {/* Mobile Hamburger / X */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -237,19 +226,14 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Side Drawer */}
       {isMobileMenuOpen && (
         <>
-          {/* Backdrop */}
           <div
-            className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
             onClick={toggleMobileMenu}
           />
-
-          {/* Drawer */}
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col">
-            {/* Logo + Divider */}
-            <div className="h-14 px-6 flex items-center border-b">
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col items-center">
+            <div className="h-14 w-full flex items-center justify-between px-6 border-b">
               <NavLink
                 to="/"
                 end
@@ -264,66 +248,74 @@ const Navbar: React.FC = () => {
                   LDA
                 </span>
               </NavLink>
+              <button
+                onClick={toggleMobileMenu}
+                className="text-[#C17829] p-2"
+              >
+                <FaTimes size={24} />
+              </button>
             </div>
-
-            {/* Nav Links at Top */}
-            <nav className="flex-1 px-6 pt-4 flex flex-col space-y-4">
+            <nav className="flex-1 w-full flex flex-col items-center pt-4 space-y-4">
               <NavLink
                 to="/"
                 end
                 className={({ isActive }) =>
-                  `text-lg ${isActive ? activeLink : inactiveLink}`
+                  `w-full text-center text-lg ${
+                    isActive ? activeLink : inactiveLink
+                  }`
                 }
                 onClick={toggleMobileMenu}
               >
                 Home
               </NavLink>
-
               {authChecked && isAuthenticated && (
                 <NavLink
                   to="/dashboard"
                   className={({ isActive }) =>
-                    `text-lg ${isActive ? activeLink : inactiveLink}`
+                    `w-full text-center text-lg ${
+                      isActive ? activeLink : inactiveLink
+                    }`
                   }
                   onClick={toggleMobileMenu}
                 >
                   Dashboard
                 </NavLink>
               )}
-
               <NavLink
                 to="/#services"
                 className={({ isActive }) =>
-                  `text-lg ${isServicesTab ? activeLink : inactiveLink}`
+                  `w-full text-center text-lg ${
+                    isServicesTab ? activeLink : inactiveLink
+                  }`
                 }
                 onClick={toggleMobileMenu}
               >
                 Services
               </NavLink>
-
               <NavLink
                 to="/about"
                 className={({ isActive }) =>
-                  `text-lg ${isActive ? activeLink : inactiveLink}`
+                  `w-full text-center text-lg ${
+                    isActive ? activeLink : inactiveLink
+                  }`
                 }
                 onClick={toggleMobileMenu}
               >
                 About
               </NavLink>
-
               <NavLink
                 to="/contact"
                 className={({ isActive }) =>
-                  `text-lg ${isActive ? activeLink : inactiveLink}`
+                  `w-full text-center text-lg ${
+                    isActive ? activeLink : inactiveLink
+                  }`
                 }
                 onClick={toggleMobileMenu}
               >
                 Contact
               </NavLink>
             </nav>
-
-            {/* Centered Desktop-style Buttons */}
-            <div className="px-6 pb-6 flex flex-col items-center space-y-4">
+            <div className="w-full flex flex-col items-center pb-6 space-y-4">
               {!authChecked ? null : isAuthenticated ? (
                 <>
                   <Button
