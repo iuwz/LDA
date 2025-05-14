@@ -13,12 +13,10 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 
-import male1 from "../../../assets/images/male1.png";
-import male2 from "../../../assets/images/male2.png";
-import male3 from "../../../assets/images/male3.png";
-import female1 from "../../../assets/images/female1.png";
-import female2 from "../../../assets/images/female2.png";
-import female3 from "../../../assets/images/female3.png";
+import ahmed from "../../../assets/images/ahmed.jpg";
+import shalfan from "../../../assets/images/shalfan.jpg";
+import saud from "../../../assets/images/saud.jpg";
+import sae from "../../../assets/images/sae.jpg";
 
 const SERVICES = [
   {
@@ -262,46 +260,32 @@ function WhyChooseUs() {
 
 const TESTIMONIALS = [
   {
-    name: "Adam Wilson",
-    role: "Senior Lawyer, West Law Group",
+    name: "Ahmed Alfaifi,",
+    role: "Software Engineer",
     quote:
       "LDA's AI tools have revolutionized our review process, saving us countless hours.",
-    avatarUrl: male1,
+    avatarUrl: ahmed,
   },
   {
-    name: "Sarah Ahmed",
-    role: "Compliance Officer, FinReg Solutions",
+    name: "Abdulaziz Alsaeed",
+    role: "UX Designer",
     quote:
-      "The compliance checker is unbelievably quick—we catch issues almost immediately now!",
-    avatarUrl: female1,
+      "The compliance checker is unbelievably quick, it can catch issues almost immediately!",
+    avatarUrl: sae,
   },
   {
-    name: "David Chen",
-    role: "Attorney, Chen & Associates",
+    name: "Saud Albarkheel",
+    role: "Software Engineer",
     quote:
-      "The risk assessment feature helped us identify pitfalls before they became real issues.",
-    avatarUrl: male2,
+      "The risk assessment feature helped me in identifying pitfalls before they became real issues.",
+    avatarUrl: saud,
   },
   {
-    name: "Emily Ross",
-    role: "Partner, Ross Legal",
+    name: "Abdulaziz Alshalfan",
+    role: "Software Engineer",
     quote:
-      "I appreciate how user-friendly the interface is; no steep learning curve for my team.",
-    avatarUrl: female2,
-  },
-  {
-    name: "Michael Scott",
-    role: "Manager, Dundie Law Firm",
-    quote:
-      "We integrated the chatbot and saw immediate improvements in client responsiveness!",
-    avatarUrl: male3,
-  },
-  {
-    name: "Olivia Zhang",
-    role: "Paralegal, Allied Global",
-    quote:
-      "The document rephrasing feature is a lifesaver—saves me hours of tedious manual edits.",
-    avatarUrl: female3,
+      "I appreciate how user-friendly the interface is; no steep learning curve for me.",
+    avatarUrl: shalfan,
   },
 ];
 
