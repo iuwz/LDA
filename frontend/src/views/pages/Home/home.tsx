@@ -13,7 +13,6 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 
-// Updated avatar imports
 import male1 from "../../../assets/images/male1.png";
 import male2 from "../../../assets/images/male2.png";
 import male3 from "../../../assets/images/male3.png";
@@ -80,8 +79,8 @@ function ServicesSection() {
           Our Services
         </h2>
         <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
-          Discover the features that set us apart in delivering modern, AI-driven
-          solutions for your legal workflow.
+          Discover the features that set us apart in delivering modern,
+          AI-driven solutions for your legal workflow.
         </p>
       </div>
 
@@ -231,7 +230,9 @@ function WhyChooseUs() {
         </h2>
         <p className="text-gray-800 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
           We combine cutting-edge AI with deep legal insights to streamline
-          document analysis, ensuring both <span className="text-[#C17829] font-semibold">speed</span> and <span className="text-[#C17829] font-semibold">accuracy</span>.
+          document analysis, ensuring both{" "}
+          <span className="text-[#C17829] font-semibold">speed</span> and{" "}
+          <span className="text-[#C17829] font-semibold">accuracy</span>.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -259,42 +260,47 @@ function WhyChooseUs() {
   );
 }
 
-// Updated testimonials with proper male/female avatars
 const TESTIMONIALS = [
   {
     name: "Adam Wilson",
     role: "Senior Lawyer, West Law Group",
-    quote: "LDA's AI tools have revolutionized our review process, saving us countless hours.",
+    quote:
+      "LDA's AI tools have revolutionized our review process, saving us countless hours.",
     avatarUrl: male1,
   },
   {
     name: "Sarah Ahmed",
     role: "Compliance Officer, FinReg Solutions",
-    quote: "The compliance checker is unbelievably quick—we catch issues almost immediately now!",
+    quote:
+      "The compliance checker is unbelievably quick—we catch issues almost immediately now!",
     avatarUrl: female1,
   },
   {
     name: "David Chen",
     role: "Attorney, Chen & Associates",
-    quote: "The risk assessment feature helped us identify pitfalls before they became real issues.",
+    quote:
+      "The risk assessment feature helped us identify pitfalls before they became real issues.",
     avatarUrl: male2,
   },
   {
     name: "Emily Ross",
     role: "Partner, Ross Legal",
-    quote: "I appreciate how user-friendly the interface is; no steep learning curve for my team.",
+    quote:
+      "I appreciate how user-friendly the interface is; no steep learning curve for my team.",
     avatarUrl: female2,
   },
   {
     name: "Michael Scott",
     role: "Manager, Dundie Law Firm",
-    quote: "We integrated the chatbot and saw immediate improvements in client responsiveness!",
+    quote:
+      "We integrated the chatbot and saw immediate improvements in client responsiveness!",
     avatarUrl: male3,
   },
   {
     name: "Olivia Zhang",
     role: "Paralegal, Allied Global",
-    quote: "The document rephrasing feature is a lifesaver—saves me hours of tedious manual edits.",
+    quote:
+      "The document rephrasing feature is a lifesaver—saves me hours of tedious manual edits.",
     avatarUrl: female3,
   },
 ];
@@ -326,22 +332,23 @@ function Testimonials() {
           Our Clients
         </h2>
         <p className="text-gray-800 text-lg max-w-2xl mx-auto mb-8">
-          Hear what our satisfied clients have to say about their experience with LDA.
+          Hear what our satisfied clients have to say about their experience
+          with LDA.
         </p>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4">
+      <div className="relative max-w-7xl mx-auto px-4 overflow-visible">
         <button
           onClick={() => setPage((p) => Math.max(0, p - 1))}
           disabled={page === 0}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-60 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
+          className="absolute -left-8 lg:-left-12 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-70 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
         >
           <FaChevronLeft />
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
           disabled={page === totalPages - 1}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-60 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
+          className="absolute -right-8 lg:-right-12 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white bg-opacity-70 text-[#C17829] hover:bg-opacity-100 transition disabled:opacity-50"
         >
           <FaChevronRight />
         </button>
@@ -367,7 +374,9 @@ function Testimonials() {
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
               </div>
-              <p className="text-gray-700 italic leading-relaxed">"{t.quote}"</p>
+              <p className="text-gray-700 italic leading-relaxed">
+                "{t.quote}"
+              </p>
             </motion.div>
           ))}
         </div>
@@ -417,19 +426,21 @@ export default function Home() {
             Leveraging advanced AI tools to enhance accuracy and efficiency in
             legal document analysis.
           </motion.p>
-            <motion.a
+          <motion.a
             href="#services"
             onClick={(e) => {
               e.preventDefault();
-              document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
+              document
+                .getElementById("services")
+                ?.scrollIntoView({ behavior: "smooth" });
             }}
             className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            >
+          >
             Explore Services →
-            </motion.a>
+          </motion.a>
         </motion.div>
       </section>
 
