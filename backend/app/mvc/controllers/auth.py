@@ -23,10 +23,19 @@ async def register_user(user: User, db: AsyncIOMotorDatabase) -> UserInDB:
     if await users.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
 
+# Capitalize first letter of first_name and last_name
+    # (so “alice” → “Alice”, “o’connor” → “O’connor”)
+    first = user.first_name.strip().capitalize()
+    last  = user.last_name.strip().capitalize()
+
     # Hash and store
     hashed_pwd = pwd_context.hash(user.hashed_password)
     doc = user.dict()
-    doc["hashed_password"] = hashed_pwd
+    doc.update({
+        "first_name": first,
+        "last_name":  last,
+        "hashed_password": hashed_pwd,
+    })
     res = await users.insert_one(doc)
 
     stored = await users.find_one({"_id": res.inserted_id})
