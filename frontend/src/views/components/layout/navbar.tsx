@@ -104,6 +104,9 @@ const Navbar: React.FC = () => {
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
+  const buttonClasses =
+    "inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
+
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
@@ -208,7 +211,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="secondary"
-                  className="rounded-full"
+                  className={buttonClasses}
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -219,7 +222,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="primary"
-                  className="rounded-full"
+                  className={buttonClasses}
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -315,7 +318,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="secondary"
-                className="rounded-full"
+                className={buttonClasses}
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1">
@@ -326,7 +329,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="primary"
-                className="rounded-full"
+                className={buttonClasses}
                 onClick={handleRegisterClick}
               >
                 Register
