@@ -18,7 +18,6 @@ import Ibrahim from "../../../assets/images/ibra.jpg";
 
 import { BubbleGenerator } from "../Home/home";
 
-/* ─────────── team & values data ─────────── */
 const teamMembers = [
   {
     name: "Mazen Alkhodairi",
@@ -73,11 +72,9 @@ const values = [
   },
 ];
 
-/* ─────────── component ─────────── */
 export default function About() {
   return (
     <main className="font-sans text-gray-800">
-      {/* ───── hero ───── */}
       <Hero
         title="About Us"
         subtitle="We’re reshaping the legal landscape with AI solutions that empower professionals worldwide."
@@ -86,7 +83,6 @@ export default function About() {
         bgImage={aboutHero}
       />
 
-      {/* top slanted divider */}
       <div className="overflow-hidden leading-[0]">
         <svg
           className="-mt-1 w-full h-12"
@@ -97,21 +93,9 @@ export default function About() {
         </svg>
       </div>
 
-      {/* inverted divider for end of hero */}
-      <div className="overflow-hidden leading-[0] rotate-180">
-        <svg
-          className="w-full h-12"
-          viewBox="0 0 1440 54"
-          preserveAspectRatio="none"
-        >
-          <path d="M0,22L1440,54L1440,0L0,0Z" fill="white" />
-        </svg>
-      </div>
-
-      {/* ───── our story ───── */}
       <section
         id="our-story"
-        className="bg-white px-4 sm:px-6 lg:px-8 pt-0 pb-12 sm:pb-16 lg:pb-20"
+        className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
       >
         <motion.div
           className="max-w-3xl mx-auto text-center"
@@ -132,9 +116,7 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* ───── mission with bubbles ───── */}
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
-        {/* animated bubbles */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-y-0 left-0 w-1/2">
             <BubbleGenerator />
@@ -184,7 +166,6 @@ export default function About() {
         </motion.div>
       </section>
 
-      {/* ───── team ───── */}
       <section className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <motion.div
           className="max-w-7xl mx-auto text-center mb-12"
@@ -213,15 +194,11 @@ export default function About() {
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
               <div className="flex flex-col items-center">
-                {/* avatar with fixed 1:1 ratio & identical framing */}
-                <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4">
-                  <img
-                    src={m.avatarUrl}
-                    alt={m.name}
-                    className="absolute inset-0 w-full h-full object-cover object-center"
-                  />
-                </div>
-
+                <img
+                  src={m.avatarUrl}
+                  alt={m.name}
+                  className="w-24 h-24 rounded-full mb-4 object-cover"
+                />
                 <h3 className="font-serif text-xl text-[#2C2C4A] font-semibold mb-1 text-center">
                   {m.name}
                 </h3>
@@ -231,13 +208,11 @@ export default function About() {
                 <p className="text-gray-700 text-xs italic text-center mb-4">
                   “{m.bio}”
                 </p>
-
                 <a
                   href={m.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] hover:bg-[#C17829] hover:text-white transition-colors"
-                  aria-label={`LinkedIn profile of ${m.name}`}
                 >
                   <FaLinkedinIn />
                 </a>
