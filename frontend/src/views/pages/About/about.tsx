@@ -93,9 +93,19 @@ export default function About() {
         </svg>
       </div>
 
+      <div className="overflow-hidden leading-[0] rotate-180">
+        <svg
+          className="w-full h-12"
+          viewBox="0 0 1440 54"
+          preserveAspectRatio="none"
+        >
+          <path d="M0,22L1440,54L1440,0L0,0Z" fill="white" />
+        </svg>
+      </div>
+
       <section
         id="our-story"
-        className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
+        className="bg-white px-4 sm:px-6 lg:px-8 pt-0 pb-12 sm:pb-16 lg:pb-20"
       >
         <motion.div
           className="max-w-3xl mx-auto text-center"
@@ -213,6 +223,7 @@ export default function About() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] hover:bg-[#C17829] hover:text-white transition-colors"
+                  aria-label={`LinkedIn profile of ${m.name}`}
                 >
                   <FaLinkedinIn />
                 </a>
