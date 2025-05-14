@@ -30,7 +30,6 @@ import TranslationTool from "./views/pages/Dashboard/TranslationTool";
 import DashboardChatbot from "./views/pages/Dashboard/DashboardChatbot";
 import EditProfile from "./views/pages/Dashboard/EditProfile";
 
-
 /* ── Admin page ──────────────────────── */
 import AdminPage from "./views/pages/Admin/AdminPage";
 
@@ -130,7 +129,6 @@ export default function App() {
               <Navbar />
               <Home />
               <Footer />
-
             </>
           }
         />
@@ -146,7 +144,6 @@ export default function App() {
               <Navbar />
               <About />
               <Footer />
-
             </>
           }
         />
@@ -157,7 +154,6 @@ export default function App() {
               <Navbar />
               <Contact />
               <Footer />
-
             </>
           }
         />
@@ -177,7 +173,7 @@ export default function App() {
             <>
               <Navbar />
               <ForgotPassword />
-
+              <Footer />
             </>
           }
         />
@@ -187,7 +183,7 @@ export default function App() {
             <>
               <Navbar />
               <ResetPassword />
-
+              <Footer />
             </>
           }
         />

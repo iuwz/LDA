@@ -106,8 +106,8 @@ const Navbar: React.FC = () => {
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
   // Styles for Login and Register buttons
-  const loginButtonStyle = `rounded-full font-semibold border border-[${ACCENT}] text-[${ACCENT}] hover:bg-[${ACCENT}] hover:text-white transition-colors`;
-  const registerButtonStyle = `rounded-full font-semibold bg-[${ACCENT}] text-white hover:bg-[${ACCENT_DARKER_HOVER}] transition-colors`;
+  const loginButtonStyle = `inline-flex items-center px-6 py-2 border-2 border-[#C17829] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white`;
+  const registerButtonStyle = `inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105`;
 
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
@@ -213,7 +213,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="inline-flex items-center px-6 py-2 border-2 border-[#C17829] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
+                  className={loginButtonStyle}
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -225,7 +225,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="sm"
                   variant="primary"
-                  className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
+                  className={registerButtonStyle}
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -317,27 +317,27 @@ const Navbar: React.FC = () => {
               </button>
             </>
           ) : (
-            <>
+            <div className="flex flex-col items-center space-y-4 w-64">
               <Button
                 size="md"
-                className={loginButtonStyle} // Apply new style
+                variant="secondary"
+                className={loginButtonStyle}
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1 justify-center">
-                  {" "}
-                  {/* Added justify-center for mobile button content */}
                   <LogIn size={16} />
                   <span>Login</span>
                 </div>
               </Button>
               <Button
                 size="md"
-                className={registerButtonStyle} // Apply new style
+                variant="primary"
+                className={registerButtonStyle}
                 onClick={handleRegisterClick}
               >
                 Register
               </Button>
-            </>
+            </div>
           )}
         </div>
       )}
