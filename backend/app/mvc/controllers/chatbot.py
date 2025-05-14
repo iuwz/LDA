@@ -1,32 +1,17 @@
 """
-Central chatbot‑persistence logic (LEGAL‑ONLY edition – GPT classifier)
-─────────────────────────────────────────────────────────────────────
-This module stores chat history in MongoDB, mediates calls to OpenAI via
-``backend.app.core.openai_client.call_gpt`` **and** enforces a guard‑rail:
-1.  It first calls a *lightweight* OpenAI model to decide whether the user
-    message is a *legal* question.  The classification prompt is engineered
-    to return exactly either "LEGAL" or "NONLEGAL".
-2.  If the query is legal → call the *main* model for a substantive answer.
-3.  Otherwise the assistant refuses, explaining it can only help with legal
-    matters.
+Central chatbot-persistence logic (LEGAL-ONLY edition – robust GPT classifier)
+────────────────────────────────────────────────────────────────────────────
+Fix: The previous lightweight classifier never detected legal questions
+because the helper `call_gpt` didn't support the separate *system* prompt
+parameter.  We now construct a **single prompt string** that embeds the
+instruction *and* the user's question, then parse the first occurrence of
+"LEGAL" or "NONLEGAL" in the model's response.
 
-Collection layout
-─────────────────
-chat_sessions
-  _id            ObjectId
-  user_id        str  (current_user.id → Users collection ObjectId str)
-  title          str
-  created_at     datetime (UTC)
-  updated_at     datetime (UTC)
-  messages       [
-                   { "sender": "user" | "bot",
-                     "text": str,
-                     "timestamp": datetime }
-                 ]
+Collection layout unchanged – see earlier header for details.
 """
 from __future__ import annotations
 
-import json
+import re
 import logging
 from datetime import datetime
 from typing import Optional, Any
@@ -40,47 +25,48 @@ logger = logging.getLogger(__name__)
 COLL = "chat_sessions"
 
 
-# ───────────────────────────────── GPT‑based legal‑question classifier
-_CLASSIFIER_SYSTEM_PROMPT = (
+# ───────────────────────────────── GPT-based legal-question classifier
+_CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"  # cheap & fast
+
+# Bare‑bones instruction; we’ll embed the user question below.
+_CLASSIFIER_PROMPT_TEMPLATE = (
     "You are a short classification assistant. "
-    "Given a user question, decide if it is seeking *legal* information or "
-    "advice (including compliance, regulations, contracts, disputes, etc.). "
-    "Respond with exactly either the word LEGAL or NONLEGAL—no extra text."
+    "Given a user question, decide if it seeks *legal* information or advice "
+    "(contracts, regulations, compliance, disputes, privacy policies, etc.).\n\n"
+    "Return exactly either LEGAL or NONLEGAL—no extra words, no punctuation.\n\n"
+    "User question: {question}\nAnswer:"
 )
 
-# Use a lightweight/cheap chat model for classification.  Adjust as needed
-_CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"
+_CLASSIFIER_REGEX = re.compile(r"\b(LEGAL|NONLEGAL)\b", re.I)
 
 
-async def _is_legal_query(db: AsyncIOMotorDatabase, user_id: str, question: str) -> bool:
-    """Return True if the classifier judges *question* as legal‑related."""
+async def _is_legal_query(user_id: str, question: str) -> bool:
+    """Return True if GPT labels the *question* as legal‑related."""
+    prompt = _CLASSIFIER_PROMPT_TEMPLATE.format(question=question.strip())
     try:
-        outcome: str = call_gpt(
-            question,
-            system_prompt=_CLASSIFIER_SYSTEM_PROMPT,
+        raw_resp: str = call_gpt(
+            prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
-            max_tokens=1,
-        )
-        outcome = (outcome or "").strip().upper()
-        logger.debug("Classifier outcome for user %s: %s", user_id, outcome)
-        return outcome == "LEGAL"
+            max_tokens=4,
+        ) or ""
+        logger.debug("Classifier raw response for %s: %s", user_id, raw_resp)
+        match = _CLASSIFIER_REGEX.search(raw_resp)
+        return match and match.group(1).upper() == "LEGAL"
     except Exception as exc:  # noqa: BLE001
-        logger.exception("Classifier failed – defaulting to NONLEGAL: %s", exc)
+        logger.exception("Classifier failed – default NONLEGAL: %s", exc)
         return False
 
 
 # ───────────────────────────────── helpers
 
 def _ts() -> datetime:
-    """Single, central UTC timestamp helper."""
     return datetime.utcnow()
 
 
 async def _ensure_session(
     db: AsyncIOMotorDatabase, user_id: str, first_user_msg: str | None = None
 ) -> ObjectId:
-    """Create a new session and (optionally) insert the very first user message."""
     now = _ts()
     doc: dict[str, Any] = {
         "user_id": user_id,
@@ -91,7 +77,6 @@ async def _ensure_session(
     }
     if first_user_msg:
         doc["messages"].append({"sender": "user", "text": first_user_msg, "timestamp": now})
-
     res = await db[COLL].insert_one(doc)
     return res.inserted_id
 
@@ -104,9 +89,9 @@ async def chat(
     query: str,
     session_id: Optional[str] = None,
 ) -> dict[str, str]:
-    """Persist *query*, run classifier & GPT, persist reply, return result."""
+    """Persist *query*, classify, maybe answer, persist reply, return result."""
 
-    # 1. fetch or create session – create early so conversation shows instantly
+    # 1. fetch or create session
     new_session = False
     if session_id and ObjectId.is_valid(session_id):
         sid = ObjectId(session_id)
@@ -117,13 +102,12 @@ async def chat(
         sid = await _ensure_session(db, user_id, query)
         new_session = True
 
-    # 2. Decide if the query is legal
-    is_legal = await _is_legal_query(db, user_id, query)
+    # 2. is it legal?
+    is_legal = await _is_legal_query(user_id, query)
 
     if is_legal:
         assistant_reply = (
-            call_gpt(query)  # uses default (presumably stronger) model
-            or "Sorry, I'm unable to respond right now – please try again later."
+            call_gpt(query) or "Sorry, I'm unable to respond right now – please try again later."
         )
     else:
         assistant_reply = (
@@ -131,14 +115,13 @@ async def chat(
             "Please rephrase your request to focus on legal matters."
         )
 
-    # 3. build message batch
+    # 3. persist messages
     now = _ts()
     msgs = []
-    if not new_session:  # first user message already persisted when session created
+    if not new_session:
         msgs.append({"sender": "user", "text": query, "timestamp": now})
     msgs.append({"sender": "bot", "text": assistant_reply, "timestamp": now})
 
-    # 4. persist response
     await db[COLL].update_one(
         {"_id": sid},
         {
@@ -154,7 +137,6 @@ async def chat(
 
 
 async def list_sessions(db: AsyncIOMotorDatabase, user_id: str) -> list[dict]:
-    """Return a lightweight list of the user's chat sessions for the sidebar."""
     cursor = (
         db[COLL]
         .find({"user_id": user_id}, {"title": 1, "messages": 1, "updated_at": 1, "created_at": 1})
@@ -180,7 +162,6 @@ async def list_sessions(db: AsyncIOMotorDatabase, user_id: str) -> list[dict]:
 async def get_messages(
     db: AsyncIOMotorDatabase, user_id: str, session_id: str
 ) -> list[dict]:
-    """Retrieve every message for *session_id* (timestamps → ISO)."""
     if not ObjectId.is_valid(session_id):
         raise ValueError("Invalid session id")
 
@@ -190,20 +171,16 @@ async def get_messages(
     if not doc:
         raise ValueError("Session not found")
 
-    def _to_iso(ts: datetime | str) -> str:
+    def _iso(ts):
         return ts.isoformat() if isinstance(ts, datetime) else str(ts)
 
-    return [
-        {"sender": m["sender"], "text": m["text"], "timestamp": _to_iso(m["timestamp"])}
-        for m in doc["messages"]
-    ]
+    return [{"sender": m["sender"], "text": m["text"], "timestamp": _iso(m["timestamp"])} for m in doc["messages"]]
 
 
 # NEW helper ────────────────────────────────────────────────
 async def delete_session(
     db: AsyncIOMotorDatabase, *, user_id: str, session_id: str
 ) -> None:
-    """Delete a session and its messages."""
     if not ObjectId.is_valid(session_id):
         raise ValueError("Invalid session id")
 
