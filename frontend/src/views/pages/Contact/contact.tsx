@@ -1,4 +1,3 @@
-// src/views/pages/Contact/contact.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { BubbleGenerator } from "../Home/home";
@@ -84,7 +83,7 @@ export default function Contact() {
                 <input
                   type="text"
                   placeholder="Your name"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-accent-dark focus:ring-accent-dark/30 outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
               </label>
 
@@ -93,7 +92,7 @@ export default function Contact() {
                 <input
                   type="email"
                   placeholder="Your email"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-accent-dark focus:ring-accent-dark/30 outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
               </label>
             </div>
@@ -103,7 +102,7 @@ export default function Contact() {
               <input
                 type="text"
                 placeholder="Subject"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-accent-dark focus:ring-accent-dark/30 outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               />
             </label>
 
@@ -112,7 +111,7 @@ export default function Contact() {
               <textarea
                 rows={4}
                 placeholder="Your message…"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-accent-dark focus:ring-accent-dark/30 outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               />
             </label>
 
