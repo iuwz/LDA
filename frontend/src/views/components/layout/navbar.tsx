@@ -205,21 +205,20 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <>
-                <button
-                  className="relative px-4 py-2 text-[#2C2C4A] hover:text-[#C17829] transition-colors"
+                <NavLink
+                  to="/auth?form=login"
+                  className={`relative px-1 pb-1 ${inactiveLink}`}
                   onClick={handleLoginClick}
                 >
-                  <div className="flex items-center space-x-1">
-                    <LogIn size={16} />
-                    <span>Login</span>
-                  </div>
-                </button>
-                <button
-                  className="relative px-4 py-2 text-[#2C2C4A] hover:text-[#C17829] transition-colors font-medium"
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/auth?form=register"
+                  className={`relative px-1 pb-1 ${inactiveLink}`}
                   onClick={handleRegisterClick}
                 >
                   Register
-                </button>
+                </NavLink>
               </>
             )
           ) : (
@@ -308,21 +307,20 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <button
-                className="text-xl text-[#2C2C4A] hover:text-[#C17829] transition-colors"
-                onClick={handleLoginClick}
+              <NavLink
+                to="/auth?form=login"
+                className="text-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                <div className="flex items-center space-x-1">
-                  <LogIn size={16} />
-                  <span>Login</span>
-                </div>
-              </button>
-              <button
-                className="text-xl text-[#2C2C4A] hover:text-[#C17829] transition-colors font-medium"
-                onClick={handleRegisterClick}
+                Login
+              </NavLink>
+              <NavLink
+                to="/auth?form=register"
+                className="text-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Register
-              </button>
+              </NavLink>
             </>
           )}
         </div>
