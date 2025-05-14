@@ -213,7 +213,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="secondary"
-                  className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
+                  className="inline-flex items-center px-6 py-2 border-2 border-[#C17829] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -225,7 +225,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="primary"
-                  className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
+                  className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
                   onClick={handleRegisterClick}
                 >
                   Register
