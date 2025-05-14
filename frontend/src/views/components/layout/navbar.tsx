@@ -158,6 +158,14 @@ const Navbar: React.FC = () => {
           >
             Services
           </Link>
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+            }
+          >
+            Contact
+          </NavLink>
 
           <NavLink
             to="/about"
@@ -166,14 +174,6 @@ const Navbar: React.FC = () => {
             }
           >
             About
-          </NavLink>
-          <NavLink
-            to="/contact"
-            className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
-            }
-          >
-            Contact
           </NavLink>
         </div>
 
