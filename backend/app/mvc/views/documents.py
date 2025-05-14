@@ -119,25 +119,35 @@ async def upload_document(
     current_user: UserInDB = Depends(get_current_user),
 ):
     """Upload a PDF or DOCX to GridFS and store metadata."""
+    # ── validate extension ───────────────────────
+    _, ext = os.path.splitext(file.filename)
+    ext = ext.lower()
+    allowed_exts = {".pdf", ".docx",".doc", ".txt"}
+    # Check if the file extension is in the allowed list
+    # If not, raise an HTTPException with a 400 status code
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{ext}'. Only PDF and DOCX are allowed."
+        )
+    # ─────────────────────────────────────────────
+
     user_id = current_user.email
-
-    # You can add file type restrictions here if needed, but the text extraction
-    # logic below already handles unsupported types gracefully.
-    # allowed_ext = {"pdf", "docx"}
-    # if not any(file.filename.lower().endswith(f".{ext}") for ext in allowed_ext):
-    #     raise HTTPException(
-    #         status_code=400, detail="Unsupported file type. Only PDF or DOCX allowed."
-    #     )
-
     db = request.app.state.db
-    # Read file content in chunks if it can be very large, but for text extraction
-    # we often need the whole content. Reading all at once for simplicity here.
+
+    # read the whole file into memory (we need it for text‐extraction later)
     file_content = await file.read()
 
+    # store in GridFS
     file_id = await upload_file_to_gridfs(db, file_content, file.filename)
-    doc_id = await store_document_record(db, user_id, file.filename, file_id)
+    doc_id  = await store_document_record(db, user_id, file.filename, file_id)
 
-    return {"message": "File uploaded", "doc_id": doc_id, "file_id": str(file_id)}
+    return {
+        "message": "File uploaded",
+        "doc_id":   doc_id,
+        "file_id":  str(file_id),
+    }
+
 
 
 # ───────────────────────── list ───────────────────────────

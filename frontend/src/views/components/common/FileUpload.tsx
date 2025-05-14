@@ -16,8 +16,31 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploaded }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
-    setFile(e.target.files?.[0] || null);
+    const f = e.target.files?.[0] || null;
+    if (f) {
+      const okTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+        "application/msword", // DOC
+        "text/plain", // TXT
+      ];
+      // fallback: allow files if extension matches .pdf, .docx, .doc, or .txt
+      const fileName = f.name.toLowerCase();
+      const hasSupportedExt =
+        fileName.endsWith(".pdf") ||
+        fileName.endsWith(".docx") ||
+        fileName.endsWith(".doc") ||
+        fileName.endsWith(".txt");
+
+      if (!okTypes.includes(f.type) && !hasSupportedExt) {
+        setError("Unsupported file format. Only PDF, DOCX, DOC, and TXT files are allowed.");
+        e.target.value = ""; // clear selection
+        return;
+      }
+    }
+    setFile(f);
   };
+
 
   const handleUpload = async () => {
     if (!file) {
@@ -51,6 +74,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploaded }) => {
   return (
     <div className="flex flex-col items-center gap-4">
       <input
+        accept=".pdf,.docx,.doc,.txt"
         type="file"
         onChange={handleChange}
         className="block w-full text-sm text-gray-900
