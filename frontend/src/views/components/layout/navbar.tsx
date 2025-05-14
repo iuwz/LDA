@@ -14,6 +14,9 @@ import { Button } from "../../components/common/button";
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
 
+const EXPLORE_BUTTON_CLASSES =
+  "inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
+
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -208,7 +211,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="secondary"
-                  className="rounded-full"
+                  className={EXPLORE_BUTTON_CLASSES}
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -219,7 +222,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="primary"
-                  className="rounded-full"
+                  className={EXPLORE_BUTTON_CLASSES}
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -315,7 +318,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="secondary"
-                className="rounded-full"
+                className={EXPLORE_BUTTON_CLASSES}
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1">
@@ -326,7 +329,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="primary"
-                className="rounded-full"
+                className={EXPLORE_BUTTON_CLASSES}
                 onClick={handleRegisterClick}
               >
                 Register
