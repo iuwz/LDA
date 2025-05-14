@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
-  // New styles for Login and Register buttons
+  // Styles for Login and Register buttons
   const loginButtonStyle = `rounded-full font-semibold border border-[${ACCENT}] text-[${ACCENT}] hover:bg-[${ACCENT}] hover:text-white transition-colors`;
   const registerButtonStyle = `rounded-full font-semibold bg-[${ACCENT}] text-white hover:bg-[${ACCENT_DARKER_HOVER}] transition-colors`;
 
@@ -320,7 +320,9 @@ const Navbar: React.FC = () => {
                 className={loginButtonStyle} // Apply new style
                 onClick={handleLoginClick}
               >
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 justify-center">
+                  {" "}
+                  {/* Added justify-center for mobile button content */}
                   <LogIn size={16} />
                   <span>Login</span>
                 </div>
