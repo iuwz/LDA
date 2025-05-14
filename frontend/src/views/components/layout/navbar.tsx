@@ -211,21 +211,21 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 <Button
-                  size="md"
+                  size="sm"
                   variant="secondary"
-                  className="inline-flex items-center px-6 py-2 border-2 border-[#C17829] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
+                  className="inline-flex items-center px-4 py-1 border-2 border-[#E3A063] text-[#E3A063] rounded-full font-semibold text-sm transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
-                    <LogIn size={16} />
+                    <LogIn size={14} />
                     <span>Login</span>
                   </div>
                 </Button>
 
                 <Button
-                  size="md"
+                  size="sm"
                   variant="primary"
-                  className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
+                  className="inline-flex items-center px-4 py-1 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-sm shadow-lg transition transform hover:scale-105"
                   onClick={handleRegisterClick}
                 >
                   Register
