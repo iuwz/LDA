@@ -20,13 +20,21 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
   const [authChecked, setAuthChecked] = useState(false);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [initials, setInitials] = useState("");
+
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
   const location = useLocation();
+
   const navigate = useNavigate();
 
   const isServicesTab =
@@ -34,21 +42,28 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
+
       .then((u) => {
         setIsAuthenticated(true);
+
         setInitials(
           `${u.first_name[0].toUpperCase()}${u.last_name[0].toUpperCase()}`
         );
       })
+
       .catch(() => setIsAuthenticated(false))
+
       .finally(() => setAuthChecked(true));
   }, []);
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
+
       if (window.innerWidth >= 1024) setIsMobileMenuOpen(false);
     };
+
     window.addEventListener("resize", onResize);
+
     return () => window.removeEventListener("resize", onResize);
   }, []);
   useEffect(() => {
@@ -61,11 +76,14 @@ const Navbar: React.FC = () => {
         setIsProfileDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handle);
+
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -73,32 +91,46 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     if (location.hash === "#services") {
       document
+
         .getElementById("services")
+
         ?.scrollIntoView({ behavior: "smooth" });
     }
   }, [location.hash]);
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
+
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
   const handleLoginClick = () => {
     navigate("/auth?form=login");
+
     setIsMobileMenuOpen(false);
   };
+
   const handleRegisterClick = () => {
     navigate("/auth?form=register");
+
     setIsMobileMenuOpen(false);
   };
+
   const handleLogout = async () => {
     await fetch(`${API_BASE}/auth/logout`, {
       method: "POST",
+
       credentials: "include",
     });
+
     setIsAuthenticated(false);
+
     setIsProfileDropdownOpen(false);
+
     setIsMobileMenuOpen(false);
+
     navigate("/");
   };
   const getIconSize = () => (screenWidth < 350 ? 16 : 20);
+
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
+
   const inactiveLink = "hover:text-[#C17829] transition-colors";
   return (
     <div>
@@ -199,7 +231,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="secondary"
-                  className="rounded-full bg-white text-[#C17829] border border-[#C17829] shadow-md transition transform hover:scale-105"
+                  className="rounded-full bg-white text-[#C17829] border border-[#C17829] shadow-lg transition transform hover:scale-105"
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -210,7 +242,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="md"
                   variant="primary"
-                  className="rounded-full bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white shadow-md transition transform hover:scale-105"
+                  className="rounded-full bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white shadow-lg transition transform hover:scale-105"
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -306,7 +338,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="secondary"
-                className="rounded-full bg-white text-[#C17829] border border-[#C17829] shadow-md transition transform hover:scale-105"
+                className="rounded-full bg-white text-[#C17829] border border-[#C17829] shadow-lg transition transform hover:scale-105"
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1">
@@ -317,7 +349,7 @@ const Navbar: React.FC = () => {
               <Button
                 size="md"
                 variant="primary"
-                className="rounded-full bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white shadow-md transition transform hover:scale-105"
+                className="rounded-full bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white shadow-lg transition transform hover:scale-105"
                 onClick={handleRegisterClick}
               >
                 Register
