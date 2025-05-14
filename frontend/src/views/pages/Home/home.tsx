@@ -260,7 +260,7 @@ function WhyChooseUs() {
 
 const TESTIMONIALS = [
   {
-    name: "Ahmed Alfaifi,",
+    name: "Ahmed Alfaifi",
     role: "Software Engineer",
     quote:
       "LDA's AI tools have revolutionized our review process, saving us countless hours.",
@@ -351,7 +351,7 @@ function Testimonials() {
                 <img
                   src={t.avatarUrl}
                   alt={t.name}
-                  className="w-12 h-12 rounded-full border-2 border-[#C17829]/50 mr-3"
+                  className="w-12 h-12 rounded-full mr-3"
                 />
                 <div>
                   <p className="font-semibold text-[#2C2C4A]">{t.name}</p>
