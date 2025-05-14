@@ -278,7 +278,7 @@ function SignUpForm({
               >
                 {isSending
                   ? <FaSpinner className="animate-spin" />
-                  : (codeSent ? "Resend" : "Send")
+                  : (codeSent ? "Resend" : "Verify")
                 }
               </Button>
               {emailError && (
