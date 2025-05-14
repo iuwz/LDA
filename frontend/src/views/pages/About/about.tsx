@@ -1,22 +1,22 @@
 // src/views/pages/About/About.tsx
-import React from "react"
-import { motion } from "framer-motion"
+import React from "react";
+import { motion } from "framer-motion";
 import {
   FaUserTie,
   FaLightbulb,
   FaHandshake,
   FaGlobe,
   FaLinkedinIn,
-} from "react-icons/fa"
-import Hero from "../../components/common/Hero"
-import aboutHero from "../../../assets/images/about-hero.jpeg"
+} from "react-icons/fa";
+import Hero from "../../components/common/Hero";
+import aboutHero from "../../../assets/images/about-hero.jpeg";
 
-import Mazen from "../../../assets/images/mazen.jpg"
-import Rayan from "../../../assets/images/rayan.jpg"
-import Abdulaziz from "../../../assets/images/azoz.jpg"
-import Ibrahim from "../../../assets/images/ibra.jpg"
+import Mazen from "../../../assets/images/mazen.jpg";
+import Rayan from "../../../assets/images/rayan.jpg";
+import Abdulaziz from "../../../assets/images/azoz.jpg";
+import Ibrahim from "../../../assets/images/ibra.jpg";
 
-import { BubbleGenerator } from "../Home/home"
+import { BubbleGenerator } from "../Home/home";
 
 const teamMembers = [
   {
@@ -36,7 +36,7 @@ const teamMembers = [
   {
     name: "Ibrahim Alfayez",
     role: "Consultant",
-    bio: "Translates business challenges into explainable AI strategies, guiding teams from concept to production.",
+    bio: "Turns complex problems into elegant machine-learning solutions.",
     avatarUrl: Ibrahim,
     linkedin: "https://www.linkedin.com/in/ibrahimalfayez29/",
   },
@@ -47,14 +47,30 @@ const teamMembers = [
     avatarUrl: Rayan,
     linkedin: "https://www.linkedin.com/in/rayan-alghamdi04/",
   },
-]
+];
 
 const values = [
-  { icon: FaLightbulb, title: "Innovation", desc: "Committed to innovation in everything we do." },
-  { icon: FaHandshake, title: "Integrity", desc: "Committed to integrity in everything we do." },
-  { icon: FaGlobe, title: "Global Reach", desc: "Committed to global reach in everything we do." },
-  { icon: FaUserTie, title: "Expertise", desc: "Committed to expertise in everything we do." },
-]
+  {
+    icon: FaLightbulb,
+    title: "Innovation",
+    desc: "Committed to innovation in everything we do.",
+  },
+  {
+    icon: FaHandshake,
+    title: "Integrity",
+    desc: "Committed to integrity in everything we do.",
+  },
+  {
+    icon: FaGlobe,
+    title: "Global Reach",
+    desc: "Committed to global reach in everything we do.",
+  },
+  {
+    icon: FaUserTie,
+    title: "Expertise",
+    desc: "Committed to expertise in everything we do.",
+  },
+];
 
 export default function About() {
   return (
@@ -68,21 +84,19 @@ export default function About() {
       />
 
       <div className="overflow-hidden leading-[0]">
-        <svg className="-mt-1 w-full h-12" viewBox="0 0 1440 54" preserveAspectRatio="none">
+        <svg
+          className="-mt-1 w-full h-12"
+          viewBox="0 0 1440 54"
+          preserveAspectRatio="none"
+        >
           <path d="M0,22L1440,54L1440,0L0,0Z" fill="white" />
         </svg>
       </div>
 
       <section
         id="our-story"
-        className="relative bg-white px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 md:pt-12 pb-12 sm:pb-16 lg:pb-20"
+        className="bg-white px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
       >
-        <div className="absolute -top-1 w-full overflow-hidden leading-[0] rotate-180">
-          <svg className="w-full h-12" viewBox="0 0 1440 54" preserveAspectRatio="none">
-            <path d="M0,22L1440,54L1440,0L0,0Z" fill="white" />
-          </svg>
-        </div>
-
         <motion.div
           className="max-w-3xl mx-auto text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -94,19 +108,20 @@ export default function About() {
             Our Story
           </h2>
           <p className="text-base sm:text-lg leading-relaxed">
-            Founded on the belief that legal processes can be re-imagined through technology, our team merged legal
-            expertise with cutting-edge AI. Today, we simplify workflows, mitigate risks, and empower legal
-            professionals around the globe.
+            Founded on the belief that legal processes can be re-imagined
+            through technology, our team merged legal expertise with
+            cutting-edge AI. Today, we simplify workflows, mitigate risks, and
+            empower legal professionals around the globe.
           </p>
         </motion.div>
       </section>
 
       <section className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-y-0 left-0 w-1/2 opacity-[0.07] blur-[2px]">
+          <div className="absolute inset-y-0 left-0 w-1/2">
             <BubbleGenerator />
           </div>
-          <div className="absolute inset-y-0 right-0 w-1/2 opacity-[0.07] blur-[2px]">
+          <div className="absolute inset-y-0 right-0 w-1/2">
             <BubbleGenerator />
           </div>
         </div>
@@ -122,8 +137,9 @@ export default function About() {
             Our Mission
           </h2>
           <p className="text-base sm:text-lg leading-relaxed max-w-prose mx-auto mb-12">
-            To empower legal professionals with AI tools that streamline processes and enhance accuracy—fostering a
-            transparent, efficient legal ecosystem.
+            To empower legal professionals with AI tools that streamline
+            processes and enhance accuracy—fostering a transparent, efficient
+            legal ecosystem.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -181,7 +197,7 @@ export default function About() {
                 <img
                   src={m.avatarUrl}
                   alt={m.name}
-                  className="w-24 h-24 rounded-full mb-4 object-cover object-center"
+                  className="w-24 h-24 rounded-full mb-4 object-cover"
                 />
                 <h3 className="font-serif text-xl text-[#2C2C4A] font-semibold mb-1 text-center">
                   {m.name}
@@ -196,8 +212,7 @@ export default function About() {
                   href={m.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`LinkedIn profile of ${m.name}`}
-                  className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] bg-white transition-colors hover:border-transparent hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#2C2C4A] hover:text-white"
+                  className="flex items-center justify-center w-8 h-8 rounded-full border border-[#2C2C4A] text-[#2C2C4A] hover:bg-[#C17829] hover:text-white transition-colors"
                 >
                   <FaLinkedinIn />
                 </a>
@@ -207,5 +222,5 @@ export default function About() {
         </div>
       </section>
     </main>
-  )
+  );
 }
