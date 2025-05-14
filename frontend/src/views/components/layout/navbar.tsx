@@ -106,8 +106,10 @@ const Navbar: React.FC = () => {
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
   // Styles for Login and Register buttons
-  const loginButtonStyle = `inline-flex items-center px-6 py-2 border-2 border-[#C17829] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white`;
-  const registerButtonStyle = `inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105`;
+  const loginButtonStyle =
+    "inline-flex items-center justify-center w-[105px] h-[40px] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
+  const registerButtonStyle =
+    "inline-flex items-center justify-center w-[105px] h-[40px] bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
 
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
