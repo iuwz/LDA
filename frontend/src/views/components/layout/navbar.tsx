@@ -27,15 +27,17 @@ const Navbar: React.FC = () => {
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
-  // Styles
+  // Desktop link styles
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
+
+  // Button styles
   const loginButtonStyle =
     "inline-flex items-center justify-center w-[105px] h-[40px] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
   const registerButtonStyle =
     "inline-flex items-center justify-center w-[105px] h-[40px] bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
 
-  // Fetch auth
+  // Fetch auth state
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -49,7 +51,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  // Close profile dropdown on outside click
+  // Click outside to close profile dropdown
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (
@@ -64,7 +66,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", onClick);
   }, [isProfileDropdownOpen]);
 
-  // Prevent body scroll when mobile menu open
+  // Prevent body scroll when drawer open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -96,8 +98,9 @@ const Navbar: React.FC = () => {
 
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* Navbar */}
+      {/* Top Navbar */}
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
+        {/* Logo */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -110,6 +113,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* Desktop Links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -122,6 +126,7 @@ const Navbar: React.FC = () => {
           >
             Home
           </NavLink>
+
           {authChecked && isAuthenticated && (
             <NavLink
               to="/dashboard"
@@ -132,6 +137,7 @@ const Navbar: React.FC = () => {
               Dashboard
             </NavLink>
           )}
+
           <Link
             to="/#services"
             className={`relative px-1 pb-1 ${
@@ -140,6 +146,7 @@ const Navbar: React.FC = () => {
           >
             Services
           </Link>
+
           <NavLink
             to="/about"
             className={({ isActive }) =>
@@ -148,6 +155,7 @@ const Navbar: React.FC = () => {
           >
             About
           </NavLink>
+
           <NavLink
             to="/contact"
             className={({ isActive }) =>
@@ -158,6 +166,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* Desktop Auth / Profile */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -217,12 +226,13 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* Mobile Hamburger / X */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
             className="text-[#2C2C4A] hover:text-[#C17829] p-2"
           >
-            <FaBars size={20} />
+            {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
           </button>
         </div>
       </nav>
@@ -230,14 +240,16 @@ const Navbar: React.FC = () => {
       {/* Mobile Side Drawer */}
       {isMobileMenuOpen && (
         <>
+          {/* Backdrop */}
           <div
             className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
             onClick={toggleMobileMenu}
           />
 
+          {/* Drawer */}
           <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col">
-            {/* Header with logo & single close */}
-            <div className="flex items-center justify-between h-12 px-6 border-b">
+            {/* Logo + Divider */}
+            <div className="h-14 px-6 flex items-center border-b">
               <NavLink
                 to="/"
                 end
@@ -252,16 +264,10 @@ const Navbar: React.FC = () => {
                   LDA
                 </span>
               </NavLink>
-              <button
-                onClick={toggleMobileMenu}
-                className="text-[#2C2C4A] hover:text-[#C17829] p-2"
-              >
-                <FaTimes size={20} />
-              </button>
             </div>
 
-            {/* Centered Nav Links */}
-            <nav className="flex-1 flex flex-col items-center justify-center space-y-6 py-4">
+            {/* Nav Links at Top */}
+            <nav className="flex-1 px-6 pt-4 flex flex-col space-y-4">
               <NavLink
                 to="/"
                 end
@@ -272,6 +278,7 @@ const Navbar: React.FC = () => {
               >
                 Home
               </NavLink>
+
               {authChecked && isAuthenticated && (
                 <NavLink
                   to="/dashboard"
@@ -283,17 +290,17 @@ const Navbar: React.FC = () => {
                   Dashboard
                 </NavLink>
               )}
+
               <NavLink
                 to="/#services"
                 className={({ isActive }) =>
-                  `text-lg ${
-                    isActive || isServicesTab ? activeLink : inactiveLink
-                  }`
+                  `text-lg ${isServicesTab ? activeLink : inactiveLink}`
                 }
                 onClick={toggleMobileMenu}
               >
                 Services
               </NavLink>
+
               <NavLink
                 to="/about"
                 className={({ isActive }) =>
@@ -303,6 +310,7 @@ const Navbar: React.FC = () => {
               >
                 About
               </NavLink>
+
               <NavLink
                 to="/contact"
                 className={({ isActive }) =>
@@ -316,7 +324,32 @@ const Navbar: React.FC = () => {
 
             {/* Centered Desktop-style Buttons */}
             <div className="px-6 pb-6 flex flex-col items-center space-y-4">
-              {authChecked && !isAuthenticated && (
+              {!authChecked ? null : isAuthenticated ? (
+                <>
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    className={loginButtonStyle}
+                    onClick={() => {
+                      navigate("/dashboard/profile");
+                      toggleMobileMenu();
+                    }}
+                  >
+                    Profile
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    className={loginButtonStyle.replace(
+                      /hover:bg-gradient-to-r[\s\S]*/,
+                      "text-red-600 hover:bg-red-50"
+                    )}
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
                 <>
                   <Button
                     size="md"
@@ -336,32 +369,6 @@ const Navbar: React.FC = () => {
                     onClick={handleRegisterClick}
                   >
                     Register
-                  </Button>
-                </>
-              )}
-              {authChecked && isAuthenticated && (
-                <>
-                  <Button
-                    size="md"
-                    variant="secondary"
-                    className={loginButtonStyle}
-                    onClick={() => {
-                      navigate("/dashboard/profile");
-                      toggleMobileMenu();
-                    }}
-                  >
-                    Profile
-                  </Button>
-                  <Button
-                    size="md"
-                    variant="secondary"
-                    className={loginButtonStyle.replace(
-                      "hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white",
-                      "text-red-600 hover:bg-red-50"
-                    )}
-                    onClick={handleLogout}
-                  >
-                    Logout
                   </Button>
                 </>
               )}
