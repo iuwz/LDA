@@ -13,7 +13,6 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const ACCENT_DARKER_HOVER = "#A25F22";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -25,9 +24,21 @@ const Navbar: React.FC = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
   const isServicesTab =
     location.pathname === "/" && location.hash === "#services";
 
+  // Styles for desktop links
+  const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
+  const inactiveLink = "hover:text-[#C17829] transition-colors";
+
+  // Styles for mobile links
+  const activeMobileLink = `w-full text-left text-lg font-semibold text-[${ACCENT}] border-b-2 border-[${ACCENT}] pb-1`;
+  const inactiveMobileLink = `w-full text-left text-lg text-[#2C2C4A] hover:text-[#C17829] pb-1 transition-colors`;
+
+  const getIconSize = () => (screenWidth < 350 ? 16 : 20);
+
+  // Fetch auth state
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -41,6 +52,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
+  // Close mobile menu on resize
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -50,6 +62,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Close profile dropdown on outside click
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -64,6 +77,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
+  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -71,6 +85,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  // Scroll to #services anchor
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -101,18 +116,11 @@ const Navbar: React.FC = () => {
     navigate("/");
   };
 
-  const getIconSize = () => (screenWidth < 350 ? 16 : 20);
-  const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
-  const inactiveLink = "hover:text-[#C17829] transition-colors";
-
-  const loginButtonStyle =
-    "inline-flex items-center justify-center w-[105px] h-[40px] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
-  const registerButtonStyle =
-    "inline-flex items-center justify-center w-[105px] h-[40px] bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
-
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
+      {/* Desktop Navbar */}
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
+        {/* Logo */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -125,6 +133,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* Center Links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -138,6 +147,7 @@ const Navbar: React.FC = () => {
           >
             Home
           </NavLink>
+
           {authChecked && isAuthenticated && (
             <NavLink
               to="/dashboard"
@@ -148,6 +158,7 @@ const Navbar: React.FC = () => {
               Dashboard
             </NavLink>
           )}
+
           <Link
             to="/#services"
             className={`relative px-1 pb-1 ${
@@ -157,14 +168,7 @@ const Navbar: React.FC = () => {
           >
             Services
           </Link>
-          <NavLink
-            to="/contact"
-            className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
-            }
-          >
-            Contact
-          </NavLink>
+
           <NavLink
             to="/about"
             className={({ isActive }) =>
@@ -173,8 +177,18 @@ const Navbar: React.FC = () => {
           >
             About
           </NavLink>
+
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+            }
+          >
+            Contact
+          </NavLink>
         </div>
 
+        {/* Profile / Auth Buttons */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -211,7 +225,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="sm"
                   variant="secondary"
-                  className={loginButtonStyle}
+                  className="inline-flex items-center justify-center w-[105px] h-[40px] text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -219,10 +233,11 @@ const Navbar: React.FC = () => {
                     <span>Login</span>
                   </div>
                 </Button>
+
                 <Button
                   size="sm"
                   variant="primary"
-                  className={registerButtonStyle}
+                  className="inline-flex items-center justify-center w-[105px] h-[40px] bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -234,6 +249,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* Mobile Hamburger */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -248,129 +264,140 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
+      {/* Mobile Side Drawer */}
       {isMobileMenuOpen && (
         <>
           <div
             className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
             onClick={toggleMobileMenu}
           />
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white pt-20 flex flex-col items-center space-y-6 px-6 shadow-lg">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
-                  isActive
-                    ? "bg-[#C17829] text-white"
-                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
-                }`
-              }
-              onClick={toggleMobileMenu}
-            >
-              Home
-            </NavLink>
-
-            {authChecked && isAuthenticated && (
+          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col">
+            {/* Logo & Close */}
+            <div className="flex items-center justify-between h-12 px-6 border-b">
               <NavLink
-                to="/dashboard"
+                to="/"
+                end
+                className="flex items-center space-x-2"
+                onClick={toggleMobileMenu}
+              >
+                <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
+                <span
+                  className="text-xl font-serif font-bold"
+                  style={{ color: ACCENT }}
+                >
+                  LDA
+                </span>
+              </NavLink>
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 hover:bg-gray-100 rounded"
+              >
+                <FaTimes className="text-xl text-[#2C2C4A]" />
+              </button>
+            </div>
+
+            {/* Nav Links */}
+            <div className="flex-1 px-6 py-4 flex flex-col space-y-4">
+              <NavLink
+                to="/"
+                end
                 className={({ isActive }) =>
-                  `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
-                    isActive
-                      ? "bg-[#C17829] text-white"
-                      : "text-[#2C2C4A] hover:bg-[#f7ede1]"
-                  }`
+                  isActive && location.hash === ""
+                    ? activeMobileLink
+                    : inactiveMobileLink
                 }
                 onClick={toggleMobileMenu}
               >
-                Dashboard
+                Home
               </NavLink>
-            )}
-
-            <NavLink
-              to="/#services"
-              className={({ isActive }) =>
-                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
-                  isServicesTab
-                    ? "bg-[#C17829] text-white"
-                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
-                }`
-              }
-              onClick={toggleMobileMenu}
-            >
-              Services
-            </NavLink>
-
-            <NavLink
-              to="/about"
-              className={({ isActive }) =>
-                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
-                  isActive
-                    ? "bg-[#C17829] text-white"
-                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
-                }`
-              }
-              onClick={toggleMobileMenu}
-            >
-              About
-            </NavLink>
-
-            <NavLink
-              to="/contact"
-              className={({ isActive }) =>
-                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
-                  isActive
-                    ? "bg-[#C17829] text-white"
-                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
-                }`
-              }
-              onClick={toggleMobileMenu}
-            >
-              Contact
-            </NavLink>
-
-            {!authChecked ? (
-              <div className="h-8 w-full" />
-            ) : isAuthenticated ? (
-              <>
-                <button
-                  className="w-full text-center text-xl font-medium py-2 rounded-md text-[#2C2C4A] hover:bg-[#f7ede1] transition-colors flex items-center justify-center"
-                  onClick={() => {
-                    navigate("/dashboard/profile");
-                    setIsMobileMenuOpen(false);
-                  }}
+              {authChecked && isAuthenticated && (
+                <NavLink
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    isActive ? activeMobileLink : inactiveMobileLink
+                  }
+                  onClick={toggleMobileMenu}
                 >
-                  <FaUserCircle className="mr-2" size={18} /> Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-center text-xl font-medium py-2 rounded-md text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center"
-                >
-                  <FaSignOutAlt className="mr-2" size={18} /> Logout
-                </button>
-              </>
-            ) : (
-              <div className="flex flex-col items-center space-y-4 w-full">
-                <Button
-                  size="md"
-                  variant="secondary"
-                  className={loginButtonStyle}
-                  onClick={handleLoginClick}
-                >
-                  <div className="flex items-center justify-center space-x-1">
-                    <LogIn size={16} />
-                    <span>Login</span>
-                  </div>
-                </Button>
-                <Button
-                  size="md"
-                  variant="primary"
-                  className={registerButtonStyle}
-                  onClick={handleRegisterClick}
-                >
-                  Register
-                </Button>
-              </div>
-            )}
+                  Dashboard
+                </NavLink>
+              )}
+              <NavLink
+                to="/#services"
+                className={({ isActive }) =>
+                  location.hash === "#services"
+                    ? activeMobileLink
+                    : inactiveMobileLink
+                }
+                onClick={toggleMobileMenu}
+              >
+                Services
+              </NavLink>
+              <NavLink
+                to="/about"
+                className={({ isActive }) =>
+                  isActive ? activeMobileLink : inactiveMobileLink
+                }
+                onClick={toggleMobileMenu}
+              >
+                About
+              </NavLink>
+              <NavLink
+                to="/contact"
+                className={({ isActive }) =>
+                  isActive ? activeMobileLink : inactiveMobileLink
+                }
+                onClick={toggleMobileMenu}
+              >
+                Contact
+              </NavLink>
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="px-6 pb-6 flex flex-col space-y-4">
+              {authChecked ? (
+                isAuthenticated ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/profile");
+                        toggleMobileMenu();
+                      }}
+                      className={inactiveMobileLink}
+                    >
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className={inactiveMobileLink}
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      className="w-full"
+                      onClick={handleLoginClick}
+                    >
+                      <div className="flex items-center justify-center space-x-1">
+                        <LogIn size={16} />
+                        <span>Login</span>
+                      </div>
+                    </Button>
+                    <Button
+                      size="md"
+                      variant="primary"
+                      className="w-full"
+                      onClick={handleRegisterClick}
+                    >
+                      Register
+                    </Button>
+                  </>
+                )
+              ) : null}
+            </div>
           </aside>
         </>
       )}
