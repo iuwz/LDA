@@ -26,7 +26,8 @@ const Navbar: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initials, setInitials] = useState("");
 
-  const profileDropdownRef = useRef(null);
+  // Fix: Explicitly type the useRef for the profile dropdown element
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,6 +60,9 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
+      // The check `profileDropdownRef.current` is correctly used here.
+      // Typing the ref helps TypeScript understand that profileDropdownRef.current,
+      // when not null, is an HTMLDivElement which *does* have the contains method.
       if (
         isProfileDropdownOpen &&
         profileDropdownRef.current &&
@@ -70,7 +74,7 @@ const Navbar: React.FC = () => {
 
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
-  }, [isProfileDropdownOpen]);
+  }, [isProfileDropdownOpen]); // Depend on isProfileDropdownOpen
 
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
@@ -115,6 +119,12 @@ const Navbar: React.FC = () => {
 
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
+
+  // Assuming these styles are from your original code or defined elsewhere
+  const buttonBaseStyle =
+    "inline-flex items-center px-8 py-3 rounded-full font-semibold text-lg shadow-lg transition transform";
+  const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white hover:scale-105`; // Re-added based on the previous request context
+  const secondaryButtonStyle = `${buttonBaseStyle} bg-white text-[#2C2C4A] border border-[#C17829] hover:scale-105`; // Re-added based on the previous request context
 
   return (
     <div>
@@ -185,7 +195,8 @@ const Navbar: React.FC = () => {
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
-              <div className="relative">
+              // Assign the ref to the element you want to track clicks outside of
+              <div className="relative" ref={profileDropdownRef}>
                 <div
                   onClick={toggleProfileDropdown}
                   className="h-8 w-8 rounded-full bg-[#2C2C4A] text-white flex items-center justify-center cursor-pointer"
@@ -215,10 +226,11 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <>
+                {/* Applied the button styles from the previous request */}
                 <Button
                   size="md"
                   variant="secondary"
-                  className="rounded-full"
+                  className={`${secondaryButtonStyle} rounded-full`} // Keep original rounded-full style if needed
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -226,10 +238,11 @@ const Navbar: React.FC = () => {
                     <span>Login</span>
                   </div>
                 </Button>
+                {/* Applied the button styles from the previous request */}
                 <Button
                   size="md"
                   variant="primary"
-                  className="rounded-full"
+                  className={`${primaryButtonStyle} rounded-full`} // Keep original rounded-full style if needed
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -322,10 +335,11 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
+              {/* Applied the button styles from the previous request */}
               <Button
                 size="md"
                 variant="secondary"
-                className="rounded-full"
+                className={`${secondaryButtonStyle} rounded-full`} // Keep original rounded-full style if needed
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1">
@@ -333,10 +347,11 @@ const Navbar: React.FC = () => {
                   <span>Login</span>
                 </div>
               </Button>
+              {/* Applied the button styles from the previous request */}
               <Button
                 size="md"
                 variant="primary"
-                className="rounded-full"
+                className={`${primaryButtonStyle} rounded-full`} // Keep original rounded-full style if needed
                 onClick={handleRegisterClick}
               >
                 Register
