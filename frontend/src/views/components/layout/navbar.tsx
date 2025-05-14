@@ -13,6 +13,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
+const ACCENT_DARKER_HOVER = "#A25F22"; // A slightly darker shade of ACCENT for hover
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -103,6 +104,10 @@ const Navbar: React.FC = () => {
   const getIconSize = () => (screenWidth < 350 ? 16 : 20);
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
+
+  // New styles for Login and Register buttons
+  const loginButtonStyle = `rounded-full font-semibold border border-[${ACCENT}] text-[${ACCENT}] hover:bg-[${ACCENT}] hover:text-white transition-colors`;
+  const registerButtonStyle = `rounded-full font-semibold bg-[${ACCENT}] text-white hover:bg-[${ACCENT_DARKER_HOVER}] transition-colors`;
 
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
@@ -205,20 +210,23 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <>
-                <NavLink
-                  to="/auth?form=login"
-                  className={`relative px-1 pb-1 ${inactiveLink}`}
+                <Button
+                  size="md"
+                  className={loginButtonStyle}
                   onClick={handleLoginClick}
                 >
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/auth?form=register"
-                  className={`relative px-1 pb-1 ${inactiveLink}`}
+                  <div className="flex items-center space-x-1">
+                    <LogIn size={16} />
+                    <span>Login</span>
+                  </div>
+                </Button>
+                <Button
+                  size="md"
+                  className={registerButtonStyle}
                   onClick={handleRegisterClick}
                 >
                   Register
-                </NavLink>
+                </Button>
               </>
             )
           ) : (
@@ -307,20 +315,23 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <NavLink
-                to="/auth?form=login"
-                className="text-xl"
-                onClick={() => setIsMobileMenuOpen(false)}
+              <Button
+                size="md"
+                className={loginButtonStyle} // Apply new style
+                onClick={handleLoginClick}
               >
-                Login
-              </NavLink>
-              <NavLink
-                to="/auth?form=register"
-                className="text-xl"
-                onClick={() => setIsMobileMenuOpen(false)}
+                <div className="flex items-center space-x-1">
+                  <LogIn size={16} />
+                  <span>Login</span>
+                </div>
+              </Button>
+              <Button
+                size="md"
+                className={registerButtonStyle} // Apply new style
+                onClick={handleRegisterClick}
               >
                 Register
-              </NavLink>
+              </Button>
             </>
           )}
         </div>
