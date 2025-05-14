@@ -303,6 +303,8 @@ function Testimonials() {
   useEffect(() => {
     function update() {
       const w = window.innerWidth;
+      // Keeping the responsive logic for how many cards are shown per page
+      // but the individual card size is now fixed.
       if (w >= 1024) setPerPage(3);
       else if (w >= 640) setPerPage(2);
       else setPerPage(1);
@@ -344,11 +346,14 @@ function Testimonials() {
           <FaChevronRight />
         </button>
 
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Adjusted grid to center items and potentially handle fixed size */}
+        {/* You might need to further adjust the gap or parent container padding/width */}
+        <div className="flex justify-center items-center flex-wrap gap-6">
           {visible.map((t, i) => (
             <motion.div
               key={i}
-              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1"
+              // Added fixed width and height classes
+              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1 w-[400px] h-[206px] flex flex-col justify-between"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -358,14 +363,15 @@ function Testimonials() {
                 <img
                   src={t.avatarUrl}
                   alt={t.name}
-                  className="w-12 h-12 rounded-full mr-3"
+                  className="w-12 h-12 rounded-full mr-3 object-cover" // Added object-cover
                 />
                 <div>
                   <p className="font-semibold text-[#2C2C4A]">{t.name}</p>
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
               </div>
-              <p className="text-gray-700 italic leading-relaxed">
+              {/* Added overflow-hidden and text ellipsis if needed, though fixed height might cause cut-off */}
+              <p className="text-gray-700 italic leading-relaxed overflow-hidden text-ellipsis">
                 "{t.quote}"
               </p>
             </motion.div>
