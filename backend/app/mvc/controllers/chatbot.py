@@ -31,8 +31,7 @@ _CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"  # cheap & fast
 # Bare‑bones instruction; we’ll embed the user question below.
 _CLASSIFIER_PROMPT_TEMPLATE = (
     "You are a short classification assistant. "
-    "Given a user question, decide if it seeks *legal* information or advice "
-    "(contracts, regulations, compliance, disputes, privacy policies, etc.).\n\n"
+    "Given a user question, decide if it seeks *legal or similar near legal field* information or advice "
     "Return exactly either LEGAL or NONLEGAL—no extra words, no punctuation.\n\n"
     "User question: {question}\nAnswer:"
 )
