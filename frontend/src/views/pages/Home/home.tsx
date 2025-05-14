@@ -291,7 +291,7 @@ const TESTIMONIALS = [
     name: "Fahad Alzuhair ",
     role: "Finance Student",
     quote:
-      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand. It provides quick and accurate insights, helping me make informed decisions faster.",
+      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand. It provides quick and accurate insights!",
     avatarUrl: fahad,
   },
 ];
