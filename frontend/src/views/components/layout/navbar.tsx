@@ -13,7 +13,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const ACCENT_DARKER_HOVER = "#A25F22"; // A slightly darker shade of ACCENT for hover
+const ACCENT_DARKER_HOVER = "#A25F22";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -138,7 +138,6 @@ const Navbar: React.FC = () => {
           >
             Home
           </NavLink>
-
           {authChecked && isAuthenticated && (
             <NavLink
               to="/dashboard"
@@ -149,7 +148,6 @@ const Navbar: React.FC = () => {
               Dashboard
             </NavLink>
           )}
-
           <Link
             to="/#services"
             className={`relative px-1 pb-1 ${
@@ -167,7 +165,6 @@ const Navbar: React.FC = () => {
           >
             Contact
           </NavLink>
-
           <NavLink
             to="/about"
             className={({ isActive }) =>
@@ -257,60 +254,102 @@ const Navbar: React.FC = () => {
             className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
             onClick={toggleMobileMenu}
           />
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white pt-20 flex flex-col space-y-6 px-6">
-            <NavLink to="/" end className="text-xl" onClick={toggleMobileMenu}>
+          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white pt-20 flex flex-col items-center space-y-6 px-6 shadow-lg">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
+                  isActive
+                    ? "bg-[#C17829] text-white"
+                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
+                }`
+              }
+              onClick={toggleMobileMenu}
+            >
               Home
             </NavLink>
+
             {authChecked && isAuthenticated && (
               <NavLink
                 to="/dashboard"
-                className="text-xl"
+                className={({ isActive }) =>
+                  `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
+                    isActive
+                      ? "bg-[#C17829] text-white"
+                      : "text-[#2C2C4A] hover:bg-[#f7ede1]"
+                  }`
+                }
                 onClick={toggleMobileMenu}
               >
                 Dashboard
               </NavLink>
             )}
-            <Link
+
+            <NavLink
               to="/#services"
-              className="text-xl"
+              className={({ isActive }) =>
+                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
+                  isServicesTab
+                    ? "bg-[#C17829] text-white"
+                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
+                }`
+              }
               onClick={toggleMobileMenu}
             >
               Services
-            </Link>
-            <NavLink to="/about" className="text-xl" onClick={toggleMobileMenu}>
+            </NavLink>
+
+            <NavLink
+              to="/about"
+              className={({ isActive }) =>
+                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
+                  isActive
+                    ? "bg-[#C17829] text-white"
+                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
+                }`
+              }
+              onClick={toggleMobileMenu}
+            >
               About
             </NavLink>
+
             <NavLink
               to="/contact"
-              className="text-xl"
+              className={({ isActive }) =>
+                `w-full text-center text-xl font-medium py-2 rounded-md transition-colors ${
+                  isActive
+                    ? "bg-[#C17829] text-white"
+                    : "text-[#2C2C4A] hover:bg-[#f7ede1]"
+                }`
+              }
               onClick={toggleMobileMenu}
             >
               Contact
             </NavLink>
 
             {!authChecked ? (
-              <div className="h-8 w-32" />
+              <div className="h-8 w-full" />
             ) : isAuthenticated ? (
               <>
                 <button
-                  className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg hover:bg-gray-100"
+                  className="w-full text-center text-xl font-medium py-2 rounded-md text-[#2C2C4A] hover:bg-[#f7ede1] transition-colors flex items-center justify-center"
                   onClick={() => {
                     navigate("/dashboard/profile");
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  <FaUserCircle className="mr-2 text-[#2C2C4A]" size={18} />{" "}
-                  Profile
+                  <FaUserCircle className="mr-2" size={18} /> Profile
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg font-medium text-red-600 hover:bg-gray-100"
+                  className="w-full text-center text-xl font-medium py-2 rounded-md text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center"
                 >
                   <FaSignOutAlt className="mr-2" size={18} /> Logout
                 </button>
               </>
             ) : (
-              <div className="flex flex-col space-y-4">
+              <div className="flex flex-col items-center space-y-4 w-full">
                 <Button
                   size="md"
                   variant="secondary"
