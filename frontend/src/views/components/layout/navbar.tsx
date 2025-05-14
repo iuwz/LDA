@@ -14,9 +14,6 @@ import { Button } from "../../components/common/button";
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
 
-const EXPLORE_BUTTON_CLASSES =
-  "inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
-
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -208,25 +205,21 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <>
-                <Button
-                  size="md"
-                  variant="secondary"
-                  className={EXPLORE_BUTTON_CLASSES}
+                <button
+                  className="relative px-4 py-2 text-[#2C2C4A] hover:text-[#C17829] transition-colors"
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
                     <LogIn size={16} />
                     <span>Login</span>
                   </div>
-                </Button>
-                <Button
-                  size="md"
-                  variant="primary"
-                  className={EXPLORE_BUTTON_CLASSES}
+                </button>
+                <button
+                  className="relative px-4 py-2 text-[#2C2C4A] hover:text-[#C17829] transition-colors font-medium"
                   onClick={handleRegisterClick}
                 >
                   Register
-                </Button>
+                </button>
               </>
             )
           ) : (
@@ -315,25 +308,21 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <Button
-                size="md"
-                variant="secondary"
-                className={EXPLORE_BUTTON_CLASSES}
+              <button
+                className="text-xl text-[#2C2C4A] hover:text-[#C17829] transition-colors"
                 onClick={handleLoginClick}
               >
                 <div className="flex items-center space-x-1">
                   <LogIn size={16} />
                   <span>Login</span>
                 </div>
-              </Button>
-              <Button
-                size="md"
-                variant="primary"
-                className={EXPLORE_BUTTON_CLASSES}
+              </button>
+              <button
+                className="text-xl text-[#2C2C4A] hover:text-[#C17829] transition-colors font-medium"
                 onClick={handleRegisterClick}
               >
                 Register
-              </Button>
+              </button>
             </>
           )}
         </div>
