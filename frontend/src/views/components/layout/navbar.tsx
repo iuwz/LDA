@@ -22,12 +22,39 @@ const Navbar: React.FC = () => {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initials, setInitials] = useState("");
+  const [activeSection, setActiveSection] = useState<
+    "home" | "services" | null
+  >(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const isServicesTab =
-    location.pathname === "/" && location.hash === "#services";
 
+  /* ───────── determine active section on scroll ───────── */
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setActiveSection(null);
+      return;
+    }
+    const servicesEl = document.getElementById("services");
+    if (!servicesEl) return;
+
+    const navHeight = 80; // adjust if navbar height changes
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + navHeight + 1;
+      const servicesTop = servicesEl.offsetTop;
+      const servicesBottom = servicesTop + servicesEl.offsetHeight;
+      if (scrollPos >= servicesTop && scrollPos < servicesBottom) {
+        setActiveSection("services");
+      } else {
+        setActiveSection("home");
+      }
+    };
+    handleScroll(); // run on mount
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
+
+  /* ───────── auth check ───────── */
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -41,6 +68,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
+  /* ───────── resize ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -50,6 +78,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  /* ───────── close profile dropdown on outside click ───────── */
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -64,6 +93,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
+  /* ───────── lock body scroll when mobile menu open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -71,6 +101,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  /* ───────── scroll to services on hash change ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -79,6 +110,7 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
+  /* ───────── callbacks ───────── */
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
 
@@ -105,10 +137,11 @@ const Navbar: React.FC = () => {
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
-  // Styles for Login and Register buttons: fixed 105x40, no border
+  /* ───────── button styles ───────── */
   const loginButtonStyle = `w-[105px] h-[40px] inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white`;
   const registerButtonStyle = `w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105`;
 
+  /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
       <nav className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md">
@@ -124,16 +157,18 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* ───────── desktop links ───────── */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
             end
-            className={({ isActive }) => {
-              const homeActive = isActive && location.hash === "";
-              return `relative px-1 pb-1 ${
-                homeActive ? activeLink : inactiveLink
-              }`;
-            }}
+            className={() =>
+              `relative px-1 pb-1 ${
+                activeSection !== "services" && location.pathname === "/"
+                  ? activeLink
+                  : inactiveLink
+              }`
+            }
           >
             Home
           </NavLink>
@@ -152,7 +187,7 @@ const Navbar: React.FC = () => {
           <Link
             to="/#services"
             className={`relative px-1 pb-1 ${
-              isServicesTab ? activeLink : inactiveLink
+              activeSection === "services" ? activeLink : inactiveLink
             }`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
@@ -177,6 +212,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* ───────── desktop auth ───────── */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -237,6 +273,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* ───────── mobile hamburger ───────── */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -251,6 +288,7 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
+      {/* ───────── mobile menu ───────── */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-white pt-20 flex flex-col items-center space-y-6">
           <NavLink
