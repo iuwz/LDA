@@ -179,9 +179,11 @@ export default function DashboardHome() {
 
         {/* uploads with bubbles */}
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          <div className="absolute inset-0 pointer-events-none">
-            <BubbleGenerator />
-            <BubbleGenerator />
+          {/* bubble overlay */}
+          <div className="absolute -inset-1/2 pointer-events-none overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <BubbleGenerator key={i} />
+            ))}
           </div>
 
           <div className="relative z-10 flex flex-col gap-6">
