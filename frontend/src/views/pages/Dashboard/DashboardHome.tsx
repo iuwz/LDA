@@ -1,3 +1,4 @@
+// src/views/pages/Dashboard/DashboardHome.tsx
 import React, { useEffect, useRef, useState, useMemo, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -79,7 +80,7 @@ export default function DashboardHome() {
 
   /* bubbles */
   const bubbles = useMemo(
-    () => [...Array(12)].map((_, i) => <BubbleGenerator key={i} />),
+    () => [...Array(5)].map((_, i) => <BubbleGenerator key={i} />),
     []
   );
 

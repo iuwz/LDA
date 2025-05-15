@@ -131,10 +131,11 @@ function ServicesSection() {
 
 /* ───────────────────────── Bubble background ───────────────────────── */
 export const BubbleGenerator: React.FC = () => {
+  const BUBBLE_COUNT = 20; // reduced from 40
   /* Generate bubble data **once** to prevent flicker */
   const bubbles = useMemo(
     () =>
-      Array.from({ length: 40 }).map((_, i) => {
+      Array.from({ length: BUBBLE_COUNT }).map((_, i) => {
         const size = Math.random() * 120 + 30;
         const top = Math.random() * 100;
         const left = Math.random() * 100;
@@ -219,7 +220,7 @@ const whyFeatures = [
 function WhyChooseUs() {
   return (
     <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
-      {/* floating accents (unchanged) */}
+      {/* floating accents */}
       <motion.div
         className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
         animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
@@ -397,7 +398,7 @@ export default function Home() {
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
 
-        {/* decorative circles (unchanged) */}
+        {/* decorative circles */}
         <motion.div
           className="absolute w-[300px] h-[300px] bg-[#C17829] rounded-full opacity-20 top-[-100px] left-[-100px] z-0"
           animate={{ x: [0, 50, 0], y: [0, 30, 0] }}

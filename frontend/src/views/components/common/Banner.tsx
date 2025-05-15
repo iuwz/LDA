@@ -24,7 +24,6 @@ const Banner: React.FC = () => {
     <div className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
       <div className="absolute inset-0 pointer-events-none">
         <BubbleGenerator />
-        <BubbleGenerator />
       </div>
 
       <div className="relative z-10 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
