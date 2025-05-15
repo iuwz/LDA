@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import { BubbleGenerator } from "../Home/home";
+import LoadingScreen from "../../components/common/LoadingScreen";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
@@ -25,12 +26,14 @@ interface Doc {
 const AllUploads: React.FC = () => {
   /* ───────── state ───────── */
   const [docs, setDocs] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── bubbles (reduced to 10) ───────── */
+  /* pageReady: render the whole card only after data is fetched */
+  const [pageReady, setPageReady] = useState(false);
+
+  /* ───────── bubbles (stable 10) ───────── */
   const bubbles = useMemo(
     () => [...Array(10)].map((_, i) => <BubbleGenerator key={i} />),
     []
@@ -38,7 +41,6 @@ const AllUploads: React.FC = () => {
 
   /* ───────── fetch docs ───────── */
   const fetchDocs = async () => {
-    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -50,7 +52,7 @@ const AllUploads: React.FC = () => {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setLoading(false);
+      setPageReady(true); // show page only once data arrives or fails
     }
   };
 
@@ -125,6 +127,8 @@ const AllUploads: React.FC = () => {
   );
 
   /* ────────────────────────────────────────────────────── */
+  if (!pageReady) return <LoadingScreen />; // ⬅️ prevents flicker entirely
+
   return (
     <>
       <div className="p-6 max-w-4xl mx-auto">
@@ -152,9 +156,7 @@ const AllUploads: React.FC = () => {
             </div>
 
             {/* files list */}
-            {loading ? (
-              <p className="text-gray-600">Loading…</p>
-            ) : err ? (
+            {err ? (
               <p className="text-red-600">{err}</p>
             ) : docs.length === 0 ? (
               <p className="text-gray-600">No documents uploaded yet.</p>
