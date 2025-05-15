@@ -13,7 +13,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80; // top-nav height (desktop & drawer brand)
+const NAV_HEIGHT_PX = 80; // top-nav / drawer brand height
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── determine active section on scroll ───────── */
+  /* ───────── active section on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -39,14 +39,10 @@ const Navbar: React.FC = () => {
     if (!servicesEl) return;
 
     const handleScroll = () => {
-      const scrollPos = window.scrollY + NAV_HEIGHT_PX + 1;
-      const servicesTop = servicesEl.offsetTop;
-      const servicesBottom = servicesTop + servicesEl.offsetHeight;
-      setActiveSection(
-        scrollPos >= servicesTop && scrollPos < servicesBottom
-          ? "services"
-          : "home"
-      );
+      const y = window.scrollY + NAV_HEIGHT_PX + 1;
+      const top = servicesEl.offsetTop;
+      const bottom = top + servicesEl.offsetHeight;
+      setActiveSection(y >= top && y < bottom ? "services" : "home");
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll);
@@ -100,7 +96,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  /* ───────── scroll to services on hash change ───────── */
+  /* ───────── scroll to #services on hash change ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -109,7 +105,7 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
-  /* ───────── helper: always scroll to services ───────── */
+  /* ───────── helper to always scroll to services ───────── */
   const handleServicesClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
@@ -153,26 +149,25 @@ const Navbar: React.FC = () => {
 
   const getIconSize = () => (screenWidth < 350 ? 16 : 20);
 
-  /* ───────── link styles ───────── */
-  const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
-  const inactiveLink = "hover:text-[#C17829] transition-colors";
+  /* ───────── styles ───────── */
+  const desktopActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
+  const desktopInactive = "hover:text-[#C17829] transition-colors";
 
-  /* ───────── mobile link styles (underline just under word) ───────── */
+  // vertical list; w-full keeps underline sized to text only (border set on element content)
   const mobileLink = (isActive: boolean) =>
-    `inline-block mx-auto py-2 px-1 text-center ${
-      isActive ? activeLink : "text-gray-700 hover:text-[#C17829]"
+    `block w-auto px-1 py-2 text-center ${
+      isActive ? desktopActive : "text-gray-700 hover:text-[#C17829]"
     }`;
 
-  /* ───────── button styles ───────── */
-  const loginButton =
+  const loginBtn =
     "w-[105px] h-[40px] inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-lg transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
-  const registerButton =
+  const registerBtn =
     "w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition hover:scale-105";
 
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* Top-nav */}
+      {/* top-nav */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -189,7 +184,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* Desktop links */}
+        {/* desktop links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -197,8 +192,8 @@ const Navbar: React.FC = () => {
             className={() =>
               `relative px-1 pb-1 ${
                 activeSection !== "services" && location.pathname === "/"
-                  ? activeLink
-                  : inactiveLink
+                  ? desktopActive
+                  : desktopInactive
               }`
             }
           >
@@ -209,7 +204,9 @@ const Navbar: React.FC = () => {
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+                `relative px-1 pb-1 ${
+                  isActive ? desktopActive : desktopInactive
+                }`
               }
             >
               Dashboard
@@ -218,17 +215,17 @@ const Navbar: React.FC = () => {
 
           <Link
             to="/#services"
-            className={`relative px-1 pb-1 ${
-              activeSection === "services" ? activeLink : inactiveLink
-            }`}
             onClick={handleServicesClick}
+            className={`relative px-1 pb-1 ${
+              activeSection === "services" ? desktopActive : desktopInactive
+            }`}
           >
             Services
           </Link>
           <NavLink
             to="/contact"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+              `relative px-1 pb-1 ${isActive ? desktopActive : desktopInactive}`
             }
           >
             Contact
@@ -236,14 +233,14 @@ const Navbar: React.FC = () => {
           <NavLink
             to="/about"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? activeLink : inactiveLink}`
+              `relative px-1 pb-1 ${isActive ? desktopActive : desktopInactive}`
             }
           >
             About
           </NavLink>
         </div>
 
-        {/* Desktop auth */}
+        {/* desktop auth */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -280,7 +277,7 @@ const Navbar: React.FC = () => {
                 <Button
                   size="sm"
                   variant="secondary"
-                  className={loginButton}
+                  className={loginBtn}
                   onClick={handleLoginClick}
                 >
                   <div className="flex items-center space-x-1">
@@ -288,11 +285,10 @@ const Navbar: React.FC = () => {
                     <span>Login</span>
                   </div>
                 </Button>
-
                 <Button
                   size="sm"
                   variant="primary"
-                  className={registerButton}
+                  className={registerBtn}
                   onClick={handleRegisterClick}
                 >
                   Register
@@ -304,7 +300,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Mobile hamburger */}
+        {/* mobile hamburger */}
         <div className="lg:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -319,18 +315,18 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile drawer */}
+      {/* mobile drawer */}
       {isMobileMenuOpen && (
         <>
-          {/* backdrop */}
+          {/* overlay */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          {/* drawer */}
+          {/* side-panel */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
-            {/* Brand (align divider with top-nav) */}
+            {/* brand - divider aligns w/ top-nav */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -347,8 +343,8 @@ const Navbar: React.FC = () => {
               </NavLink>
             </div>
 
-            {/* Links with breathing space */}
-            <div className="flex-1 overflow-y-auto pt-6 space-y-4">
+            {/* vertical links w/ breathing space */}
+            <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
               <NavLink
                 to="/"
                 end
@@ -400,13 +396,13 @@ const Navbar: React.FC = () => {
                       navigate("/dashboard/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="inline-block mx-auto py-2 text-gray-700 hover:text-[#C17829]"
+                    className="block w-auto px-1 py-2 text-center text-gray-700 hover:text-[#C17829]"
                   >
                     Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="inline-block mx-auto py-2 text-red-600 hover:text-red-700"
+                    className="block w-auto px-1 py-2 text-center text-red-600 hover:text-red-700"
                   >
                     Logout
                   </button>
@@ -416,7 +412,7 @@ const Navbar: React.FC = () => {
                   <Button
                     size="md"
                     variant="secondary"
-                    className={loginButton}
+                    className={loginBtn}
                     onClick={handleLoginClick}
                   >
                     <div className="flex items-center space-x-1 justify-center">
@@ -427,7 +423,7 @@ const Navbar: React.FC = () => {
                   <Button
                     size="md"
                     variant="primary"
-                    className={registerButton}
+                    className={registerBtn}
                     onClick={handleRegisterClick}
                   >
                     Register
