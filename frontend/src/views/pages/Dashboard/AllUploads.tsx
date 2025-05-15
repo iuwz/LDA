@@ -29,7 +29,7 @@ const AllUploads: React.FC = () => {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── bubbles ───────── */
+  /* ───────── bubbles (same style as DashboardHome) ───────── */
   const bubbles = useMemo(
     () => [...Array(5)].map((_, i) => <BubbleGenerator key={i} />),
     []
@@ -85,7 +85,7 @@ const AllUploads: React.FC = () => {
         grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
         items-center gap-2 sm:gap-4
         rounded-lg border px-4 py-3
-        bg-white/90 hover:bg-gray-50/90
+        bg-white hover:bg-gray-50
       "
     >
       <div className="flex items-center">
@@ -128,16 +128,18 @@ const AllUploads: React.FC = () => {
   /* ════════════════════════════════════════════════════════════ */
   return (
     <>
-      <div className="space-y-14 p-6 max-w-4xl mx-auto">
-        {/* header + bubbles container */}
+      <div className="p-6 max-w-4xl mx-auto">
+        {/* bubble-powered container */}
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
+          {/* animated bubbles */}
           <div
-            className="absolute inset-0 overflow-hidden pointer-events-none"
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
             style={{ opacity: 0.9 }}
           >
             {bubbles}
           </div>
 
+          {/* actual page content */}
           <div className="relative z-10 flex flex-col gap-6">
             <a
               href="/dashboard"
@@ -147,29 +149,28 @@ const AllUploads: React.FC = () => {
             </a>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h1 className="text-2xl font-semibold">All uploads</h1>
+              <h1 className="text-2xl font-semibold">All ploads</h1>
               <InlineUpload onDone={fetchDocs} />
             </div>
+
+            {loading ? (
+              <p className="text-gray-600">Loading…</p>
+            ) : err ? (
+              <p className="text-red-600">{err}</p>
+            ) : docs.length === 0 ? (
+              <p className="text-gray-600">No documents uploaded yet.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {docs
+                  .slice()
+                  .sort((a, b) => (a._id < b._id ? 1 : -1))
+                  .map((d, i) => (
+                    <Row key={d._id} d={d} i={i} />
+                  ))}
+              </div>
+            )}
           </div>
         </section>
-
-        {/* list of documents */}
-        {loading ? (
-          <p className="text-gray-600">Loading…</p>
-        ) : err ? (
-          <p className="text-red-600">{err}</p>
-        ) : docs.length === 0 ? (
-          <p className="text-gray-600">No documents uploaded yet.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {docs
-              .slice()
-              .sort((a, b) => (a._id < b._id ? 1 : -1))
-              .map((d, i) => (
-                <Row key={d._id} d={d} i={i} />
-              ))}
-          </div>
-        )}
       </div>
 
       {/* delete modal */}
@@ -224,7 +225,7 @@ const AllUploads: React.FC = () => {
 
 export default AllUploads;
 
-/* ───────────────── InlineUpload (same as DashboardHome) ───────────────── */
+/* ───────────────── InlineUpload (copied from DashboardHome) ───────────────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
