@@ -1,7 +1,7 @@
 /*  src/views/pages/Dashboard/RiskAssessmentTool.tsx
     ──────────────────────────────────────────────────────────────
     Single-file implementation of the Risk-Assessment front-end.
-    Upload section now mirrors ComplianceChecker exactly.
+    Upload section mirrors ComplianceChecker exactly.
 */
 
 import React, {
@@ -140,6 +140,9 @@ function RiskAssessmentTool() {
   /* UI filter */
   const [activeSection, setActiveSection] = useState("all");
 
+  /* scroll anchor */
+  const topRef = useRef<HTMLDivElement>(null);
+
   /* ------------ lifecycle ------------ */
   useEffect(() => {
     fetchDocuments();
@@ -232,6 +235,9 @@ function RiskAssessmentTool() {
   };
 
   /* ------------ actions ------------ */
+  const scrollToTopSmooth = () =>
+    setTimeout(() => topRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setError(null);
@@ -268,7 +274,7 @@ function RiskAssessmentTool() {
       await uploadRiskPdf(resp.id, pdfBlob, niceName);
 
       loadHistory();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     } catch (e: any) {
       setError(`Risk analysis failed: ${e.message || "Unknown error"}`);
     } finally {
@@ -290,7 +296,7 @@ function RiskAssessmentTool() {
           "Report",
       });
       setActiveSection("all");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     } catch {
       setError("Failed to open report.");
     } finally {
@@ -318,6 +324,7 @@ function RiskAssessmentTool() {
     setError(null);
     setActiveSection("all");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    scrollToTopSmooth();
   };
 
   /* ------------ derived ------------ */
@@ -355,7 +362,7 @@ function RiskAssessmentTool() {
 
   /* ═══════════════════  RENDER  ═══════════════════ */
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8 p-6" ref={topRef}>
       {/* Header */}
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[#c17829] to-[var(--accent-light)]" />
