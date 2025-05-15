@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCloudUploadAlt,
   FaDownload,
-  FaTrashAlt,
+  FaTrash,
   FaArrowLeft,
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
@@ -25,8 +25,9 @@ const AllUploads: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  /* fetch */
+  /* ───────────── fetch ───────────── */
   const fetchDocs = async () => {
     setLoading(true);
     try {
@@ -48,9 +49,10 @@ const AllUploads: React.FC = () => {
     void fetchDocs();
   }, []);
 
-  /* delete */
+  /* ───────────── delete flow ───────────── */
   const confirmDelete = async () => {
     if (!pendingDel) return;
+    setIsDeleting(true);
     try {
       await fetch(`${API_BASE}/documents/${pendingDel._id}`, {
         method: "DELETE",
@@ -61,10 +63,11 @@ const AllUploads: React.FC = () => {
       alert("Delete failed");
     } finally {
       setPendingDel(null);
+      setIsDeleting(false);
     }
   };
 
-  /* row */
+  /* ───────────── row component ───────────── */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
@@ -86,37 +89,37 @@ const AllUploads: React.FC = () => {
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
 
-      {/* download */}
-      <Button
-        size="xs"
-        variant="outline"
-        className="w-full sm:w-24 h-9 flex items-center justify-center gap-1"
-      >
-        <a
-          href={`${API_BASE}/documents/download/${d._id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 w-full justify-center"
-        >
-          <FaDownload /> Download
-        </a>
-      </Button>
-
-      {/* remove */}
-      <Button
-        size="xs"
-        variant="outline"
+      {/* download (matches Compliance style) */}
+      <a
+        href={`${API_BASE}/documents/download/${d._id}`}
+        target="_blank"
+        rel="noopener noreferrer"
         className="
-          w-full sm:w-24 h-9 flex items-center justify-center gap-1
-          border-red-500 text-red-500 hover:bg-red-500 hover:text-white
+          flex items-center justify-center gap-1
+          rounded-md px-3 py-1
+          text-sm text-[#c17829] hover:bg-[#a66224]/10
+          w-full sm:w-auto
         "
-        onClick={() => setPendingDel(d)}
       >
-        <FaTrashAlt /> Remove
-      </Button>
+        <FaDownload /> Download
+      </a>
+
+      {/* remove (matches Compliance style) */}
+      <button
+        onClick={() => setPendingDel(d)}
+        disabled={isDeleting}
+        className="
+          flex items-center justify-center gap-1
+          text-sm text-red-600 hover:text-red-800
+          disabled:opacity-50 w-full sm:w-auto
+        "
+      >
+        <FaTrash /> Remove
+      </button>
     </motion.div>
   );
 
+  /* ════════════════════════════════════════════════════════════ */
   return (
     <>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -156,6 +159,7 @@ const AllUploads: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setPendingDel(null)}
             />
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -166,7 +170,7 @@ const AllUploads: React.FC = () => {
               <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
                 <h4 className="text-lg font-semibold">Remove document</h4>
                 <p className="text-sm text-gray-700">
-                  Delete&nbsp;
+                  Delete{" "}
                   <span className="font-medium">{pendingDel.filename}</span>?
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
@@ -174,6 +178,7 @@ const AllUploads: React.FC = () => {
                     size="xs"
                     variant="outline"
                     onClick={() => setPendingDel(null)}
+                    disabled={isDeleting}
                   >
                     Cancel
                   </Button>
@@ -181,6 +186,7 @@ const AllUploads: React.FC = () => {
                     size="xs"
                     className="bg-red-600 text-white hover:bg-red-700"
                     onClick={confirmDelete}
+                    disabled={isDeleting}
                   >
                     Delete
                   </Button>
