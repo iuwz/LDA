@@ -13,7 +13,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80; // keep this in-sync with desktop top-nav height
+const NAV_HEIGHT_PX = 80; // top-nav height (desktop & drawer brand)
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,13 +42,13 @@ const Navbar: React.FC = () => {
       const scrollPos = window.scrollY + NAV_HEIGHT_PX + 1;
       const servicesTop = servicesEl.offsetTop;
       const servicesBottom = servicesTop + servicesEl.offsetHeight;
-      if (scrollPos >= servicesTop && scrollPos < servicesBottom) {
-        setActiveSection("services");
-      } else {
-        setActiveSection("home");
-      }
+      setActiveSection(
+        scrollPos >= servicesTop && scrollPos < servicesBottom
+          ? "services"
+          : "home"
+      );
     };
-    handleScroll(); // run on mount
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
@@ -157,9 +157,9 @@ const Navbar: React.FC = () => {
   const activeLink = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
-  /* ───────── mobile link styles (centered, underline) ───────── */
+  /* ───────── mobile link styles (underline just under word) ───────── */
   const mobileLink = (isActive: boolean) =>
-    `block w-full text-center py-2 ${
+    `inline-block mx-auto py-2 px-1 text-center ${
       isActive ? activeLink : "text-gray-700 hover:text-[#C17829]"
     }`;
 
@@ -172,7 +172,7 @@ const Navbar: React.FC = () => {
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* ───────── Top-nav (always visible) ───────── */}
+      {/* Top-nav */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -319,18 +319,18 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* ───────── Mobile drawer (left-side) ───────── */}
+      {/* Mobile drawer */}
       {isMobileMenuOpen && (
         <>
-          {/* Back-drop */}
+          {/* backdrop */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          {/* Drawer */}
+          {/* drawer */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
-            {/* Brand section (match desktop nav height & divider alignment) */}
+            {/* Brand (align divider with top-nav) */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -347,8 +347,8 @@ const Navbar: React.FC = () => {
               </NavLink>
             </div>
 
-            {/* Drawer links */}
-            <div className="flex-1 overflow-y-auto pt-4 space-y-1">
+            {/* Links with breathing space */}
+            <div className="flex-1 overflow-y-auto pt-6 space-y-4">
               <NavLink
                 to="/"
                 end
@@ -400,19 +400,19 @@ const Navbar: React.FC = () => {
                       navigate("/dashboard/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="block w-full text-center py-2 text-gray-700 hover:text-[#C17829]"
+                    className="inline-block mx-auto py-2 text-gray-700 hover:text-[#C17829]"
                   >
                     Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-center py-2 text-red-600 hover:text-red-700"
+                    className="inline-block mx-auto py-2 text-red-600 hover:text-red-700"
                   >
                     Logout
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center space-y-4 mt-4">
+                <div className="flex flex-col items-center space-y-4">
                   <Button
                     size="md"
                     variant="secondary"
