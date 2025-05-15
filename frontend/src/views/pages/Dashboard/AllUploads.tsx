@@ -30,9 +30,9 @@ const AllUploads: React.FC = () => {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── bubbles (20, like Banner) ───────── */
+  /* ───────── bubbles (reduced to 10) ───────── */
   const bubbles = useMemo(
-    () => [...Array(20)].map((_, i) => <BubbleGenerator key={i} />),
+    () => [...Array(10)].map((_, i) => <BubbleGenerator key={i} />),
     []
   );
 
