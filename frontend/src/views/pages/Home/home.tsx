@@ -1,5 +1,5 @@
 // src/views/pages/Home/index.tsx
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   FaBalanceScale,
@@ -130,32 +130,37 @@ function ServicesSection() {
 }
 
 /* ───────────────────────── Bubble background ───────────────────────── */
-export const BubbleGenerator = () => {
-  const bubbles = Array.from({ length: 40 }).map((_, i) => {
-    const size = Math.random() * 120 + 30;
-    const top = Math.random() * 100;
-    const left = Math.random() * 100;
-    const opacity = Math.random() * 0.15 + 0.02;
-    const animDuration = Math.random() * 12 + 8;
-    const delay = Math.random() * 2;
-    const color =
-      i % 2 === 0
-        ? "from-[#C17829]/30 to-[#C17829]/5"
-        : "from-[#2C2C4A]/30 to-[#2C2C4A]/5";
-    const moveRange = Math.random() * 50 + 30;
+export const BubbleGenerator: React.FC = () => {
+  /* Generate bubble data **once** to prevent flicker */
+  const bubbles = useMemo(
+    () =>
+      Array.from({ length: 40 }).map((_, i) => {
+        const size = Math.random() * 120 + 30;
+        const top = Math.random() * 100;
+        const left = Math.random() * 100;
+        const opacity = Math.random() * 0.15 + 0.02;
+        const animDuration = Math.random() * 12 + 8;
+        const delay = Math.random() * 2;
+        const color =
+          i % 2 === 0
+            ? "from-[#C17829]/30 to-[#C17829]/5"
+            : "from-[#2C2C4A]/30 to-[#2C2C4A]/5";
+        const moveRange = Math.random() * 50 + 30;
 
-    return {
-      id: i,
-      size,
-      top,
-      left,
-      opacity,
-      animDuration,
-      delay,
-      color,
-      moveRange,
-    };
-  });
+        return {
+          id: i,
+          size,
+          top,
+          left,
+          opacity,
+          animDuration,
+          delay,
+          color,
+          moveRange,
+        };
+      }),
+    []
+  );
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -214,6 +219,7 @@ const whyFeatures = [
 function WhyChooseUs() {
   return (
     <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
+      {/* floating accents (unchanged) */}
       <motion.div
         className="absolute w-[200px] h-[200px] bg-[#C17829] rounded-full opacity-30 top-[-50px] left-[-50px] z-0"
         animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
@@ -274,14 +280,14 @@ const TESTIMONIALS = [
     name: "Abdulaziz Alsaeed",
     role: "UX Designer",
     quote:
-      "The compliance checker is unbelievably quick, it can catch issues almost immediately!",
+      "The compliance checker is unbelievably quick; it can catch issues almost immediately!",
     avatarUrl: sae,
   },
   {
     name: "Saud Albarkheel",
     role: "Software Engineer",
     quote:
-      "The risk assessment feature helped me in identifying pitfalls before they became real issues.",
+      "The risk assessment feature helped me identify pitfalls before they became real issues.",
     avatarUrl: saud,
   },
   {
@@ -295,7 +301,7 @@ const TESTIMONIALS = [
     name: "Fahad Alzuhair",
     role: "Finance Student",
     quote:
-      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand. It provides quick and accurate insights!",
+      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand.",
     avatarUrl: fahad,
   },
 ];
@@ -305,7 +311,6 @@ function Testimonials() {
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(3);
 
-  /* responsive cards per page */
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
@@ -392,6 +397,7 @@ export default function Home() {
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
 
+        {/* decorative circles (unchanged) */}
         <motion.div
           className="absolute w-[300px] h-[300px] bg-[#C17829] rounded-full opacity-20 top-[-100px] left-[-100px] z-0"
           animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
