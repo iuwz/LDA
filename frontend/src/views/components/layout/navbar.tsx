@@ -17,7 +17,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80; // desktop + mobile top-nav height
+const NAV_HEIGHT_PX = 80;
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── detect section on scroll ───────── */
+  /* ───────── active section on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -53,7 +53,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
-  /* ───────── auth status ───────── */
+  /* ───────── auth check ───────── */
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  /* ───────── resize listener ───────── */
+  /* ───────── resize ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -98,7 +98,7 @@ const Navbar: React.FC = () => {
     return () => void (document.body.style.overflow = "");
   }, [isMobileMenuOpen]);
 
-  /* ───────── smooth-scroll to #services on hash change ───────── */
+  /* ───────── hash -> services ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -164,12 +164,11 @@ const Navbar: React.FC = () => {
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
-      {/* ───────── top-nav (stays visible) ───────── */}
+      {/* top-nav */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
       >
-        {/* brand (always visible) */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -325,23 +324,30 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* ───────── drawer (left-side) ───────── */}
+      {/* drawer */}
       {isMobileMenuOpen && (
         <>
-          {/* backdrop */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
+          <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
+            <div
+              className="flex items-center h-full px-4 border-b"
+              style={{ height: NAV_HEIGHT_PX }}
+            >
+              <NavLink
+                to="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center space-x-2"
+              >
+                <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
+                <span className="text-xl font-bold text-[#C17829] font-serif">
+                  LDA
+                </span>
+              </NavLink>
+            </div>
 
-          {/* drawer panel */}
-          <div
-            className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col"
-            /* leave the top-nav fully visible, so we **do not**
-               duplicate the brand in the drawer */
-            style={{ paddingTop: NAV_HEIGHT_PX }}
-          >
-            {/* nav links (start below top-nav for perfect alignment) */}
             <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
               <NavLink
                 to="/"
@@ -391,7 +397,6 @@ const Navbar: React.FC = () => {
                 <span>Contact</span>
               </NavLink>
 
-              {/* auth (same as before) */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
