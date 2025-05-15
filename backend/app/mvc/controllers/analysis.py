@@ -40,10 +40,10 @@ logger = logging.getLogger(__name__)
 # ───────────────────────── configuration ─────────────────────────
 GPT_MODEL          = os.getenv("GPT_MODEL", "gpt-4o-mini")
 ENCODING           = tiktoken.encoding_for_model(GPT_MODEL)
-CHUNK_TOKENS       = int(os.getenv("RISK_CHUNK_TOKENS", 26000))
-OVERLAP_TOKENS     = int(os.getenv("RISK_OVERLAP_TOKENS", 2000))
-GPT_TEMP           = float(os.getenv("RISK_GPT_TEMP", 0))
-PREVIEW_LEN        = int(os.getenv("RISK_PREVIEW_LEN", 80000))
+CHUNK_TOKENS       = int(os.getenv("RISK_CHUNK_TOKENS", 2600))
+OVERLAP_TOKENS     = int(os.getenv("RISK_OVERLAP_TOKENS", 200))
+GPT_TEMP           = float(os.getenv("RISK_GPT_TEMP", 0.3))
+PREVIEW_LEN        = int(os.getenv("RISK_PREVIEW_LEN", 8000))
 
 SYSTEM_MESSAGE = (
     "You are an expert legal AI specialising in the laws and regulations of the "
