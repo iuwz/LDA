@@ -33,11 +33,11 @@ async def _is_legal_query(user_id: str, question: str) -> bool:
     """Ask the lightweight GPT model to tag LEGAL or NONLEGAL."""
     try:
         prompt = _CLASSIFIER_PROMPT.format(question=question.strip())
-        raw = await call_gpt(
+        raw = call_gpt(
             prompt=prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
-            max_tokens=1,
+            max_completion_tokens=1,
         ) or ""
         logger.debug("Classifier response for %s → %s", user_id, raw)
         return raw.strip().upper() == "LEGAL"

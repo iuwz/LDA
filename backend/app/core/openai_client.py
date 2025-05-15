@@ -16,6 +16,7 @@ def call_gpt(
     *,
     model: str = "gpt-3.5-turbo",
     temperature: float | None = None,
+    max_completion_tokens: int | None = None,
 ) -> str | None:
     """
     Convenience wrapper for OpenAI chat-completions.
@@ -48,6 +49,10 @@ def call_gpt(
         # Attach temperature only for models that support it
         if model not in {"o4-mini", "o4"} and temperature is not None:
             chat_kwargs["temperature"] = temperature
+        
+        # Allow user to cap the output
+        if max_completion_tokens is not None:
+            chat_kwargs["max_completion_tokens"] = max_completion_tokens
 
         # Use the new 1.x client interface
         response = client.chat.completions.create(**chat_kwargs)
