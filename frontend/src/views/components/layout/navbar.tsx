@@ -159,8 +159,18 @@ const Navbar: React.FC = () => {
   const inactiveLink = "hover:text-[#C17829] transition-colors";
 
   /* ───────── button styles ───────── */
-  const loginButtonStyle = `w-[105px] h-[40px] inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white`;
-  const registerButtonStyle = `w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105`;
+  const loginButtonStyle =
+    "w-[105px] h-[40px] inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-lg transition transform hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
+  const registerButtonStyle =
+    "w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105";
+
+  /* ───────── mobile nav classes ───────── */
+  const mobileClass = (isActive: boolean) =>
+    `flex items-center px-4 py-2 rounded-md text-base font-medium transition-colors ${
+      isActive
+        ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+        : "text-gray-700 hover:bg-gray-100"
+    }`;
 
   /* ───────── JSX ───────── */
   return (
@@ -309,96 +319,129 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* ───────── mobile menu ───────── */}
+      {/* ───────── mobile drawer ───────── */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-white pt-20 flex flex-col items-center space-y-6">
-          <NavLink
-            to="/"
-            end
-            className="text-xl"
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Home
-          </NavLink>
-
-          {authChecked && isAuthenticated && (
-            <NavLink
-              to="/dashboard"
-              className="text-xl"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Dashboard
-            </NavLink>
-          )}
-
-          <Link
-            to="/#services"
-            className="text-xl"
-            onClick={handleServicesClick}
-          >
-            Services
-          </Link>
-
-          <NavLink
-            to="/about"
-            className="text-xl"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            About
-          </NavLink>
-          <NavLink
-            to="/contact"
-            className="text-xl"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Contact
-          </NavLink>
-
-          {!authChecked ? (
-            <div className="h-8 w-32" />
-          ) : isAuthenticated ? (
-            <>
+          />
+          <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
+            {/* Brand */}
+            <div className="flex items-center justify-between h-12 px-4 border-b">
+              <NavLink
+                to="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center space-x-2"
+              >
+                <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
+                <span className="text-xl font-bold text-[#C17829] font-serif">
+                  LDA
+                </span>
+              </NavLink>
               <button
-                className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg hover:bg-gray-100"
-                onClick={() => {
-                  navigate("/dashboard/profile");
-                  setIsMobileMenuOpen(false);
-                }}
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-label="Close menu"
               >
-                <FaUserCircle className="mr-2 text-[#2C2C4A]" size={18} />{" "}
-                Profile
+                <FaTimes />
               </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center px-3 py-2 rounded-md text-lg font-medium text-red-600 hover:bg-gray-100"
-              >
-                <FaSignOutAlt className="mr-2" size={18} /> Logout
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center space-y-4 w-64">
-              <Button
-                size="md"
-                variant="secondary"
-                className={loginButtonStyle}
-                onClick={handleLoginClick}
-              >
-                <div className="flex items-center space-x-1 justify-center">
-                  <LogIn size={16} />
-                  <span>Login</span>
-                </div>
-              </Button>
-              <Button
-                size="md"
-                variant="primary"
-                className={registerButtonStyle}
-                onClick={handleRegisterClick}
-              >
-                Register
-              </Button>
             </div>
-          )}
-        </div>
+
+            {/* Links */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-1">
+              <NavLink
+                to="/"
+                end
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => mobileClass(isActive)}
+              >
+                Home
+              </NavLink>
+
+              {authChecked && isAuthenticated && (
+                <NavLink
+                  to="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => mobileClass(isActive)}
+                >
+                  Dashboard
+                </NavLink>
+              )}
+
+              <Link
+                to="/#services"
+                onClick={handleServicesClick}
+                className={
+                  activeSection === "services"
+                    ? mobileClass(true)
+                    : mobileClass(false)
+                }
+              >
+                Services
+              </Link>
+
+              <NavLink
+                to="/about"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => mobileClass(isActive)}
+              >
+                About
+              </NavLink>
+              <NavLink
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => mobileClass(isActive)}
+              >
+                Contact
+              </NavLink>
+
+              {!authChecked ? (
+                <div className="h-8 w-32" />
+              ) : isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => {
+                      navigate("/dashboard/profile");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center px-4 py-2 rounded-md text-base text-gray-700 hover:bg-gray-100"
+                  >
+                    <FaUserCircle className="mr-3" /> Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center px-4 py-2 rounded-md text-base text-red-600 hover:bg-gray-100"
+                  >
+                    <FaSignOutAlt className="mr-3" /> Logout
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col space-y-4 px-4 mt-4">
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    className={loginButtonStyle}
+                    onClick={handleLoginClick}
+                  >
+                    <div className="flex items-center space-x-1 justify-center">
+                      <LogIn size={16} />
+                      <span>Login</span>
+                    </div>
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="primary"
+                    className={registerButtonStyle}
+                    onClick={handleRegisterClick}
+                  >
+                    Register
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
