@@ -20,6 +20,7 @@ import saud from "../../../assets/images/saud.jpg";
 import sae from "../../../assets/images/sae.jpg";
 import fahad from "../../../assets/images/fahad.jpg";
 
+/* ───────────────────────── Services data ───────────────────────── */
 const SERVICES = [
   {
     icon: FaBalanceScale,
@@ -38,11 +39,7 @@ const SERVICES = [
     title: "AI-Powered Legal Chatbot",
     description:
       "On-demand legal guidance and quick references to relevant statutes or precedents.",
-    bullets: [
-      "24/7 availability",
-      "Context-aware Q&A",
-      "Seamless platform integration",
-    ],
+    bullets: ["24/7 availability", "Context-aware Q&A", "Seamless integration"],
     link: "/dashboard",
   },
   {
@@ -71,6 +68,7 @@ const SERVICES = [
   },
 ];
 
+/* ───────────────────────── Services section ───────────────────────── */
 function ServicesSection() {
   return (
     <section id="services" className="py-12 px-4 bg-white">
@@ -131,6 +129,7 @@ function ServicesSection() {
   );
 }
 
+/* ───────────────────────── Bubble background ───────────────────────── */
 export const BubbleGenerator = () => {
   const bubbles = Array.from({ length: 40 }).map((_, i) => {
     const size = Math.random() * 120 + 30;
@@ -187,6 +186,7 @@ export const BubbleGenerator = () => {
   );
 };
 
+/* ───────────────────────── Why-choose-us data ───────────────────────── */
 const whyFeatures = [
   {
     icon: FaBrain,
@@ -210,6 +210,7 @@ const whyFeatures = [
   },
 ];
 
+/* ───────────────────────── Why-choose-us section ───────────────────────── */
 function WhyChooseUs() {
   return (
     <section className="relative bg-[#f7ede1] py-12 px-4 overflow-hidden">
@@ -260,6 +261,7 @@ function WhyChooseUs() {
   );
 }
 
+/* ───────────────────────── Testimonials data ───────────────────────── */
 const TESTIMONIALS = [
   {
     name: "Ahmed Alfaifi",
@@ -298,10 +300,12 @@ const TESTIMONIALS = [
   },
 ];
 
+/* ───────────────────────── Testimonials section ───────────────────────── */
 function Testimonials() {
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(3);
 
+  /* responsive cards per page */
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
@@ -331,6 +335,7 @@ function Testimonials() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 overflow-visible">
+        {/* navigation arrows */}
         <button
           onClick={() => setPage((p) => Math.max(0, p - 1))}
           disabled={page === 0}
@@ -346,11 +351,12 @@ function Testimonials() {
           <FaChevronRight />
         </button>
 
-        <div className="flex justify-center items-start flex-wrap gap-6">
+        {/* cards */}
+        <div className="flex justify-center items-stretch flex-wrap gap-6">
           {visible.map((t, i) => (
             <motion.div
               key={i}
-              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1 w-[400px] flex flex-col"
+              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1 w-[400px] h-[240px] flex flex-col"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -378,11 +384,14 @@ function Testimonials() {
   );
 }
 
+/* ───────────────────────── Home page ───────────────────────── */
 export default function Home() {
   return (
     <main className="bg-white min-h-screen flex flex-col">
+      {/* hero */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
+
         <motion.div
           className="absolute w-[300px] h-[300px] bg-[#C17829] rounded-full opacity-20 top-[-100px] left-[-100px] z-0"
           animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
@@ -410,6 +419,7 @@ export default function Home() {
             <br className="hidden sm:block" />
             <span className="block mt-6 text-[#C17829]">with AI</span>
           </motion.h1>
+
           <motion.p
             className="text-gray-700 text-lg sm:text-xl mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 10 }}
@@ -419,6 +429,7 @@ export default function Home() {
             Leveraging advanced AI tools to enhance accuracy and efficiency in
             legal document analysis.
           </motion.p>
+
           <motion.a
             href="#services"
             onClick={(e) => {
