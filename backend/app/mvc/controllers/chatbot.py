@@ -15,7 +15,7 @@ COLL = "chat_sessions"
 
 
 # ───────────────────────────────── GPT-based legal-question classifier
-_CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"  # low cost & fast
+_CLASSIFIER_MODEL = "gpt-4o"  # low cost & fast
 _CLASSIFIER_PROMPT = """
 You are a legal-question detector. Determine if the user’s question is about any thing legal or near-legal in any way or form :
 
