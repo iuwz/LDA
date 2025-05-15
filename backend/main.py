@@ -29,6 +29,7 @@ from backend.app.mvc.views.documents import router as documents_router
 from backend.app.mvc.views.rephrase import router as rephrase_router
 from backend.app.mvc.views.translate import router as translate_router
 from backend.app.mvc.views.analysis import router as analysis_router  # <-- ADD THIS
+from backend.app.mvc.views.contact import router as contact_router   # ← ADD THIS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,6 +81,7 @@ def create_app() -> FastAPI:
     app.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
     app.include_router(admin_router, prefix="/admin", tags=["Admin"])
     app.include_router(analysis_router, prefix="/risk", tags=["Risk"])  # <-- FIXED: Register risk analysis endpoints
+    app.include_router(contact_router, prefix="/contact", tags=["Contact"])  # ← ADD
 
     @app.get("/auth/me", tags=["Auth"])
     async def read_current_user(current_user: UserInDB = Depends(get_current_user)):

@@ -1,10 +1,44 @@
-import React from "react";
+// src/views/pages/Contact/Contact.tsx
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { BubbleGenerator } from "../Home/home";
+import { sendContactMessage } from "../../../api"; // ← new helper
+import { FaSpinner } from "react-icons/fa";
 
 export default function Contact() {
+  /* ───────── state ───────── */
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /* ───────── handlers ───────── */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSending(true);
+    try {
+      await sendContactMessage({ name, email, subject, message });
+      setSent(true);
+      /* clear fields */
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (err: any) {
+      setError(err.message ?? "Failed to send message");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main className="bg-white font-sans">
+      {/* ───────────────── hero ───────────────── */}
       <section className="relative w-full h-[70vh] flex items-center bg-gradient-to-r from-[#f7ede1] to-white overflow-hidden">
         <BubbleGenerator />
 
@@ -30,7 +64,7 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Whether you have questions, feedback, or need support, drop us a
-            message and we’ll reply within 24 hours.
+            message and we’ll reply within 24&nbsp;hours.
           </motion.p>
 
           <motion.a
@@ -61,6 +95,7 @@ export default function Contact() {
         </svg>
       </div>
 
+      {/* ───────────────── form ───────────────── */}
       <section
         id="contact-form"
         className="px-4 sm:px-6 lg:px-8 py-12 max-w-3xl mx-auto"
@@ -76,54 +111,88 @@ export default function Contact() {
             Send Us a Message
           </h3>
 
-          <form className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {sent ? (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-green-600 text-center font-medium"
+            >
+              Thank you! Your message has been sent.
+            </motion.p>
+          ) : (
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <label className="block">
+                  <span className="text-gray-800 font-medium">Name</span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                    required
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-gray-800 font-medium">Email</span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Your email"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                    required
+                  />
+                </label>
+              </div>
+
               <label className="block">
-                <span className="text-gray-800 font-medium">Name</span>
+                <span className="text-gray-800 font-medium">Subject</span>
                 <input
                   type="text"
-                  placeholder="Your name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Subject"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                  required
                 />
               </label>
 
               <label className="block">
-                <span className="text-gray-800 font-medium">Email</span>
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                <span className="text-gray-800 font-medium">Message</span>
+                <textarea
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Your message…"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                  required
                 />
               </label>
-            </div>
 
-            <label className="block">
-              <span className="text-gray-800 font-medium">Subject</span>
-              <input
-                type="text"
-                placeholder="Subject"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
-              />
-            </label>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
+                >
+                  {error}
+                </motion.p>
+              )}
 
-            <label className="block">
-              <span className="text-gray-800 font-medium">Message</span>
-              <textarea
-                rows={4}
-                placeholder="Your message…"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
-              />
-            </label>
-
-            <div className="text-center">
-              <button
-                type="submit"
-                className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105"
-              >
-                Send Message 📩
-              </button>
-            </div>
-          </form>
+              <div className="text-center">
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50"
+                >
+                  {sending && <FaSpinner className="animate-spin mr-2" />}
+                  Send Message 📩
+                </button>
+              </div>
+            </form>
+          )}
         </motion.div>
       </section>
     </main>

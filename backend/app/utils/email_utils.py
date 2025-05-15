@@ -70,3 +70,36 @@ def send_verification_email(to_email: str, code: str) -> None:
         ),
     }
     _post_email(payload)
+
+# ───────────────────── contact form (⇢ added) ───────────────────
+def send_contact_email(name: str, email: str, subject: str, message: str) -> None:
+    """
+    Forward a contact-form submission to the LDA support inbox.
+    The e-mail is sent *from* and *to* the same address configured
+    in the SUPPORT_EMAIL env variable (defaults to support@lda-legal.com).
+    """
+    support_addr = os.getenv("SUPPORT_EMAIL", "support@lda-legal.com")
+
+    plaintext = (
+        f"New contact-form submission\n"
+        f"Name   : {name}\n"
+        f"Email  : {email}\n"
+        f"Subject: {subject}\n\n"
+        f"Message:\n{message}"
+    )
+
+    html = (
+        "<p><strong>New contact-form submission</strong></p>"
+        f"<p><strong>Name&nbsp;&nbsp;&nbsp;:</strong> {name}<br>"
+        f"<strong>Email&nbsp;&nbsp;&nbsp;:</strong> {email}<br>"
+        f"<strong>Subject :</strong> {subject}</p>"
+        f"<pre style='font-family: monospace'>{message}</pre>"
+    )
+
+    payload = {
+        "to_email": support_addr,
+        "subject": f"[LDA Contact] {subject}",
+        "plain": plaintext,
+        "html": html,
+    }
+    _post_email(payload)

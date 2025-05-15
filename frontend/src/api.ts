@@ -5,7 +5,7 @@
    ─ Risk & Compliance helpers now line‑up with the new backend
 ──────────────────────────────────────────────────────────────── */
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.lda-legal.com/";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.lda-legal.com";
 console.log("API_BASE:", API_BASE);  // Debugging output
 
 const common: RequestInit = {
@@ -211,6 +211,22 @@ export function uploadRiskPdf(
     }).then(r =>
         handleResponse<{ report_doc_id: string; filename: string }>(r),
     );
+}
+/* ═════════════════════ CONTACT FORM ══════════════════════ */
+
+export function sendContactMessage(body: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  return fetch(`${API_BASE}/contact`, {
+    ...common,
+    method: "POST",
+    body: JSON.stringify(body),
+  }).then(res => {
+    if (!res.ok) throw new Error("Unable to send message");
+  });
 }
 
 /* history list ------------------------------------------------ */
