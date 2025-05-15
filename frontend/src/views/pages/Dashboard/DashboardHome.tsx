@@ -19,6 +19,9 @@ import ToolList, { ToolCard } from "../../components/common/toolList";
 import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
+const ACCENT = "#C17829"; // primary brand color
+const ACCENT_LIGHT = "#D48F41"; // lighter shade for gradients
+
 const toDate = (id: string) =>
   new Date(parseInt(id.substring(0, 8), 16) * 1000).toLocaleString();
 
@@ -118,13 +121,14 @@ export default function DashboardHome() {
       className="
         grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
         items-center gap-2 sm:gap-4
-        rounded-lg border px-4 py-3
-        bg-white hover:bg-gray-50
+        rounded-lg border-2
+        border-[color:var(--accent-light)]
+        bg-white hover:bg-[color:var(--accent-light)]/10
+        px-4 py-3
       "
+      style={{ "--accent-light": ACCENT_LIGHT } as React.CSSProperties}
     >
-      <div className="flex items-center">
-        <FaCloudUploadAlt className="text-indigo-600" />
-      </div>
+      <FaCloudUploadAlt className="text-[color:var(--accent)]" size={20} />
 
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
@@ -137,10 +141,12 @@ export default function DashboardHome() {
         rel="noopener noreferrer"
         className="
           flex items-center justify-center gap-1
-          rounded-md px-3 py-1
-          text-sm text-[#c17829] hover:bg-[#a66224]/10
+          rounded-md px-3 py-1 text-sm
+          text-[color:var(--accent)] hover:bg-[color:var(--accent)]/10
+          transition-colors
           w-full sm:w-auto
         "
+        style={{ "--accent": ACCENT } as React.CSSProperties}
       >
         <FaDownload /> Download
       </a>
@@ -177,7 +183,15 @@ export default function DashboardHome() {
         </section>
 
         {/* uploads */}
-        <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
+        <section
+          className="
+            rounded-2xl overflow-hidden
+            bg-white shadow border-2
+            border-[color:var(--accent-light)]
+            p-8 flex flex-col gap-6
+          "
+          style={{ "--accent-light": ACCENT_LIGHT } as React.CSSProperties}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 className="text-xl font-semibold">Recent uploads</h3>
             <InlineUpload onDone={refresh} />
@@ -192,7 +206,8 @@ export default function DashboardHome() {
                 size="sm"
                 variant="outline"
                 onClick={refresh}
-                className="text-[#C17829] hover:underline"
+                className="text-[color:var(--accent)] hover:underline"
+                style={{ "--accent": ACCENT } as React.CSSProperties}
               >
                 Try again
               </Button>
@@ -211,7 +226,12 @@ export default function DashboardHome() {
             <div className="self-end">
               <Link
                 to="/dashboard/uploads"
-                className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                className="
+                  inline-flex items-center gap-1
+                  text-[color:var(--accent)] hover:underline
+                  rounded-md font-medium
+                "
+                style={{ "--accent": ACCENT } as React.CSSProperties}
               >
                 View all <FaArrowRight size={12} />
               </Link>
@@ -258,7 +278,10 @@ export default function DashboardHome() {
                     variant="outline"
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                    className="
+                      border-red-600 text-red-600
+                      hover:bg-red-600 hover:text-white
+                    "
                   >
                     Delete
                   </Button>
@@ -324,10 +347,23 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         variant="primary"
         onClick={click}
         disabled={busy}
-        className="w-full sm:w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        className="
+          w-full sm:w-56 h-9
+          bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-light)]
+          text-white
+          hover:from-[color:var(--accent-light)] hover:to-[color:var(--accent)]
+          transition-colors
+        "
+        style={
+          {
+            "--accent": ACCENT,
+            "--accent-light": ACCENT_LIGHT,
+          } as React.CSSProperties
+        }
       >
         {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
       </Button>
+
       {file && !busy && (
         <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
           {file.name}
