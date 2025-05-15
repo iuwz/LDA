@@ -1,20 +1,23 @@
 """
 Universal OpenAI helper – supports all known chat- and completion-style models.
-Automatically caps max_tokens based on each model's documented limits.
+Automatically caps tokens based on each model's documented limits, and omits unsupported parameters per model.
 """
 from __future__ import annotations
-import os, logging
+import os
+import logging
 from typing import Any, Dict, Optional, Iterator
 from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv()
+# Load environment variables\_dotenv_load = load_dotenv()
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def _is_chat_model(name: str) -> bool:
-    # We treat modern GPT and o-series as chat
+    """
+    Determine if a model is a chat-style (chat/completions) model.
+    """
     return any(
         name.startswith(prefix)
         for prefix in (
@@ -24,6 +27,9 @@ def _is_chat_model(name: str) -> bool:
 
 
 def _consume_stream(stream: Iterator[Any], is_chat: bool) -> str:
+    """
+    Concatenate streaming chunks into a single string.
+    """
     parts: list[str] = []
     for ev in stream:
         if is_chat:
@@ -42,47 +48,77 @@ def call_gpt(
     max_completion_tokens: Optional[int] = None,
     **openai_extra: Any,
 ) -> str:
+    """
+    Send a request to OpenAI and return the assistant's reply as a string.
+
+    Supports both chat (gpt-*) and legacy completion models, auto-capping
+    messages per model's token limits and omitting unsupported params.
+    """
     try:
         is_chat = _is_chat_model(model)
         kwargs: Dict[str, Any] = {"model": model}
 
-        # Documented max token capacities
+        # Known max token capacities per model
         model_limits = {
             # Chat models
-            "gpt-3.5-turbo":      4096,
-            "gpt-3.5-turbo-16k": 16384,
-            "gpt-4":              8192,
-            "gpt-4-32k":         32768,
-            "o3":                 8192,
-            "o4-mini":           16384,
-            "o4-mini-high":      16384,
-            "gpt-4o":             8192,
+            "gpt-3.5-turbo":       4096,
+            "gpt-3.5-turbo-16k":  16384,
+            "gpt-4":               8192,
+            "gpt-4-32k":          32768,
+            "o3":                  8192,
+            "o4-mini":            16384,
+            "o4-mini-high":       16384,
+            "gpt-4o":              8192,
             # Legacy completion
-            "text-davinci-003":   4096,
-            "text-davinci-002":   4096,
-            "code-davinci-002":   8000,
+            "text-davinci-003":    4096,
+            "text-davinci-002":    4096,
+            "code-davinci-002":    8000,
         }
 
-        # Determine max_tokens
-        if max_completion_tokens is not None:
-            kwargs["max_tokens"] = max_completion_tokens
-        elif "max_tokens" in openai_extra:
-            kwargs["max_tokens"] = openai_extra.pop("max_tokens")
-        else:
-            limit = None
-            for m, cap in model_limits.items():
-                if model.startswith(m):
-                    limit = cap
-                    break
-            # Fallback: chat defaults to 8192, completion to 4096
-            kwargs["max_tokens"] = limit or (8192 if is_chat else 4096)
+        # Determine default cap based on model prefix
+        cap: Optional[int] = None
+        for m, limit in model_limits.items():
+            if model.startswith(m):
+                cap = limit
+                break
+        default_cap = cap if cap is not None else (8192 if is_chat else 4096)
 
+        # 1️⃣ Use explicit max_completion_tokens argument
+        if max_completion_tokens is not None:
+            if is_chat:
+                kwargs["max_completion_tokens"] = max_completion_tokens
+            else:
+                kwargs["max_tokens"] = max_completion_tokens
+
+        # 2️⃣ Legacy 'max_tokens' passed in openai_extra
+        elif "max_tokens" in openai_extra:
+            tok = openai_extra.pop("max_tokens")
+            if is_chat:
+                kwargs["max_completion_tokens"] = tok
+            else:
+                kwargs["max_tokens"] = tok
+
+        # 3️⃣ Fallback to documented caps
+        else:
+            if is_chat:
+                kwargs["max_completion_tokens"] = default_cap
+            else:
+                kwargs["max_tokens"] = default_cap
+
+        # Add temperature if supported by model
+        # Note: o4-mini and o4-mini-high only support default (1.0), ignore explicit temps
         if temperature is not None:
-            kwargs["temperature"] = temperature
-        # Pass through extras (response_format, stream, etc.)
+            if not model.startswith("o4-mini"):
+                kwargs["temperature"] = temperature
+            else:
+                logger.debug(
+                    "Dropping explicit temperature for %s; using default", model
+                )
+
+        # Pass through other compatible params (response_format, stream, etc.)
         kwargs.update(openai_extra)
 
-        # Compose messages for chat models
+        # Chat completion
         if is_chat:
             messages: list[dict[str, str]] = []
             if system_message:
@@ -93,10 +129,11 @@ def call_gpt(
             if kwargs.get("stream"):
                 stream = client.chat.completions.create(**kwargs)
                 return _consume_stream(stream, is_chat=True)
+
             resp = client.chat.completions.create(**kwargs)
             return resp.choices[0].message.content.strip()
 
-        # Legacy completion branch
+        # Legacy completion
         full_prompt = prompt
         if system_message:
             full_prompt = f"{system_message.strip()}\n\n{prompt}"
@@ -105,6 +142,7 @@ def call_gpt(
         if kwargs.get("stream"):
             stream = client.completions.create(**kwargs)
             return _consume_stream(stream, is_chat=False)
+
         resp = client.completions.create(**kwargs)
         return resp.choices[0].text.strip()
 
