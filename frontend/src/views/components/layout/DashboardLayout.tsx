@@ -1,3 +1,4 @@
+// src/components/layout/DashboardLayout.tsx
 import React, { useState, useEffect, createContext } from "react";
 import {
   FaBars,
@@ -54,8 +55,8 @@ const titleFor = (path: string) => {
 const DashboardLayout: React.FC = () => {
   /* gate #1 – authenticate */
   const [userReady, setUserReady] = useState(false);
-  /* gate #2 – child page */
-  const [childReady, setChildReady] = useState(false);
+  /* gate #2 – child page (initially ready so no overlay) */
+  const [childReady, setChildReady] = useState(true);
 
   /* UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -112,13 +113,6 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <DashboardReadyContext.Provider value={setChildReady}>
-      {/* overlay loader over *everything* until child says ready */}
-      {!childReady && (
-        <div className="fixed inset-0 z-[100]">
-          <LoadingScreen />
-        </div>
-      )}
-
       <div className="flex h-screen bg-gray-50 overflow-hidden">
         {/* overlay for mobile sidebar */}
         {sidebarOpen && (
@@ -226,6 +220,7 @@ const DashboardLayout: React.FC = () => {
                 <FaCog />
               </button>
             </div>
+
             {accMenu && (
               <div className="mt-2 space-y-1">
                 <NavLink
