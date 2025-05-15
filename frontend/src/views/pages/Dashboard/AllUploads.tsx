@@ -1,5 +1,5 @@
 // src/views/pages/Dashboard/AllUploads.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCloudUploadAlt,
@@ -9,6 +9,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
+import { BubbleGenerator } from "../Home/home";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
@@ -27,6 +28,12 @@ const AllUploads: React.FC = () => {
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  /* ───────── bubbles (same style as DashboardHome) ───────── */
+  const bubbles = useMemo(
+    () => [...Array(5)].map((_, i) => <BubbleGenerator key={i} />),
+    []
+  );
 
   /* ───────────── fetch ───────────── */
   const fetchDocs = async () => {
@@ -121,37 +128,52 @@ const AllUploads: React.FC = () => {
   /* ════════════════════════════════════════════════════════════ */
   return (
     <>
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
-        <a
-          href="/dashboard"
-          className="text-[#C17829] flex items-center gap-1 hover:underline"
-        >
-          <FaArrowLeft /> Back to dashboard
-        </a>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-semibold">All uploads</h1>
-          <InlineUpload onDone={fetchDocs} />
-        </div>
-
-        {loading ? (
-          <p className="text-gray-600">Loading…</p>
-        ) : err ? (
-          <p className="text-red-600">{err}</p>
-        ) : docs.length === 0 ? (
-          <p className="text-gray-600">No documents uploaded yet.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {docs
-              .slice()
-              .sort((a, b) => (a._id < b._id ? 1 : -1))
-              .map((d, i) => (
-                <Row key={d._id} d={d} i={i} />
-              ))}
+      <div className="p-6 max-w-4xl mx-auto">
+        {/* bubble-powered container */}
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
+          {/* animated bubbles */}
+          <div
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            style={{ opacity: 0.9 }}
+          >
+            {bubbles}
           </div>
-        )}
+
+          {/* actual page content */}
+          <div className="relative z-10 flex flex-col gap-6">
+            <a
+              href="/dashboard"
+              className="text-[#C17829] flex items-center gap-1 hover:underline"
+            >
+              <FaArrowLeft /> Back to dashboard
+            </a>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h1 className="text-2xl font-semibold">All uploads</h1>
+              <InlineUpload onDone={fetchDocs} />
+            </div>
+
+            {loading ? (
+              <p className="text-gray-600">Loading…</p>
+            ) : err ? (
+              <p className="text-red-600">{err}</p>
+            ) : docs.length === 0 ? (
+              <p className="text-gray-600">No documents uploaded yet.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {docs
+                  .slice()
+                  .sort((a, b) => (a._id < b._id ? 1 : -1))
+                  .map((d, i) => (
+                    <Row key={d._id} d={d} i={i} />
+                  ))}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
 
+      {/* delete modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
@@ -203,7 +225,7 @@ const AllUploads: React.FC = () => {
 
 export default AllUploads;
 
-/* ───────────────── InlineUpload (same as DashboardHome) ───────────────── */
+/* ───────────────── InlineUpload (copied from DashboardHome) ───────────────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
