@@ -17,9 +17,10 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80;
+const NAV_HEIGHT_PX = 80; // same height for top-nav and drawer header
 
 const Navbar: React.FC = () => {
+  /* ───────── state ───────── */
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -29,11 +30,12 @@ const Navbar: React.FC = () => {
   const [activeSection, setActiveSection] = useState<
     "home" | "services" | null
   >(null);
+
   const profileRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── active section on scroll ───────── */
+  /* ───────── scroll section detection ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -42,15 +44,18 @@ const Navbar: React.FC = () => {
     const servicesEl = document.getElementById("services");
     if (!servicesEl) return;
 
-    const handleScroll = () => {
+    const onScroll = () => {
       const y = window.scrollY + NAV_HEIGHT_PX + 1;
-      const top = servicesEl.offsetTop;
-      const bottom = top + servicesEl.offsetHeight;
-      setActiveSection(y >= top && y < bottom ? "services" : "home");
+      setActiveSection(
+        y >= servicesEl.offsetTop &&
+          y < servicesEl.offsetTop + servicesEl.offsetHeight
+          ? "services"
+          : "home"
+      );
     };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, [location.pathname]);
 
   /* ───────── auth check ───────── */
@@ -67,7 +72,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  /* ───────── resize ───────── */
+  /* ───────── window resize listener ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -95,10 +100,12 @@ const Navbar: React.FC = () => {
   /* ───────── lock scroll when drawer open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => void (document.body.style.overflow = "");
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isMobileMenuOpen]);
 
-  /* ───────── hash -> services ───────── */
+  /* ───────── smooth-scroll to services on hash ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -145,17 +152,15 @@ const Navbar: React.FC = () => {
     navigate("/");
   };
 
-  const getIconSize = () => (screenWidth < 350 ? 16 : 18);
+  const getIconSz = () => (screenWidth < 350 ? 16 : 18);
 
-  /* ───────── styles ───────── */
-  const desktopActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
-  const desktopInactive = "hover:text-[#C17829] transition-colors";
-
-  const mobileLink = (isActive: boolean) =>
-    `flex items-center justify-center gap-2 px-1 py-2 ${
-      isActive ? desktopActive : "text-gray-700 hover:text-[#C17829]"
+  /* ───────── common styles ───────── */
+  const deskActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
+  const deskIdle = "hover:text-[#C17829] transition-colors";
+  const mobLink = (a: boolean) =>
+    `flex items-center gap-2 px-1 py-2 justify-center ${
+      a ? deskActive : "text-gray-700 hover:text-[#C17829]"
     }`;
-
   const loginBtn =
     "w-[105px] h-[40px] inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-lg transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white";
   const registerBtn =
@@ -164,11 +169,12 @@ const Navbar: React.FC = () => {
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
-      {/* top-nav */}
+      {/* ───────── Top-nav (always visible) ───────── */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
       >
+        {/* Brand */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -181,7 +187,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* desktop links */}
+        {/* Desktop links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -189,8 +195,8 @@ const Navbar: React.FC = () => {
             className={() =>
               `relative px-1 pb-1 ${
                 activeSection !== "services" && location.pathname === "/"
-                  ? desktopActive
-                  : desktopInactive
+                  ? deskActive
+                  : deskIdle
               } flex items-center gap-2`
             }
           >
@@ -203,7 +209,7 @@ const Navbar: React.FC = () => {
               to="/dashboard"
               className={({ isActive }) =>
                 `relative px-1 pb-1 ${
-                  isActive ? desktopActive : desktopInactive
+                  isActive ? deskActive : deskIdle
                 } flex items-center gap-2`
               }
             >
@@ -216,7 +222,7 @@ const Navbar: React.FC = () => {
             to="/#services"
             onClick={handleServicesClick}
             className={`relative px-1 pb-1 ${
-              activeSection === "services" ? desktopActive : desktopInactive
+              activeSection === "services" ? deskActive : deskIdle
             } flex items-center gap-2`}
           >
             <FaTools size={16} />
@@ -227,7 +233,7 @@ const Navbar: React.FC = () => {
             to="/contact"
             className={({ isActive }) =>
               `relative px-1 pb-1 ${
-                isActive ? desktopActive : desktopInactive
+                isActive ? deskActive : deskIdle
               } flex items-center gap-2`
             }
           >
@@ -239,7 +245,7 @@ const Navbar: React.FC = () => {
             to="/about"
             className={({ isActive }) =>
               `relative px-1 pb-1 ${
-                isActive ? desktopActive : desktopInactive
+                isActive ? deskActive : deskIdle
               } flex items-center gap-2`
             }
           >
@@ -248,7 +254,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* desktop auth */}
+        {/* Desktop auth */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -309,29 +315,33 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* hamburger */}
+        {/* Hamburger */}
         <div className="lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
             className="text-[#2C2C4A] hover:text-[#C17829] p-2"
           >
             {isMobileMenuOpen ? (
-              <FaTimes size={getIconSize()} />
+              <FaTimes size={getIconSz()} />
             ) : (
-              <FaBars size={getIconSize()} />
+              <FaBars size={getIconSz()} />
             )}
           </button>
         </div>
       </nav>
 
-      {/* drawer */}
+      {/* ───────── Mobile drawer ───────── */}
       {isMobileMenuOpen && (
         <>
+          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
+
+          {/* Drawer panel */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
+            {/* Drawer header: duplicate brand so it stays visible */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -342,18 +352,22 @@ const Navbar: React.FC = () => {
                 className="flex items-center space-x-2"
               >
                 <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
-                <span className="text-xl font-bold text-[#C17829] font-serif">
+                <span
+                  className="text-xl font-bold font-serif"
+                  style={{ color: ACCENT }}
+                >
                   LDA
                 </span>
               </NavLink>
             </div>
 
+            {/* Drawer links */}
             <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
               <NavLink
                 to="/"
                 end
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => mobileLink(isActive)}
+                className={({ isActive }) => mobLink(isActive)}
               >
                 <FaHome size={16} />
                 <span>Home</span>
@@ -363,7 +377,7 @@ const Navbar: React.FC = () => {
                 <NavLink
                   to="/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => mobileLink(isActive)}
+                  className={({ isActive }) => mobLink(isActive)}
                 >
                   <FaHome style={{ transform: "scale(0.8)" }} size={16} />
                   <span>Dashboard</span>
@@ -373,7 +387,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/#services"
                 onClick={handleServicesClick}
-                className={mobileLink(activeSection === "services")}
+                className={mobLink(activeSection === "services")}
               >
                 <FaTools size={16} />
                 <span>Services</span>
@@ -382,7 +396,7 @@ const Navbar: React.FC = () => {
               <NavLink
                 to="/about"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => mobileLink(isActive)}
+                className={({ isActive }) => mobLink(isActive)}
               >
                 <FaInfoCircle size={16} />
                 <span>About</span>
@@ -391,12 +405,13 @@ const Navbar: React.FC = () => {
               <NavLink
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => mobileLink(isActive)}
+                className={({ isActive }) => mobLink(isActive)}
               >
                 <FaEnvelope size={16} />
                 <span>Contact</span>
               </NavLink>
 
+              {/* Auth in drawer */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
