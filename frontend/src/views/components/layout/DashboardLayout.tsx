@@ -1,7 +1,5 @@
 // src/views/components/layout/DashboardLayout.tsx
-
 import React, { useState, useEffect } from "react";
-
 import {
   FaBars,
   FaTimes,
@@ -17,13 +15,15 @@ import {
   FaUser,
   FaUserShield,
 } from "react-icons/fa";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { logout } from "../../../api";
 import { HiHome } from "react-icons/hi";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
-// Base URL for back-end
+import LoadingScreen from "../common/LoadingScreen";
+import { logout } from "../../../api";
+
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
+/* ───────────────── nav items ───────────────── */
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
   { icon: FaEdit, title: "Rephrasing", path: "/dashboard/rephrasing" },
@@ -49,89 +49,89 @@ const getCurrentTitle = (path: string) => {
   return found?.title || "Dashboard";
 };
 
-interface UserMe {
-  first_name?: string;
-  last_name?: string;
-  role?: string;
-}
-
+/* ───────────────── component ───────────────── */
 const DashboardLayout: React.FC = () => {
-  const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accMenu, setAccMenu] = useState(false);
 
-  // Delay-render these until loaded
-  const [firstName, setFirstName] = useState<string | null>(null);
-  const [lastName, setLastName] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  /* page-level loading gate */
+  const [layoutReady, setLayoutReady] = useState(false);
+
+  /* user info (loaded before gate lifts) */
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
 
+  /* lock scrolling when sidebar is open (mobile) */
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [sidebarOpen]);
 
-  // Fetch current user info for display
+  /* fetch current user once, then lift gate */
   useEffect(() => {
-    fetch(`${API_BASE}/auth/me`, { credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error("Not authenticated");
-        return res.json();
-      })
-      .then((data: UserMe) => {
+    (async () => {
+      try {
+        const r = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
+        if (!r.ok) throw new Error();
+        const data = await r.json();
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
         setRole(data.role || "");
-      })
-      .catch((err) => {
-        console.error("Failed to fetch user info:", err);
-        // Still mark as loaded, even on error
-        setFirstName("");
-        setLastName("");
-        setRole("");
-      });
-  }, []);
+      } catch {
+        /* if token is invalid, force logout */
+        navigate("/auth", { replace: true });
+      } finally {
+        setLayoutReady(true);
+      }
+    })();
+  }, [navigate]);
 
-  const handleNavClick = () => setOpen(false);
+  /* early return until user info is ready */
+  if (!layoutReady) return <LoadingScreen />;
+
+  const initials = (firstName.charAt(0) || "") + (lastName.charAt(0) || "");
+  const isAdmin = role === "admin";
+
+  const handleNavClick = () => setSidebarOpen(false);
 
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err) {
-      console.error("Logout failed:", err);
+    } catch {
+      /* ignore */
     }
     navigate("/auth", { replace: true });
-    setOpen(false);
-    setAccMenu(false);
   };
 
-  // Check if user is admin
-  const isAdmin = role === "admin";
-
-  // Compute user initials (won't run until loaded)
-  const initials = (firstName?.charAt(0) || "") + (lastName?.charAt(0) || "");
-
+  /* ───────────────── UI ───────────────── */
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {open && (
+      {/* overlay for mobile sidebar */}
+      {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
-          onClick={() => setOpen(false)}
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
+      {/* ── Sidebar ── */}
       <aside
         className={`
           fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col
           transform transition-transform duration-300 ease-in-out
-          ${open ? "translate-x-0" : "-translate-x-full"}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           md:relative md:translate-x-0
         `}
       >
-        {/* Sidebar brand */}
+        {/* brand */}
         <div className="flex items-center justify-between h-12 px-4 border-b">
           <NavLink
             to="/dashboard"
@@ -145,13 +145,14 @@ const DashboardLayout: React.FC = () => {
           </NavLink>
           <button
             className="md:hidden p-1 hover:bg-gray-100 rounded"
-            onClick={() => setOpen(false)}
+            onClick={() => setSidebarOpen(false)}
             aria-label="Close menu"
           >
             <FaTimes />
           </button>
         </div>
 
+        {/* nav links */}
         <div className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {navItems.map(({ icon: Icon, title, path, end }, idx) => (
             <NavLink
@@ -161,10 +162,11 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${isActive
-                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                  : "text-gray-700 hover:bg-gray-100"
-                }`
+                 ${
+                   isActive
+                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                     : "text-gray-700 hover:bg-gray-100"
+                 }`
               }
             >
               <Icon className="mr-3" />
@@ -178,10 +180,11 @@ const DashboardLayout: React.FC = () => {
               onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors
-                 ${isActive
-                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                  : "text-gray-700 hover:bg-gray-100"
-                }`
+                 ${
+                   isActive
+                     ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                     : "text-gray-700 hover:bg-gray-100"
+                 }`
               }
             >
               <FaUserShield className="mr-3" />
@@ -197,74 +200,76 @@ const DashboardLayout: React.FC = () => {
           </button>
         </div>
 
-        {/* Profile section: only render after user info has loaded */}
-        {firstName !== null && lastName !== null && role !== null && (
-          <div className="border-t p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
-                  {initials || <FaCog />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {firstName} {lastName}
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {role || "User"}
-                  </p>
-                </div>
+        {/* profile footer */}
+        <div className="border-t p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
+                {initials || <FaCog />}
               </div>
-              <button
-                className="p-1 hover:bg-gray-100 rounded"
-                onClick={() => setAccMenu((v) => !v)}
-                aria-label="Account menu"
-              >
-                <FaCog />
-              </button>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {firstName} {lastName}
+                </p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {role || "User"}
+                </p>
+              </div>
             </div>
-            {accMenu && (
-              <div className="mt-2 space-y-1">
+            <button
+              className="p-1 hover:bg-gray-100 rounded"
+              onClick={() => setAccMenu((v) => !v)}
+              aria-label="Account menu"
+            >
+              <FaCog />
+            </button>
+          </div>
+
+          {accMenu && (
+            <div className="mt-2 space-y-1">
+              <NavLink
+                to="/dashboard/profile"
+                className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+                onClick={handleNavClick}
+              >
+                <FaUser className="mr-2" /> Profile
+              </NavLink>
+
+              {isAdmin && (
                 <NavLink
-                  to="/dashboard/profile"
+                  to="/admin"
                   className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                   onClick={handleNavClick}
                 >
-                  <FaUser className="mr-2" /> Profile
+                  <FaUserShield className="mr-2" /> Admin Panel
                 </NavLink>
+              )}
 
-                {isAdmin && (
-                  <NavLink
-                    to="/admin"
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-                    onClick={handleNavClick}
-                  >
-                    <FaUserShield className="mr-2" /> Admin Panel
-                  </NavLink>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
-                >
-                  <FaSignOutAlt className="mr-2" /> Logout
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
+      {/* ── Main content ── */}
       <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${open ? "md:pl-64" : "md:pl-0"
-          }`}
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+          sidebarOpen ? "md:pl-64" : "md:pl-0"
+        }`}
       >
         <header className="flex items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 h-12">
           <div className="flex items-center">
             <button
               className="md:hidden mr-3 p-1 text-[#2C2C4A] hover:bg-gray-100 rounded"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setSidebarOpen((v) => !v)}
               aria-label="Toggle menu"
             >
-              {open ? <FaTimes size={20} /> : <FaBars size={20} />}
+              {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
             </button>
             <h1 className="text-lg sm:text-xl font-semibold text-[#2C2C4A] truncate">
               {getCurrentTitle(location.pathname)}
