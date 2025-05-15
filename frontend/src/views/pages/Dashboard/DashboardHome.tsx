@@ -140,7 +140,7 @@ export default function DashboardHome() {
       <button
         disabled={isDeleting}
         onClick={() => setPendingDel(d)}
-        className="flex w-full items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 sm:w-auto"
+        className="flex w-full items-center gap-1 rounded-md px-3 py-1 text-sm text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
