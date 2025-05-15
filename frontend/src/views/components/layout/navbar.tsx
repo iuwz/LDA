@@ -7,6 +7,10 @@ import {
   FaTimes,
   FaSignOutAlt,
   FaUserCircle,
+  FaHome,
+  FaServicestack,
+  FaInfoCircle,
+  FaEnvelope,
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -25,7 +29,7 @@ const Navbar: React.FC = () => {
   const [activeSection, setActiveSection] = useState<
     "home" | "services" | null
   >(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -73,13 +77,13 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ───────── close profile dropdown on outside click ───────── */
+  /* ───────── close dropdown on outside click ───────── */
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
         isProfileDropdownOpen &&
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(e.target as Node)
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
       ) {
         setIsProfileDropdownOpen(false);
       }
@@ -88,15 +92,13 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
-  /* ───────── lock body scroll when mobile menu open ───────── */
+  /* ───────── lock scroll when drawer open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => void (document.body.style.overflow = "");
   }, [isMobileMenuOpen]);
 
-  /* ───────── scroll to #services on hash change ───────── */
+  /* ───────── hash -> services ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -105,7 +107,7 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
-  /* ───────── helper to always scroll to services ───────── */
+  /* ───────── helpers ───────── */
   const handleServicesClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
@@ -124,10 +126,6 @@ const Navbar: React.FC = () => {
     }
   };
 
-  /* ───────── callbacks ───────── */
-  const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
-  const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
-
   const handleLoginClick = () => {
     navigate("/auth?form=login");
     setIsMobileMenuOpen(false);
@@ -142,20 +140,19 @@ const Navbar: React.FC = () => {
       credentials: "include",
     });
     setIsAuthenticated(false);
-    setIsProfileDropdownOpen(false);
     setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
     navigate("/");
   };
 
-  const getIconSize = () => (screenWidth < 350 ? 16 : 20);
+  const getIconSize = () => (screenWidth < 350 ? 16 : 18);
 
   /* ───────── styles ───────── */
   const desktopActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const desktopInactive = "hover:text-[#C17829] transition-colors";
 
-  // vertical list; w-full keeps underline sized to text only (border set on element content)
   const mobileLink = (isActive: boolean) =>
-    `block w-auto px-1 py-2 text-center ${
+    `flex items-center justify-center space-x-2 px-1 py-2 ${
       isActive ? desktopActive : "text-gray-700 hover:text-[#C17829]"
     }`;
 
@@ -166,8 +163,8 @@ const Navbar: React.FC = () => {
 
   /* ───────── JSX ───────── */
   return (
-    <div className="relative font-sans" ref={profileDropdownRef}>
-      {/* top-nav */}
+    <div className="relative font-sans" ref={profileRef}>
+      {/* ───────── top-nav ───────── */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -184,7 +181,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* desktop links */}
+        {/* ───────── desktop links ───────── */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -194,10 +191,11 @@ const Navbar: React.FC = () => {
                 activeSection !== "services" && location.pathname === "/"
                   ? desktopActive
                   : desktopInactive
-              }`
+              } flex items-center space-x-1`
             }
           >
-            Home
+            <FaHome size={16} />
+            <span>Home</span>
           </NavLink>
 
           {authChecked && isAuthenticated && (
@@ -206,10 +204,11 @@ const Navbar: React.FC = () => {
               className={({ isActive }) =>
                 `relative px-1 pb-1 ${
                   isActive ? desktopActive : desktopInactive
-                }`
+                } flex items-center space-x-1`
               }
             >
-              Dashboard
+              <FaHome style={{ transform: "scale(0.8)" }} size={16} />
+              <span>Dashboard</span>
             </NavLink>
           )}
 
@@ -218,35 +217,44 @@ const Navbar: React.FC = () => {
             onClick={handleServicesClick}
             className={`relative px-1 pb-1 ${
               activeSection === "services" ? desktopActive : desktopInactive
-            }`}
+            } flex items-center space-x-1`}
           >
-            Services
+            <FaServicestack size={16} />
+            <span>Services</span>
           </Link>
+
           <NavLink
             to="/contact"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? desktopActive : desktopInactive}`
+              `relative px-1 pb-1 ${
+                isActive ? desktopActive : desktopInactive
+              } flex items-center space-x-1`
             }
           >
-            Contact
+            <FaEnvelope size={16} />
+            <span>Contact</span>
           </NavLink>
+
           <NavLink
             to="/about"
             className={({ isActive }) =>
-              `relative px-1 pb-1 ${isActive ? desktopActive : desktopInactive}`
+              `relative px-1 pb-1 ${
+                isActive ? desktopActive : desktopInactive
+              } flex items-center space-x-1`
             }
           >
-            About
+            <FaInfoCircle size={16} />
+            <span>About</span>
           </NavLink>
         </div>
 
-        {/* desktop auth */}
+        {/* ───────── desktop auth ───────── */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
               <div className="relative">
                 <div
-                  onClick={toggleProfileDropdown}
+                  onClick={() => setIsProfileDropdownOpen((v) => !v)}
                   className="h-8 w-8 rounded-full bg-[#2C2C4A] text-white flex items-center justify-center cursor-pointer"
                 >
                   {initials}
@@ -260,14 +268,15 @@ const Navbar: React.FC = () => {
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
                     >
-                      <FaUserCircle className="mr-2 text-[#2C2C4A]" size={14} />{" "}
+                      <FaUserCircle className="mr-2 text-[#2C2C4A]" size={14} />
                       Profile
                     </button>
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center"
                     >
-                      <FaSignOutAlt className="mr-2" size={14} /> Logout
+                      <FaSignOutAlt className="mr-2" size={14} />
+                      Logout
                     </button>
                   </div>
                 )}
@@ -300,10 +309,10 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* mobile hamburger */}
+        {/* ───────── hamburger ───────── */}
         <div className="lg:hidden">
           <button
-            onClick={toggleMobileMenu}
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
             className="text-[#2C2C4A] hover:text-[#C17829] p-2"
           >
             {isMobileMenuOpen ? (
@@ -315,18 +324,15 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* mobile drawer */}
+      {/* ───────── drawer ───────── */}
       {isMobileMenuOpen && (
         <>
-          {/* overlay */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-
-          {/* side-panel */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
-            {/* brand - divider aligns w/ top-nav */}
+            {/* brand */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -343,7 +349,7 @@ const Navbar: React.FC = () => {
               </NavLink>
             </div>
 
-            {/* vertical links w/ breathing space */}
+            {/* links */}
             <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
               <NavLink
                 to="/"
@@ -351,7 +357,8 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => mobileLink(isActive)}
               >
-                Home
+                <FaHome size={16} />
+                <span>Home</span>
               </NavLink>
 
               {authChecked && isAuthenticated && (
@@ -360,7 +367,8 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => mobileLink(isActive)}
                 >
-                  Dashboard
+                  <FaHome style={{ transform: "scale(0.8)" }} size={16} />
+                  <span>Dashboard</span>
                 </NavLink>
               )}
 
@@ -369,7 +377,8 @@ const Navbar: React.FC = () => {
                 onClick={handleServicesClick}
                 className={mobileLink(activeSection === "services")}
               >
-                Services
+                <FaServicestack size={16} />
+                <span>Services</span>
               </Link>
 
               <NavLink
@@ -377,16 +386,20 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => mobileLink(isActive)}
               >
-                About
+                <FaInfoCircle size={16} />
+                <span>About</span>
               </NavLink>
+
               <NavLink
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => mobileLink(isActive)}
               >
-                Contact
+                <FaEnvelope size={16} />
+                <span>Contact</span>
               </NavLink>
 
+              {/* auth area */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
@@ -396,15 +409,17 @@ const Navbar: React.FC = () => {
                       navigate("/dashboard/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="block w-auto px-1 py-2 text-center text-gray-700 hover:text-[#C17829]"
+                    className="flex items-center space-x-2 px-1 py-2 text-gray-700 hover:text-[#C17829]"
                   >
-                    Profile
+                    <FaUserCircle size={16} />
+                    <span>Profile</span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="block w-auto px-1 py-2 text-center text-red-600 hover:text-red-700"
+                    className="flex items-center space-x-2 px-1 py-2 text-red-600 hover:text-red-700"
                   >
-                    Logout
+                    <FaSignOutAlt size={16} />
+                    <span>Logout</span>
                   </button>
                 </>
               ) : (
