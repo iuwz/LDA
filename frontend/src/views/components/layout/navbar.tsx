@@ -8,11 +8,10 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaHome,
-  FaTools,
+  FaTools, // dashboard icon 🛠️
   FaInfoCircle,
   FaEnvelope,
-  FaToolbox, // NEW  (dashboard)
-  FaLightbulb, // NEW  (services)
+  FaLightbulb, // services icon 💡
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -215,7 +214,7 @@ const Navbar: React.FC = () => {
                 } flex items-center gap-2`
               }
             >
-              <FaToolbox size={16} /> {/* Dashboard icon */}
+              <FaTools size={16} /> {/* 🛠️ dashboard icon */}
               <span>Dashboard</span>
             </NavLink>
           )}
@@ -227,7 +226,7 @@ const Navbar: React.FC = () => {
               activeSection === "services" ? deskActive : deskIdle
             } flex items-center gap-2`}
           >
-            <FaLightbulb size={16} /> {/* Services icon */}
+            <FaLightbulb size={16} /> {/* 💡 services icon */}
             <span>Services</span>
           </Link>
 
@@ -381,7 +380,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => mobLink(isActive)}
                 >
-                  <FaToolbox size={16} />
+                  <FaTools size={16} />
                   <span>Dashboard</span>
                 </NavLink>
               )}
