@@ -17,28 +17,16 @@ COLL = "chat_sessions"
 # ───────────────────────────────── GPT-based legal-question classifier
 _CLASSIFIER_MODEL = "gpt-4o"  # low cost & fast
 _CLASSIFIER_PROMPT = """
-You are a legal-question detector. Determine if the user’s question is about any thing legal or near-legal in any way or form :
+You are a legal-question detector. Determine if the user’s question is about any thing legal or near-legal in any way or form:
 
 Respond with exactly one token (no extra text):
 LEGAL    — if it’s legal or near-legal in any way or form
 NONLEGAL — otherwise
 
-Examples:
-Q: “How do I write an NDA between two startups?”
-A: LEGAL
 
-Q: “Explain GDPR data-processing agreement terms”
-A: LEGAL
-
-Q: “What’s the weather in Paris?”
-A: NONLEGAL
-
-Q: “How do I bake sourdough bread?”
-A: NONLEGAL
-
-Now classify this:
-Q: "{question}"
-A:"""
+Here’s the user’s question:
+"{question}"
+"""
 
 
 async def _is_legal_query(user_id: str, question: str) -> bool:
