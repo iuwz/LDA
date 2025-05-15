@@ -3,8 +3,10 @@ Document I/O helpers (GridFS + text-extraction).
 
 Key features
 ------------
-1. Robust 3-layer PDF extractor
-   • PyMuPDF  →  pdfminer.six  →  optional OCR fallback
+1. Robust multi-layer extractor
+   • DOCX                → python-docx
+   • PDF                 → PyMuPDF → pdfminer.six → optional OCR fallback
+   • Plain-text decode   → UTF-8 / Latin-1 best-effort
 2. Plain helpers for CRUD in the “documents” collection
 3. All functions keep the old names/signatures so nothing breaks
 """
@@ -13,6 +15,7 @@ from __future__ import annotations
 
 import io
 import logging
+from io import BytesIO
 from typing import List
 
 from bson import ObjectId
@@ -20,17 +23,25 @@ from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorGridFSBucket
 
 # ───────────── text-extraction deps ──────────────
-import fitz                                       # PyMuPDF
+import fitz  # PyMuPDF
 from pdfminer.high_level import extract_text as miner_extract
 from pdfminer.layout import LAParams
 from pdf2image import convert_from_bytes
 
+# OCR (optional)
 try:
-    import pytesseract                            # optional OCR
-    from PIL import Image                         # pillow
+    import pytesseract
+    from PIL import Image  # noqa: F401  – used by pytesseract
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
+
+# DOCX (optional)
+try:
+    from docx import Document as _DocxDocument
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -44,26 +55,39 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
     """
     Extract **plain UTF-8** text from a GridFS / UploadFile stream.
 
-    Strategy:
-    1) PyMuPDF    – fast, modern, handles hybrid PDFs
-    2) pdfminer   – better with ancient / malformed structures
-    3) OCR        – scanned documents (if pytesseract installed)
+    Order of battle
+    1) DOCX                       (python-docx)
+    2) PDF  – PyMuPDF             (fast, hybrid aware)
+    3) PDF  – pdfminer.six        (ancient / malformed)
+    4) PDF  – OCR fallback        (scanned docs, if pytesseract present)
+    5) Plain-text best effort     (utf-8 → latin-1)
 
-    Returns a string.  On fatal failure it starts with “Error:”.
+    Returns a string; on fatal failure the string starts with “Error:”.
     """
     raw = await stream.read()
+    ext = filename.rsplit(".", 1)[-1].lower()
 
-    # 1️⃣  PyMuPDF
+    # 1️⃣  DOCX ----------------------------------------------------------------
+    if ext in {"docx", "docm", "dotx", "dotm"} and DOCX_AVAILABLE:
+        try:
+            doc = _DocxDocument(BytesIO(raw))
+            txt = "\n".join(p.text for p in doc.paragraphs)
+            if _has_enough_text(txt, accept_short=True):
+                return txt
+        except Exception as e:
+            logger.debug("DOCX extraction failed on %s: %s", filename, e)
+
+    # 2️⃣  PDF – PyMuPDF -------------------------------------------------------
     try:
         with fitz.open(stream=raw, filetype="pdf") as doc:
-            # keep blank lines between pages → helps GPT understand section breaks
+            # blank line between pages → helps GPT understand section breaks
             txt = "\n\n".join(p.get_text("text") for p in doc)
         if _has_enough_text(txt):
             return txt
     except Exception as e:
         logger.debug("PyMuPDF failed on %s: %s", filename, e)
 
-    # 2️⃣  pdfminer
+    # 3️⃣  PDF – pdfminer.six ---------------------------------------------------
     try:
         laparams = LAParams(line_margin=0.2, char_margin=2.0, word_margin=0.1)
         txt = miner_extract(io.BytesIO(raw), laparams=laparams)
@@ -72,7 +96,7 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
     except Exception as e:
         logger.debug("pdfminer failed on %s: %s", filename, e)
 
-    # 3️⃣  OCR fallback
+    # 4️⃣  OCR fallback ---------------------------------------------------------
     if OCR_AVAILABLE:
         try:
             # best effort: limit to actual page-count or hard cap
@@ -80,6 +104,7 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
                 page_cnt = fitz.open(stream=raw, filetype="pdf").page_count
             except Exception:
                 page_cnt = OCR_MAX_PAGES
+
             images = convert_from_bytes(
                 raw,
                 dpi=300,
@@ -96,13 +121,23 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
         except Exception as e:
             logger.debug("OCR fallback failed on %s: %s", filename, e)
 
+    # 5️⃣  Plain-text (txt / csv / anything readable) --------------------------
+    for enc in ("utf-8", "latin-1"):
+        try:
+            txt = raw.decode(enc, errors="ignore")
+            if _has_enough_text(txt, accept_short=True):
+                return txt
+        except Exception:
+            pass
+
+    # ───── all layers failed ────────────────────────────────────────────────
     logger.error("All extraction layers failed for %s", filename)
     return "Error: Unable to extract text from document."
 
 
 def _has_enough_text(text: str, *, accept_short: bool = False) -> bool:
     """
-    Primitive heuristics: make sure we extracted *real* text.
+    Primitive heuristics: ensure we extracted *real* text.
     """
     if not text:
         return False
