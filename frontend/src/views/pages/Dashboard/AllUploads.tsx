@@ -23,19 +23,20 @@ interface Doc {
 }
 
 const AllUploads: React.FC = () => {
+  /* ───────── state ───────── */
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── bubbles (same style as DashboardHome) ───────── */
+  /* ───────── bubbles (20, like Banner) ───────── */
   const bubbles = useMemo(
-    () => [...Array(5)].map((_, i) => <BubbleGenerator key={i} />),
+    () => [...Array(20)].map((_, i) => <BubbleGenerator key={i} />),
     []
   );
 
-  /* ───────────── fetch ───────────── */
+  /* ───────── fetch docs ───────── */
   const fetchDocs = async () => {
     setLoading(true);
     try {
@@ -57,7 +58,7 @@ const AllUploads: React.FC = () => {
     void fetchDocs();
   }, []);
 
-  /* ───────────── delete flow ───────────── */
+  /* ───────── delete flow ───────── */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -75,7 +76,7 @@ const AllUploads: React.FC = () => {
     }
   };
 
-  /* ───────────── row component ───────────── */
+  /* ───────── row (single file) ───────── */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
@@ -85,12 +86,10 @@ const AllUploads: React.FC = () => {
         grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
         items-center gap-2 sm:gap-4
         rounded-lg border px-4 py-3
-        bg-white hover:bg-gray-50
+        bg-white/90 hover:bg-gray-50/90
       "
     >
-      <div className="flex items-center">
-        <FaCloudUploadAlt className="text-indigo-600" />
-      </div>
+      <FaCloudUploadAlt className="text-indigo-600" />
 
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
@@ -125,21 +124,20 @@ const AllUploads: React.FC = () => {
     </motion.div>
   );
 
-  /* ════════════════════════════════════════════════════════════ */
+  /* ────────────────────────────────────────────────────── */
   return (
     <>
       <div className="p-6 max-w-4xl mx-auto">
-        {/* bubble-powered container */}
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          {/* animated bubbles */}
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 space-y-6">
+          {/* bubbles */}
           <div
-            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            className="absolute inset-0 overflow-hidden pointer-events-none"
             style={{ opacity: 0.9 }}
           >
             {bubbles}
           </div>
 
-          {/* actual page content */}
+          {/* header + upload button */}
           <div className="relative z-10 flex flex-col gap-6">
             <a
               href="/dashboard"
@@ -149,10 +147,11 @@ const AllUploads: React.FC = () => {
             </a>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h1 className="text-2xl font-semibold">All ploads</h1>
+              <h1 className="text-2xl font-semibold">All uploads</h1>
               <InlineUpload onDone={fetchDocs} />
             </div>
 
+            {/* files list */}
             {loading ? (
               <p className="text-gray-600">Loading…</p>
             ) : err ? (
@@ -173,7 +172,7 @@ const AllUploads: React.FC = () => {
         </section>
       </div>
 
-      {/* delete modal */}
+      {/* delete confirmation modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
@@ -225,7 +224,7 @@ const AllUploads: React.FC = () => {
 
 export default AllUploads;
 
-/* ───────────────── InlineUpload (copied from DashboardHome) ───────────────── */
+/* ───────── InlineUpload (re-used from DashboardHome) ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
