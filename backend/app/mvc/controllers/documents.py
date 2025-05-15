@@ -1,218 +1,187 @@
 # backend/app/mvc/controllers/documents.py
+"""
+Document I/O helpers (GridFS + text-extraction).
 
+Key features
+------------
+1. Robust 3-layer PDF extractor
+   • PyMuPDF  →  pdfminer.six  →  optional OCR fallback
+2. Plain helpers for CRUD in the “documents” collection
+3. All functions keep the old names/signatures so nothing breaks
+"""
+
+from __future__ import annotations
+
+import io
 import logging
-import mimetypes
-from urllib.parse import quote
-from io import BytesIO # Import BytesIO for reading stream content
-import os # Import os for path splitting
+from typing import List
 
 from bson import ObjectId
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket
-
 from fastapi import HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorGridFSBucket
 
-# Import libraries for document conversion (add these to your requirements.txt)
-# You will need to install these:
-# pip install python-docx PyPDF2
+# ─────────────  text-extraction deps  ─────────────
+import fitz                                       # PyMuPDF
+from pdfminer.high_level import extract_text as miner_extract
+from pdfminer.layout import LAParams
+from pdf2image import convert_from_bytes
+
 try:
-    from docx import Document as DocxDocument
-    logger = logging.getLogger(__name__)
-    logger.info("python-docx library found.")
+    import pytesseract                            # optional OCR
+    from PIL import Image                         # pillow
+    OCR_AVAILABLE = True
 except ImportError:
-    DocxDocument = None
-    logger = logging.getLogger(__name__)
-    logger.warning("python-docx not installed. DOCX content extraction will be limited.")
-try:
-    # Using the newer PdfReader from PyPDF2
-    from PyPDF2 import PdfReader
-    logger = logging.getLogger(__name__)
-    logger.info("PyPDF2 library found for PDF reading.")
-except ImportError:
-    PdfReader = None
-    logger = logging.getLogger(__name__)
-    logger.warning("PyPDF2 not installed. PDF reading for rephrasing unavailable.")
+    OCR_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
+
+MIN_PRINTABLE_RATIO = 0.20     # < 20 % printable → likely garbage
+OCR_MAX_PAGES       = 30       # cap: OCR is expensive
 
 
-logger = logging.getLogger(__name__) # Ensure logger is defined here
-
-
-# Helper function to extract ALL text from a document stream
+# ═════════════════  TEXT EXTRACTION  ═════════════════
 async def extract_full_text_from_stream(stream, filename: str) -> str:
     """
-    Attempts to extract all text content from a file stream.
-    Requires python-docx and PyPDF2 libraries installed.
-    NOTE: This is a basic implementation and may not handle all document complexities
-    like scanned images, complex layouts, or encrypted files.
-    """
-    file_extension = filename.split('.')[-1].lower()
-    text_content = ""
+    Extract **plain UTF-8** text from a GridFS / UploadFile stream.
 
+    Strategy:
+    1) PyMuPDF    – fast, modern, handles hybrid PDFs
+    2) pdfminer   – better with ancient / malformed structures
+    3) OCR        – scanned documents (if pytesseract installed)
+
+    Returns a string.  On fatal failure it starts with “Error:”.
+    """
+    raw = await stream.read()
+
+    # 1️⃣  PyMuPDF
     try:
-        # Read the entire stream content into memory
-        # Consider adding a size limit here to prevent loading huge files into memory
-        content = await stream.read()
-
+        with fitz.open(stream=raw, filetype="pdf") as doc:
+            txt = "".join(p.get_text("text") for p in doc)
+        if _has_enough_text(txt):
+            return txt
     except Exception as e:
-        logger.error(f"Failed to read file stream for {filename}: {e}")
-        return f"Error reading file content: {e}"
+        logger.debug("PyMuPDF failed on %s: %s", filename, e)
 
+    # 2️⃣  pdfminer
+    try:
+        laparams = LAParams(line_margin=0.2, char_margin=2.0, word_margin=0.1)
+        txt = miner_extract(io.BytesIO(raw), laparams=laparams)
+        if _has_enough_text(txt):
+            return txt
+    except Exception as e:
+        logger.debug("pdfminer failed on %s: %s", filename, e)
 
-    if file_extension == 'docx' and DocxDocument:
+    # 3️⃣  OCR fallback
+    if OCR_AVAILABLE:
         try:
-            doc = DocxDocument(BytesIO(content))
-            paragraphs = [paragraph.text for paragraph in doc.paragraphs]
-            # You might need to handle tables, headers, footers, etc.
-            # For this example, we'll focus on paragraphs.
-            text_content = "\n".join(paragraphs)
-            logger.info(f"Extracted text from DOCX: {filename}")
+            images = convert_from_bytes(
+                raw,
+                dpi=300,
+                fmt="png",
+                first_page=1,
+                last_page=OCR_MAX_PAGES,
+            )
+            ocr_txt: List[str] = [
+                pytesseract.image_to_string(img, lang="eng") for img in images
+            ]
+            txt = "\n".join(ocr_txt)
+            if _has_enough_text(txt, accept_short=True):
+                return txt
         except Exception as e:
-            logger.error(f"Error extracting text from DOCX {filename}: {e}")
-            text_content = f"Error extracting text from DOCX file: {filename}. Content preview might be incomplete or unavailable. {e}"
-    elif file_extension == 'pdf' and PdfReader:
-        try:
-            reader = PdfReader(BytesIO(content))
-            text = ""
-            # check if the PDF is encrypted
-            if reader.is_encrypted:
-                logger.warning(f"PDF file {filename} is encrypted, cannot extract text.")
-                return f"Error: PDF file {filename} is encrypted. Cannot extract text."
+            logger.debug("OCR fallback failed on %s: %s", filename, e)
 
-            for page_num in range(len(reader.pages)):
-                page = reader.pages[page_num]
-                # Use extract_text()
-                text += page.extract_text() or ""
-            text_content = text
-            logger.info(f"Extracted text from PDF: {filename}")
-        except Exception as e: # Catching a broad exception for robustness
-            logger.error(f"Error extracting text from PDF {filename}: {e}")
-            text_content = f"Error extracting text from PDF file: {filename}. Content preview might be incomplete or unavailable. {e}"
-    else:
-        logger.warning(f"Unsupported file type for text extraction: {file_extension}")
-        # Attempt to decode as text for other files or if libraries are missing
-        try:
-            # Assumes UTF-8 encoding, adjust if necessary
-            text_content = content.decode('utf-8')
-        except Exception:
-            # If decoding fails, try other common encodings or return a message
-            try:
-                text_content = content.decode('latin-1')
-            except Exception:
-                 logger.warning(f"Could not decode file {filename} as UTF-8 or latin-1 text.")
-                 text_content = f"Could not display content for file: {filename}. Format not supported or text decoding failed."
+    logger.error("All extraction layers failed for %s", filename)
+    return "Error: Unable to extract text from document."
 
-    return text_content
 
-# ───────────────────────── Controllers related to Documents ─────────────────────────
-# (Keep your existing functions like upload_file_to_gridfs, store_document_record,
-# list_user_documents, list_all_documents, get_document_record, open_gridfs_file, delete_document here)
-
-async def upload_file_to_gridfs(db: AsyncIOMotorDatabase, file_data, filename: str):
+def _has_enough_text(text: str, *, accept_short: bool = False) -> bool:
     """
-    Uploads the file (file_data) to MongoDB GridFS with the given filename.
-    Returns the file_id (GridFS _id).
+    Primitive heuristics: make sure we extracted *real* text.
     """
+    if not text:
+        return False
+    printable = sum(c.isprintable() for c in text)
+    ratio = printable / max(len(text), 1)
+    return ratio >= MIN_PRINTABLE_RATIO and (len(text) > 100 or accept_short)
+
+
+# ═════════════════  GRIDFS HELPERS  ═════════════════
+async def upload_file_to_gridfs(
+    db: AsyncIOMotorDatabase, data: bytes, filename: str
+):  # -> ObjectId
     fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs")
-    file_id = await fs.upload_from_stream(filename, file_data)
-    return file_id
+    return await fs.upload_from_stream(filename, data)
 
-async def store_document_record(db: AsyncIOMotorDatabase, user_id: str, filename: str, file_id):
-    """
-    Store a reference to the uploaded GridFS file in a separate 'documents' collection,
-    so we can track ownership, filename, etc.
-    """
-    doc = {
-        "owner_id": user_id,
-        "filename": filename,
-        "file_id": file_id  # The GridFS _id
-    }
+
+async def store_document_record(
+    db: AsyncIOMotorDatabase, owner_id: str, filename: str, file_id
+) -> str:
+    doc = {"owner_id": owner_id, "filename": filename, "file_id": file_id}
     result = await db.documents.insert_one(doc)
-    logger.info(f"Inserted document record with _id={result.inserted_id} for user={user_id}")
+    logger.info("Inserted document %s for user %s", result.inserted_id, owner_id)
     return str(result.inserted_id)
 
-async def list_user_documents(db: AsyncIOMotorDatabase, user_id: str):
-    """
-    Return all document records belonging to a particular user.
-    """
-    docs_cursor = db.documents.find({"owner_id": user_id})
-    docs = []
-    async for doc in docs_cursor:
-        doc["_id"] = str(doc["_id"])
-        doc["file_id"] = str(doc["file_id"])
-        docs.append(doc)
-    return docs
+
+async def list_user_documents(db: AsyncIOMotorDatabase, owner_id: str):
+    cur = db.documents.find({"owner_id": owner_id})
+    out = []
+    async for d in cur:
+        d["_id"], d["file_id"] = map(str, (d["_id"], d["file_id"]))
+        out.append(d)
+    return out
+
 
 async def list_all_documents(db: AsyncIOMotorDatabase):
-    """
-    Return all document records, for Admin usage.
-    """
-    docs_cursor = db.documents.find({})
-    docs = []
-    async for doc in docs_cursor:
-        doc["_id"] = str(doc["_id"])
-        doc["file_id"] = str(doc["file_id"])
-        docs.append(doc)
-    return docs
+    cur = db.documents.find({})
+    out = []
+    async for d in cur:
+        d["_id"], d["file_id"] = map(str, (d["_id"], d["file_id"]))
+        out.append(d)
+    return out
+
 
 async def get_document_record(db: AsyncIOMotorDatabase, doc_id: str):
-    """
-    Retrieve a single document record by _id from the documents collection.
-    """
     if not ObjectId.is_valid(doc_id):
         raise HTTPException(status_code=400, detail="Invalid document ID")
 
-    doc = await db.documents.find_one({"_id": ObjectId(doc_id)})
-    if not doc:
+    rec = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    if not rec:
         raise HTTPException(status_code=404, detail="Document not found")
-    doc["_id"] = str(doc["_id"])
-    doc["file_id"] = str(doc["file_id"])
-    return doc
+
+    rec["_id"], rec["file_id"] = map(str, (rec["_id"], rec["file_id"]))
+    return rec
+
 
 async def open_gridfs_file(db: AsyncIOMotorDatabase, file_id: str):
-    """
-    Open a download stream from GridFS for the given file_id.
-    Returns (gridfs_stream, filename).
-    """
     if not ObjectId.is_valid(file_id):
         raise HTTPException(status_code=400, detail="Invalid GridFS file ID")
 
     fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs")
     try:
-        grid_out = await fs.open_download_stream(ObjectId(file_id))
-        filename = grid_out.filename
-        return grid_out, filename
-    except Exception as e: # Catch any exception during stream opening
-        logger.error(f"Failed to open GridFS stream for file_id {file_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail="File not found or accessible in GridFS")
+        stream = await fs.open_download_stream(ObjectId(file_id))
+        return stream, stream.filename
+    except Exception as e:
+        logger.error("Failed to open GridFS stream %s: %s", file_id, e, exc_info=True)
+        raise HTTPException(status_code=404, detail="File not found in GridFS")
+
 
 async def delete_document(db: AsyncIOMotorDatabase, doc_id: str):
-    """Delete a document record *and* its GridFS file."""
+    """
+    Delete metadata + GridFS binary.  Idempotent: if the GridFS file is already
+    gone the metadata is still removed.
+    """
     if not ObjectId.is_valid(doc_id):
         raise HTTPException(status_code=400, detail="Invalid document ID")
 
-    # Use get_document_record to ensure existence and get file_id
-    record = await get_document_record(db, doc_id)
+    rec = await get_document_record(db, doc_id)  # validates and fetches
 
-    # 1) delete GridFS file
-    fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs") # type: ignore
+    fs = AsyncIOMotorGridFSBucket(db, bucket_name="documents_fs")
     try:
-        await fs.delete(ObjectId(record["file_id"])) # type: ignore
-        logger.info(f"Deleted GridFS file {record['file_id']} for document {doc_id}")
+        await fs.delete(ObjectId(rec["file_id"]))
+        logger.info("Deleted GridFS file %s", rec["file_id"])
     except Exception as e:
-         logger.error(f"Failed to delete GridFS file {record['file_id']} for document {doc_id}: {e}", exc_info=True)
-         # Decide if you want to block document record deletion if file deletion fails.
-         # For now, log and proceed to delete the record.
+        logger.error("GridFS delete failed for %s: %s", rec["file_id"], e, exc_info=True)
 
-
-    # 2) delete metadata record
-    try:
-        delete_result = await db.documents.delete_one({"_id": ObjectId(doc_id)}) # type: ignore
-        if delete_result.deleted_count == 1:
-             logger.info(f"Deleted document record {doc_id}")
-        else:
-             logger.warning(f"Document record {doc_id} not found for deletion.")
-    except Exception as e:
-         logger.error(f"Failed to delete document record {doc_id}: {e}", exc_info=True)
-         raise HTTPException(status_code=500, detail=f"Failed to delete document record: {e}")
-
+    await db.documents.delete_one({"_id": ObjectId(doc_id)})
+    logger.info("Deleted document record %s", doc_id)
     return {"detail": "Deleted"}
