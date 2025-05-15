@@ -11,6 +11,7 @@ import {
   FaTools,
   FaInfoCircle,
   FaEnvelope,
+  FaScroll, // NEW
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -213,7 +214,7 @@ const Navbar: React.FC = () => {
                 } flex items-center gap-2`
               }
             >
-              <FaHome style={{ transform: "scale(0.8)" }} size={16} />
+              <FaScroll size={16} /> {/* NEW icon */}
               <span>Dashboard</span>
             </NavLink>
           )}
@@ -379,7 +380,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => mobLink(isActive)}
                 >
-                  <FaHome style={{ transform: "scale(0.8)" }} size={16} />
+                  <FaScroll size={16} /> {/* NEW icon */}
                   <span>Dashboard</span>
                 </NavLink>
               )}
