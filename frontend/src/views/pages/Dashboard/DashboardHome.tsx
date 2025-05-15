@@ -1,24 +1,16 @@
-// src/views/pages/Dashboard/DashboardHome.tsx
-import React, { useEffect, useRef, useState, useContext } from "react";
+// src/views/pages/Dashboard/AllUploads.tsx
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
 import {
-  FaRobot,
-  FaEdit,
-  FaShieldAlt,
-  FaClipboardCheck,
-  FaLanguage,
   FaCloudUploadAlt,
   FaDownload,
   FaTrash,
+  FaArrowLeft,
   FaTimes,
-  FaArrowRight,
 } from "react-icons/fa";
-
-import Banner from "../../components/common/Banner";
-import ToolList, { ToolCard } from "../../components/common/toolList";
 import { Button } from "../../components/common/button";
-import { DashboardReadyContext } from "../../components/layout/DashboardLayout";
+import { BubbleGenerator } from "../Home/home";
+import LoadingScreen from "../../components/common/LoadingScreen";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
@@ -31,51 +23,16 @@ interface Doc {
   file_id: string;
 }
 
-const tools: ToolCard[] = [
-  {
-    icon: FaEdit,
-    title: "Rephrasing",
-    desc: "Improve clarity & tone.",
-    link: "/dashboard/rephrasing",
-  },
-  {
-    icon: FaShieldAlt,
-    title: "Risk Assessment",
-    desc: "Spot legal issues fast.",
-    link: "/dashboard/risk-assessment",
-  },
-  {
-    icon: FaClipboardCheck,
-    title: "Compliance",
-    desc: "Verify standards.",
-    link: "/dashboard/compliance",
-  },
-  {
-    icon: FaLanguage,
-    title: "Translation",
-    desc: "Translate accurately.",
-    link: "/dashboard/translation",
-  },
-  {
-    icon: FaRobot,
-    title: "Chatbot",
-    desc: "Ask legal-doc questions.",
-    link: "/dashboard/chatbot",
-  },
-];
-
-export default function DashboardHome() {
-  const setLayoutReady = useContext(DashboardReadyContext);
-
-  const [loading, setLoading] = useState(true);
+const AllUploads: React.FC = () => {
+  /* state */
   const [docs, setDocs] = useState<Doc[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pageReady, setPageReady] = useState(false); // gate full component
 
-  /* fetch docs */
-  const fetchAllData = async () => {
-    setLoading(true);
+  /* fetch */
+  const fetchDocs = async () => {
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -87,16 +44,15 @@ export default function DashboardHome() {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setLoading(false);
-      setLayoutReady(true);
+      setPageReady(true); // render only after fetch completes
     }
   };
 
   useEffect(() => {
-    void fetchAllData();
+    void fetchDocs();
   }, []);
 
-  /* delete */
+  /* delete flow */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -105,7 +61,7 @@ export default function DashboardHome() {
         method: "DELETE",
         credentials: "include",
       });
-      setDocs((prev) => prev.filter((d) => d._id !== pendingDel._id));
+      setDocs((p) => p.filter((d) => d._id !== pendingDel._id));
     } catch {
       alert("Delete failed");
     } finally {
@@ -117,92 +73,83 @@ export default function DashboardHome() {
   /* row */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
       className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 sm:gap-4
-                 rounded-lg border px-4 py-3 bg-white hover:bg-gray-50"
+                 rounded-lg border px-4 py-3 bg-white/90 hover:bg-gray-50/90"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
+
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
+
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 w-full sm:w-auto"
+        className="flex items-center justify-center gap-1 rounded-md px-3 py-1 text-sm
+                   text-[#c17829] hover:bg-[#a66224]/10 w-full sm:w-auto"
       >
         <FaDownload /> Download
       </a>
+
       <button
-        disabled={isDeleting}
         onClick={() => setPendingDel(d)}
-        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 w-full sm:w-auto"
+        disabled={isDeleting}
+        className="flex items-center justify-center gap-1 text-sm text-red-600 hover:text-red-800
+                   disabled:opacity-50 w-full sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
     </motion.div>
   );
 
-  const recent = docs
-    .slice()
-    .sort((a, b) => (a._id < b._id ? 1 : -1))
-    .slice(0, 5);
+  /* ───────────────── early return to avoid flicker ───────────────── */
+  if (!pageReady) return <LoadingScreen />;
 
   /* ─────────────────────────── UI ─────────────────────────── */
   return (
     <>
-      <div className="space-y-14 p-6 max-w-6xl mx-auto">
-        <Banner />
+      <div className="p-6 max-w-4xl mx-auto">
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 space-y-6">
+          {/* single BubbleGenerator, overscanned to stop layout jumps */}
+          <div
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            style={{ opacity: 0.9 }}
+          >
+            <BubbleGenerator />
+          </div>
 
-        {/* tools */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Your tools</h2>
-          <ToolList tools={tools} />
-        </section>
+          {/* header */}
+          <div className="relative z-10 flex flex-col gap-6">
+            <a
+              href="/dashboard"
+              className="text-[#C17829] flex items-center gap-1 hover:underline"
+            >
+              <FaArrowLeft /> Back to dashboard
+            </a>
 
-        {/* uploads */}
-        <section className="rounded-2xl bg-white shadow border p-8">
-          <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h3 className="text-xl font-semibold">Recent Uploads</h3>
-              <InlineUpload onDone={fetchAllData} />
+              <h1 className="text-2xl font-semibold">All uploads</h1>
+              <InlineUpload onDone={fetchDocs} />
             </div>
 
-            {loading ? (
-              <p className="text-gray-600">Loading…</p>
-            ) : err ? (
-              <p className="text-red-600 py-4">
-                Error: {err}.{" "}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={fetchAllData}
-                  className="text-[#C17829] hover:underline"
-                >
-                  Try again
-                </Button>
-              </p>
+            {/* list */}
+            {err ? (
+              <p className="text-red-600">{err}</p>
             ) : docs.length === 0 ? (
               <p className="text-gray-600">No documents uploaded yet.</p>
             ) : (
               <div className="flex flex-col gap-3">
-                {recent.map((d, i) => (
-                  <Row key={d._id} d={d} i={i} />
-                ))}
-              </div>
-            )}
-
-            {docs.length > 5 && (
-              <div className="self-end">
-                <Link
-                  to="/dashboard/uploads"
-                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
-                >
-                  View all <FaArrowRight size={12} />
-                </Link>
+                {docs
+                  .slice()
+                  .sort((a, b) => (a._id < b._id ? 1 : -1))
+                  .map((d, i) => (
+                    <Row key={d._id} d={d} i={i} />
+                  ))}
               </div>
             )}
           </div>
@@ -229,13 +176,12 @@ export default function DashboardHome() {
               <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
                 <h4 className="text-lg font-semibold">Remove document</h4>
                 <p className="text-sm text-gray-700">
-                  Are you sure you want to delete{" "}
-                  <span className="font-medium">{pendingDel.filename}</span>?
-                  This action cannot be undone.
+                  Delete{" "}
+                  <span className="font-medium">{pendingDel?.filename}</span>?
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
-                    size="sm"
+                    size="xs"
                     variant="outline"
                     onClick={() => setPendingDel(null)}
                     disabled={isDeleting}
@@ -243,11 +189,10 @@ export default function DashboardHome() {
                     Cancel
                   </Button>
                   <Button
-                    size="sm"
-                    variant="outline"
+                    size="xs"
+                    className="bg-red-600 text-white hover:bg-red-700"
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
                   >
                     Delete
                   </Button>
@@ -259,9 +204,11 @@ export default function DashboardHome() {
       </AnimatePresence>
     </>
   );
-}
+};
 
-/* ───────── InlineUpload ───────── */
+export default AllUploads;
+
+/* ───────── InlineUpload (shared) ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
