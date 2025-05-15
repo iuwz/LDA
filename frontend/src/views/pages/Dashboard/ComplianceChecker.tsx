@@ -104,6 +104,11 @@ function ComplianceChecker() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  /* scroll anchor */
+  const topRef = useRef<HTMLDivElement>(null);
+  const scrollToTopSmooth = () =>
+    setTimeout(() => topRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+
   /* init load */
   useEffect(() => {
     fetchUploadedDocuments();
@@ -182,7 +187,7 @@ function ComplianceChecker() {
         analyzedFilename: rep.report_filename || id,
       });
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     } catch (e: any) {
       alert(e.message || "Failed to open report");
     }
@@ -257,6 +262,7 @@ function ComplianceChecker() {
         analyzedFilename: filename,
       });
       loadHistory();
+      scrollToTopSmooth();
     } catch (e: any) {
       setError(`Compliance check failed: ${e.message || "Unknown error"}`);
     } finally {
@@ -293,6 +299,7 @@ function ComplianceChecker() {
     if (fileInputRef.current) fileInputRef.current.value = "";
     setResults(null);
     setError(null);
+    scrollToTopSmooth();
   };
 
   const isAnalyzeDisabled =
@@ -300,7 +307,7 @@ function ComplianceChecker() {
   const isFileInputDisabled = analyzing || fetchingDocs;
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8" ref={topRef}>
       <header className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="h-2 bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)]" />
         <div className="flex items-center gap-4 p-6">
