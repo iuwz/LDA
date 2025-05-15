@@ -13,6 +13,7 @@ import {
   FaTrash,
   FaTimes,
   FaArrowRight,
+  FaSpinner,
 } from "react-icons/fa";
 
 import Banner from "../../components/common/Banner";
@@ -125,21 +126,21 @@ export default function DashboardHome() {
     >
       <FaCloudUploadAlt className="text-indigo-600" />
       <div className="truncate">
-        <p className="font-medium text-gray-800 truncate">{d.filename}</p>
+        <p className="truncate font-medium text-gray-800">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 w-full sm:w-auto"
+        className="flex w-full items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10 sm:w-auto"
       >
         <FaDownload /> Download
       </a>
       <button
         disabled={isDeleting}
         onClick={() => setPendingDel(d)}
-        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 w-full sm:w-auto"
+        className="flex w-full items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
@@ -154,19 +155,19 @@ export default function DashboardHome() {
   /* ─────────────────────────── UI ─────────────────────────── */
   return (
     <>
-      <div className="space-y-14 p-6 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl space-y-14 p-6">
         <Banner />
 
         {/* tools */}
         <section>
-          <h2 className="text-xl font-semibold mb-4">Your tools</h2>
+          <h2 className="mb-4 text-xl font-semibold">Your tools</h2>
           <ToolList tools={tools} />
         </section>
 
         {/* uploads */}
-        <section className="rounded-2xl bg-white shadow border p-8">
+        <section className="rounded-2xl border bg-white p-8 shadow">
           <div className="flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-xl font-semibold">Recent Uploads</h3>
               <InlineUpload onDone={fetchAllData} />
             </div>
@@ -174,7 +175,7 @@ export default function DashboardHome() {
             {loading ? (
               <p className="text-gray-600">Loading…</p>
             ) : err ? (
-              <p className="text-red-600 py-4">
+              <p className="py-4 text-red-600">
                 Error: {err}.{" "}
                 <Button
                   size="sm"
@@ -199,7 +200,7 @@ export default function DashboardHome() {
               <div className="self-end">
                 <Link
                   to="/dashboard/uploads"
-                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                  className="inline-flex items-center gap-1 rounded-md font-medium text-[#C17829] hover:underline"
                 >
                   View all <FaArrowRight size={12} />
                 </Link>
@@ -214,7 +215,7 @@ export default function DashboardHome() {
         {pendingDel && (
           <>
             <motion.div
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 z-40 bg-black/40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -226,31 +227,33 @@ export default function DashboardHome() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-                <h4 className="text-lg font-semibold">Remove document</h4>
+              <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
+                  Delete Document
+                </h4>
                 <p className="text-sm text-gray-700">
                   Are you sure you want to delete{" "}
-                  <span className="font-medium">{pendingDel.filename}</span>?
+                  <span className="font-medium">{pendingDel?.filename}</span>?
                   This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  <button
                     onClick={() => setPendingDel(null)}
                     disabled={isDeleting}
+                    className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  </button>
+                  <button
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
-                    Delete
-                  </Button>
+                    {isDeleting && (
+                      <FaSpinner className="mr-2 inline-block animate-spin" />
+                    )}
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -313,12 +316,12 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         variant="primary"
         onClick={click}
         disabled={busy}
-        className="w-full sm:w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        className="h-9 w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 sm:w-48"
       >
         {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
       </Button>
       {file && !busy && (
-        <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
+        <span className="flex max-w-xs items-center gap-1 truncate text-sm text-gray-700">
           {file.name}
           <Button
             size="xs"
