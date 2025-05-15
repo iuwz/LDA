@@ -37,7 +37,6 @@ async def _is_legal_query(user_id: str, question: str) -> bool:
             prompt=prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
-            max_completion_tokens=1,
         ) or ""
         logger.debug("Classifier response for %s → %s", user_id, raw)
         return raw.strip().upper() == "LEGAL"
