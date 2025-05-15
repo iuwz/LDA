@@ -8,10 +8,10 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaHome,
-  FaTools, // dashboard icon 🛠️
+  FaTools,
   FaInfoCircle,
   FaEnvelope,
-  FaLightbulb, // services icon 💡
+  FaLightbulb,
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -159,7 +159,7 @@ const Navbar: React.FC = () => {
   const deskActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const deskIdle = "hover:text-[#C17829] transition-colors";
   const mobLink = (a: boolean) =>
-    `flex items-center gap-2 px-1 py-2 justify-center ${
+    `flex items-center gap-2 px-1 py-2 ${
       a ? deskActive : "text-gray-700 hover:text-[#C17829]"
     }`;
   const loginBtn =
@@ -214,7 +214,7 @@ const Navbar: React.FC = () => {
                 } flex items-center gap-2`
               }
             >
-              <FaTools size={16} /> {/* 🛠️ dashboard icon */}
+              <FaTools size={16} />
               <span>Dashboard</span>
             </NavLink>
           )}
@@ -226,7 +226,7 @@ const Navbar: React.FC = () => {
               activeSection === "services" ? deskActive : deskIdle
             } flex items-center gap-2`}
           >
-            <FaLightbulb size={16} /> {/* 💡 services icon */}
+            <FaLightbulb size={16} />
             <span>Services</span>
           </Link>
 
@@ -363,7 +363,7 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Drawer links */}
-            <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
+            <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-start pl-6 space-y-6">
               <NavLink
                 to="/"
                 end
@@ -436,7 +436,7 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center space-y-4">
+                <div className="flex flex-col items-start pl-1 space-y-4 w-full pr-10">
                   <Button
                     size="md"
                     variant="secondary"
