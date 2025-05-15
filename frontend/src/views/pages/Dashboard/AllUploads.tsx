@@ -149,7 +149,7 @@ const AllUploads: React.FC = () => {
             </a>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h1 className="text-2xl font-semibold">All uploads</h1>
+              <h1 className="text-2xl font-semibold">All Uploads</h1>
               <InlineUpload onDone={fetchDocs} />
             </div>
 
