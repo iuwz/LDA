@@ -70,7 +70,7 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* bubbles overlay — generate ONCE */
+  /* — bubbles overlay (cached once) — */
   const bubbles = useMemo(
     () => [...Array(12)].map((_, i) => <BubbleGenerator key={i} />),
     []
@@ -78,7 +78,6 @@ export default function DashboardHome() {
 
   /* fetch uploads */
   const refresh = async () => {
-    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -152,7 +151,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
-  /* ───────── UI ───────── */
+  /* — UI — */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -166,20 +165,23 @@ export default function DashboardHome() {
 
         {/* uploads */}
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          {/*  show bubbles ONLY after loading is done -> prevents height-change flicker */}
-          {!loading && (
-            <div
-              className="absolute -inset-[60%] overflow-hidden pointer-events-none"
-              style={{ opacity: 0.9 }}
-            >
-              {bubbles}
-            </div>
-          )}
+          {/* bubbles from the start (like Banner) */}
+          <div
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            style={{ opacity: 0.9 }}
+          >
+            {bubbles}
+          </div>
 
           <div className="relative z-10 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-xl font-semibold">Recent uploads</h3>
-              <InlineUpload onDone={refresh} />
+              {/* async wrapper so type matches () => Promise<void> */}
+              <InlineUpload
+                onDone={async () => {
+                  await refresh();
+                }}
+              />
             </div>
 
             {loading && docs.length === 0 ? (
@@ -190,7 +192,7 @@ export default function DashboardHome() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={refresh}
+                  onClick={async () => await refresh()}
                   className="text-[#C17829] hover:underline"
                 >
                   Try again
@@ -272,7 +274,7 @@ export default function DashboardHome() {
   );
 }
 
-/* ───────────────── inline upload ───────────────── */
+/* ───────────────── InlineUpload ───────────────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
