@@ -98,8 +98,8 @@ const AllUploads: React.FC = () => {
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
-        className="flex w-full items-center justify-center gap-1 text-sm text-red-600 hover:text-red-800
-                   disabled:opacity-50 sm:w-auto"
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-sm
+                   text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
