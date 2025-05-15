@@ -1,5 +1,5 @@
 // src/views/pages/Dashboard/AllUploads.tsx
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCloudUploadAlt,
@@ -25,20 +25,13 @@ interface Doc {
 const AllUploads: React.FC = () => {
   /* ───────── state ───────── */
   const [docs, setDocs] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  /* ───────── bubbles (reduced to 10) ───────── */
-  const bubbles = useMemo(
-    () => [...Array(10)].map((_, i) => <BubbleGenerator key={i} />),
-    []
-  );
+  const [pageReady, setPageReady] = useState(false);
 
   /* ───────── fetch docs ───────── */
   const fetchDocs = async () => {
-    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -50,7 +43,7 @@ const AllUploads: React.FC = () => {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setLoading(false);
+      setPageReady(true);
     }
   };
 
@@ -76,18 +69,14 @@ const AllUploads: React.FC = () => {
     }
   };
 
-  /* ───────── row (single file) ───────── */
+  /* ───────── single row ───────── */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
-      className="
-        grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
-        items-center gap-2 sm:gap-4
-        rounded-lg border px-4 py-3
-        bg-white/90 hover:bg-gray-50/90
-      "
+      className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 sm:gap-4
+                 rounded-lg border px-4 py-3 bg-white/90 hover:bg-gray-50/90"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
 
@@ -100,12 +89,8 @@ const AllUploads: React.FC = () => {
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="
-          flex items-center justify-center gap-1
-          rounded-md px-3 py-1
-          text-sm text-[#c17829] hover:bg-[#a66224]/10
-          w-full sm:w-auto
-        "
+        className="flex items-center justify-center gap-1 rounded-md px-3 py-1 text-sm
+                   text-[#c17829] hover:bg-[#a66224]/10 w-full sm:w-auto"
       >
         <FaDownload /> Download
       </a>
@@ -113,31 +98,28 @@ const AllUploads: React.FC = () => {
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
-        className="
-          flex items-center justify-center gap-1
-          text-sm text-red-600 hover:text-red-800
-          disabled:opacity-50 w-full sm:w-auto
-        "
+        className="flex items-center justify-center gap-1 text-sm text-red-600 hover:text-red-800
+                   disabled:opacity-50 w-full sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
     </motion.div>
   );
 
-  /* ────────────────────────────────────────────────────── */
+  /* ───────────────────────────────── UI ───────────────────────────────── */
   return (
     <>
       <div className="p-6 max-w-4xl mx-auto">
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 space-y-6">
-          {/* bubbles */}
+          {/* bubbles — one generator, overscanned container to prevent jumps */}
           <div
-            className="absolute inset-0 overflow-hidden pointer-events-none"
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
             style={{ opacity: 0.9 }}
           >
-            {bubbles}
+            <BubbleGenerator />
           </div>
 
-          {/* header + upload button */}
+          {/* header + upload */}
           <div className="relative z-10 flex flex-col gap-6">
             <a
               href="/dashboard"
@@ -151,8 +133,8 @@ const AllUploads: React.FC = () => {
               <InlineUpload onDone={fetchDocs} />
             </div>
 
-            {/* files list */}
-            {loading ? (
+            {/* content */}
+            {!pageReady ? (
               <p className="text-gray-600">Loading…</p>
             ) : err ? (
               <p className="text-red-600">{err}</p>
@@ -172,7 +154,7 @@ const AllUploads: React.FC = () => {
         </section>
       </div>
 
-      {/* delete confirmation modal */}
+      {/* delete modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
@@ -224,7 +206,7 @@ const AllUploads: React.FC = () => {
 
 export default AllUploads;
 
-/* ───────── InlineUpload (re-used from DashboardHome) ───────── */
+/* ───────── InlineUpload (same as DashboardHome) ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
