@@ -112,9 +112,13 @@ async def run_rephrase_tool(
             f"You are a legal rewriting AI. Rephrase the following "
             f"to a {style} style, preserving meaning. Return only plain text."
         )
-        revised = call_gpt(
-            prompt=original, system_message=system_msg, temperature=0.4
-        ).strip() or original
+        revised = (call_gpt(
+            prompt=original,
+            system_message=system_msg,
+            model="o4-mini",
+            temperature=0.4,
+            max_tokens=16384
+        ) or original).strip()
 
         # build and store new .docx
         new_bytes = create_simple_docx_from_text(revised)
@@ -155,7 +159,13 @@ async def run_rephrase_tool(
     f'{{"rephrased_text":"..."}}'
 )
 
-    ai = call_gpt(prompt=original, system_message=system_msg, temperature=0.4)
+    ai = call_gpt(
+    prompt=original,
+    system_message=system_msg,
+    model="o4-mini",
+    temperature=0.4,
+    max_tokens=16384
+    )
     try:
         parsed = json.loads(ai)
         revised = parsed.get("rephrased_text", original).strip()
