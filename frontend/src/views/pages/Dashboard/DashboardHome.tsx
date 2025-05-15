@@ -1,5 +1,7 @@
 // src/views/pages/Dashboard/DashboardHome.tsx
-import React, { useEffect, useRef, useState } from "react";
+// NOTE: Only DashboardHome.tsx has changed. Other files stay untouched.
+
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -70,7 +72,13 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────── fetch uploads ───────── */
+  /* 1 ▸ keep bubble elements stable — generate them **once** */
+  const bubbles = useMemo(
+    () => [...Array(12)].map((_, i) => <BubbleGenerator key={i} />),
+    []
+  );
+
+  /* 2 ▸ fetch uploads */
   const refresh = async () => {
     setLoading(true);
     try {
@@ -87,11 +95,9 @@ export default function DashboardHome() {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    void refresh();
-  }, []);
+  useEffect(() => void refresh(), []);
 
-  /* ───────── delete flow ───────── */
+  /* 3 ▸ delete flow */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -109,7 +115,7 @@ export default function DashboardHome() {
     }
   };
 
-  /* row component */
+  /* 4 ▸ row component */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -119,27 +125,24 @@ export default function DashboardHome() {
                  rounded-lg border px-4 py-3 bg-white hover:bg-gray-50"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
-
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
-
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10
-                    w-full sm:w-auto"
+        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829]
+                   hover:bg-[#a66224]/10 w-full sm:w-auto"
       >
         <FaDownload /> Download
       </a>
-
       <button
         disabled={isDeleting}
         onClick={() => setPendingDel(d)}
-        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50
-                   w-full sm:w-auto"
+        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800
+                   disabled:opacity-50 w-full sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
@@ -151,7 +154,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
-  /* ───────── UI ───────── */
+  /* 5 ▸ UI */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -165,17 +168,14 @@ export default function DashboardHome() {
 
         {/* uploads */}
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          {/* Bubbles overlay — expanded, visible, denser */}
+          {/* bubble overlay — enlarged & clipped, but now **stable** (no remount on re-render)  */}
           <div
-            className="absolute -inset-[60%] pointer-events-none"
-            style={{ opacity: 0.9 }} /* stronger visibility */
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            style={{ opacity: 0.9 }}
           >
-            {[...Array(12)].map((_, i) => (
-              <BubbleGenerator key={i} /> /* more bubbles for density */
-            ))}
+            {bubbles}
           </div>
 
-          {/* content */}
           <div className="relative z-10 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-xl font-semibold">Recent uploads</h3>
@@ -210,7 +210,8 @@ export default function DashboardHome() {
               <div className="self-end">
                 <Link
                   to="/dashboard/uploads"
-                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline
+                             rounded-md font-medium"
                 >
                   View all <FaArrowRight size={12} />
                 </Link>
@@ -272,7 +273,7 @@ export default function DashboardHome() {
   );
 }
 
-/* ───────── inline upload ───────── */
+/* ───────── inline upload (unchanged) ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
