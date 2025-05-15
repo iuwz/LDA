@@ -33,6 +33,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  /* ───────── active section on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -40,6 +41,7 @@ const Navbar: React.FC = () => {
     }
     const servicesEl = document.getElementById("services");
     if (!servicesEl) return;
+
     const handleScroll = () => {
       const y = window.scrollY + NAV_HEIGHT_PX + 1;
       const top = servicesEl.offsetTop;
@@ -51,6 +53,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
+  /* ───────── auth check ───────── */
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -64,6 +67,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
+  /* ───────── resize ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -73,6 +77,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  /* ───────── close dropdown on outside click ───────── */
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -87,11 +92,13 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
+  /* ───────── lock scroll when drawer open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => void (document.body.style.overflow = "");
   }, [isMobileMenuOpen]);
 
+  /* ───────── hash -> services ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -100,11 +107,13 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
+  /* ───────── helpers ───────── */
   const handleServicesClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
+
     if (location.pathname !== "/") {
       navigate("/#services");
     } else {
@@ -138,11 +147,12 @@ const Navbar: React.FC = () => {
 
   const getIconSize = () => (screenWidth < 350 ? 16 : 18);
 
+  /* ───────── styles ───────── */
   const desktopActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const desktopInactive = "hover:text-[#C17829] transition-colors";
 
   const mobileLink = (isActive: boolean) =>
-    `flex items-center justify-center space-x-2 px-1 py-2 ${
+    `flex items-center justify-center gap-2 px-1 py-2 ${
       isActive ? desktopActive : "text-gray-700 hover:text-[#C17829]"
     }`;
 
@@ -151,8 +161,10 @@ const Navbar: React.FC = () => {
   const registerBtn =
     "w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition hover:scale-105";
 
+  /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
+      {/* top-nav */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -169,6 +181,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* desktop links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -178,7 +191,7 @@ const Navbar: React.FC = () => {
                 activeSection !== "services" && location.pathname === "/"
                   ? desktopActive
                   : desktopInactive
-              } flex items-center space-x-1`
+              } flex items-center gap-2`
             }
           >
             <FaHome size={16} />
@@ -191,7 +204,7 @@ const Navbar: React.FC = () => {
               className={({ isActive }) =>
                 `relative px-1 pb-1 ${
                   isActive ? desktopActive : desktopInactive
-                } flex items-center space-x-1`
+                } flex items-center gap-2`
               }
             >
               <FaHome style={{ transform: "scale(0.8)" }} size={16} />
@@ -204,7 +217,7 @@ const Navbar: React.FC = () => {
             onClick={handleServicesClick}
             className={`relative px-1 pb-1 ${
               activeSection === "services" ? desktopActive : desktopInactive
-            } flex items-center space-x-1`}
+            } flex items-center gap-2`}
           >
             <FaTools size={16} />
             <span>Services</span>
@@ -215,7 +228,7 @@ const Navbar: React.FC = () => {
             className={({ isActive }) =>
               `relative px-1 pb-1 ${
                 isActive ? desktopActive : desktopInactive
-              } flex items-center space-x-1`
+              } flex items-center gap-2`
             }
           >
             <FaEnvelope size={16} />
@@ -227,7 +240,7 @@ const Navbar: React.FC = () => {
             className={({ isActive }) =>
               `relative px-1 pb-1 ${
                 isActive ? desktopActive : desktopInactive
-              } flex items-center space-x-1`
+              } flex items-center gap-2`
             }
           >
             <FaInfoCircle size={16} />
@@ -235,6 +248,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
+        {/* desktop auth */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -252,16 +266,16 @@ const Navbar: React.FC = () => {
                         navigate("/dashboard/profile");
                         setIsProfileDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
-                      <FaUserCircle className="mr-2 text-[#2C2C4A]" size={14} />
+                      <FaUserCircle className="text-[#2C2C4A]" size={14} />
                       Profile
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
                     >
-                      <FaSignOutAlt className="mr-2" size={14} />
+                      <FaSignOutAlt size={14} />
                       Logout
                     </button>
                   </div>
@@ -275,7 +289,7 @@ const Navbar: React.FC = () => {
                   className={loginBtn}
                   onClick={handleLoginClick}
                 >
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-2">
                     <LogIn size={14} />
                     <span>Login</span>
                   </div>
@@ -295,6 +309,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* hamburger */}
         <div className="lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -309,6 +324,7 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
+      {/* drawer */}
       {isMobileMenuOpen && (
         <>
           <div
@@ -390,14 +406,14 @@ const Navbar: React.FC = () => {
                       navigate("/dashboard/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex items-center space-x-2 px-1 py-2 text-gray-700 hover:text-[#C17829]"
+                    className="flex items-center gap-2 px-1 py-2 text-gray-700 hover:text-[#C17829]"
                   >
                     <FaUserCircle size={16} />
                     <span>Profile</span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-2 px-1 py-2 text-red-600 hover:text-red-700"
+                    className="flex items-center gap-2 px-1 py-2 text-red-600 hover:text-red-700"
                   >
                     <FaSignOutAlt size={16} />
                     <span>Logout</span>
@@ -411,7 +427,7 @@ const Navbar: React.FC = () => {
                     className={loginBtn}
                     onClick={handleLoginClick}
                   >
-                    <div className="flex items-center space-x-1 justify-center">
+                    <div className="flex items-center gap-2 justify-center">
                       <LogIn size={16} />
                       <span>Login</span>
                     </div>
