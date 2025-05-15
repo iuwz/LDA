@@ -131,7 +131,7 @@ function ServicesSection() {
 
 /* ───────────────────────── Bubble background ───────────────────────── */
 export const BubbleGenerator: React.FC = () => {
-  const BUBBLE_COUNT = 20; // reduced from 40
+  const BUBBLE_COUNT = 20; // adjusted to around twenty bubbles
   /* Generate bubble data **once** to prevent flicker */
   const bubbles = useMemo(
     () =>
@@ -302,7 +302,7 @@ const TESTIMONIALS = [
     name: "Fahad Alzuhair",
     role: "Finance Student",
     quote:
-      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand.",
+      "LDA's AI-Powered Legal Chatbot is like having a legal assistant on-demand.",
     avatarUrl: fahad,
   },
 ];
