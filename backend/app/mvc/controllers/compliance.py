@@ -1,5 +1,4 @@
 # backend/app/mvc/controllers/compliance.py
-
 from __future__ import annotations
 
 import datetime as _dt
@@ -17,7 +16,13 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from docx import Document
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Table,
+    TableStyle,
+    Spacer,
+)
 from reportlab.lib.styles import getSampleStyleSheet
 
 from backend.app.core.openai_client import call_gpt
@@ -32,9 +37,54 @@ from backend.app.mvc.models.compliance import ComplianceIssue
 
 logger = logging.getLogger(__name__)
 
+# size guard: 12 000 characters ≈ 3 k tokens → stays well below GPT-3.5’s 4 k ctx
+CHUNK_CHAR_LIMIT = 12_000
+
+
+# ═════════════════════ helper utilities ══════════════════════
+def _split_into_chunks(text: str, size: int = CHUNK_CHAR_LIMIT) -> List[str]:
+    """
+    Greedy splitter that *tries* not to break sentences.
+
+    We split on line boundaries; this keeps clause structure intact and
+    avoids chopping right in the middle of a sentence or word.
+    """
+    out: list[str] = []
+    buf: list[str] = []
+    cur_len = 0
+    for line in text.splitlines(keepends=True):
+        buf.append(line)
+        cur_len += len(line)
+        if cur_len >= size:
+            out.append("".join(buf))
+            buf, cur_len = [], 0
+    if buf:
+        out.append("".join(buf))
+    return out
+
+
+def _deduplicate_issues(raw: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Remove duplicates that may appear when several chunks flag the same clause.
+
+    Key: (rule_id + first 50 chars of snippet) – good enough for our purpose.
+    """
+    unique: list[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        key = f"{item.get('rule_id')}|{(item.get('extracted_text_snippet') or '')[:50]}"
+        if key not in seen:
+            unique.append(item)
+            seen.add(key)
+    return unique
+
 
 def _extract_snippet(text: str, pattern: str, win: int = 100) -> str:
-    """Return an excerpt around the first occurrence of *pattern*."""
+    """
+    Return an excerpt around the first occurrence of *pattern*.
+
+    If the pattern is not found → empty string.
+    """
     m = re.search(pattern, text, re.IGNORECASE)
     if not m:
         return ""
@@ -43,7 +93,12 @@ def _extract_snippet(text: str, pattern: str, win: int = 100) -> str:
 
 
 def _heuristic_score(issues: List[Dict[str, Any]]) -> int:
-    """Fallback scoring: each 'Issue Found' deducts 20 points."""
+    """
+    Very simple fallback scoring:
+        – start at 100
+        – each “Issue Found” deducts 20
+        – never below 0
+    """
     bad = sum(1 for i in issues if i.get("status", "").lower() == "issue found")
     return max(0, 100 - bad * 20)
 
@@ -54,12 +109,16 @@ async def _store_pdf(
     buf: BytesIO,
     filename: str,
 ) -> str:
-    """Upload buffer to GridFS, create a document record, return doc-id."""
+    """
+    Upload the in-memory PDF buffer to GridFS, create a document record,
+    return the newly created doc-id (string).
+    """
     buf.seek(0)
     grid_id = await upload_file_to_gridfs(db, buf.read(), filename)
     return await store_document_record(db, user_id, filename, grid_id)
 
 
+# ═════════════════════ main entry point ══════════════════════
 async def run_compliance_check(
     db: AsyncIOMotorDatabase,
     user_id: str,
@@ -68,15 +127,29 @@ async def run_compliance_check(
     doc_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Analyse compliance purely via GPT, create PDF, upload it – return:
-    { report_id, issues, compliance_score, report_doc_id, report_filename }
+    Analyse the given document for Saudi PDPL / contract-law compliance.
+
+    You can either pass:
+        • raw text   – via `document_text`
+        • an uploaded document id – via `doc_id`
+    Exactly one must be provided.
+
+    The routine:
+        1. Ensures we have the plain text (extracts from GridFS if needed)
+        2. Splits it into chunks so each GPT call stays within context limits
+        3. Calls GPT for each chunk (in a background thread)
+        4. Deduplicates / normalises the issues
+        5. Stores the report in MongoDB
+        6. Generates & uploads a PDF report
+        7. Returns the consolidated result payload
     """
+    # ────────────────── sanity checks ──────────────────
     if not (document_text or doc_id):
         raise HTTPException(400, "Either document_text or doc_id must be provided.")
     if document_text and doc_id:
         raise HTTPException(400, "Provide only one of document_text or doc_id.")
 
-    # Load text from GridFS if needed
+    # ────────────────── load text if only doc-id was provided ──────────────────
     if doc_id:
         rec = await get_document_record(db, doc_id)
         stream, fname = await open_gridfs_file(db, rec["file_id"])
@@ -84,7 +157,7 @@ async def run_compliance_check(
         if document_text.startswith("Error"):
             raise HTTPException(422, document_text)
 
-    # GPT prompt: only flag direct PDPL or contract-law violations
+    # ────────────────── GPT prompt (system message) ──────────────────
     system_message = """
 You are an expert Saudi-law compliance AI assistant. Review the contract text
 line-by-line and flag *only* those clauses that breach either:
@@ -93,42 +166,48 @@ line-by-line and flag *only* those clauses that breach either:
   • mandatory Saudi contract-law principles derived from Sharia, Royal Decrees,
     the Civil Transactions Law, or any binding ministerial regulations.
 
-For every non-compliant clause, output **exactly** these keys—nothing more, nothing less:
+For every non-compliant clause, output EXACTLY these keys—nothing more:
 
-  • rule_id: one concise, uppercase identifier with no spaces (e.g., PDPL_ART18, CTL_UNFAIR_TERMS)
-  • description: a brief explanation of how the clause violates PDPL or Saudi contract law
-  • status: always the string "Issue Found"
-  • extracted_text_snippet: the verbatim offending language from the contract
+  • rule_id                – concise, uppercase identifier with no spaces
+  • description            – brief explanation of the violation
+  • status                 – always the string "Issue Found"
+  • extracted_text_snippet – verbatim offending language from the contract
 
-If the contract contains zero violations, return **only** this exact JSON (no extra whitespace, keys, or commentary):
+If the contract contains zero violations, return ONLY this exact JSON:
 {"issues":[]}
 
-Respond with *valid JSON only*—no markdown, no surrounding text, and no additional statuses such as “Warning” or “Compliant”.
-"""
+Respond with VALID JSON only—no markdown and no additional commentary.
+""".strip()
 
+    # ────────────────── call GPT chunk-by-chunk ──────────────────
+    raw_issues: list[Dict[str, Any]] = []
 
-    # Call GPT and parse JSON safely
-    raw_issues: List[Any] = []
-    try:
-        resp = call_gpt(prompt=document_text, system_message=system_message, temperature=0.0) or ""
+    for idx, chunk in enumerate(_split_into_chunks(document_text)):
         try:
-            parsed = json.loads(resp)
+            resp = await run_in_threadpool(
+                call_gpt,
+                chunk,                         # prompt
+                system_message=system_message,
+                temperature=0.0,
+            )
+            parsed: Any = json.loads(resp) if resp else {}
+            if isinstance(parsed, dict):
+                raw_issues.extend(parsed.get("issues", []))
+            elif isinstance(parsed, list):
+                raw_issues.extend(parsed)
         except json.JSONDecodeError:
-            logger.warning("Could not parse GPT response as JSON: %r", resp)
-            parsed = {}
-        if isinstance(parsed, dict):
-            raw_issues = parsed.get("issues", [])
-        elif isinstance(parsed, list):
-            raw_issues = parsed
-    except Exception:
-        logger.exception("GPT-based compliance extraction failed")
-        raw_issues = []
+            logger.warning("Chunk %d → GPT returned invalid JSON: %r", idx + 1, resp)
+        except Exception:
+            logger.exception("Chunk %d → GPT call failed", idx + 1)
 
-    # Normalize and validate each issue
+    # ────────────────── deduplicate & normalise ──────────────────
+    raw_issues = _deduplicate_issues(raw_issues)
+
     issues: List[Dict[str, Any]] = []
     for raw in raw_issues:
         if not isinstance(raw, dict):
             continue
+        # ensure minimal required keys
         raw["status"] = "Issue Found"
         if not raw.get("extracted_text_snippet"):
             pat = raw.get("rule_id", "")
@@ -136,21 +215,24 @@ Respond with *valid JSON only*—no markdown, no surrounding text, and no additi
         try:
             issues.append(ComplianceIssue(**raw).model_dump())
         except Exception:
+            # validation failed – skip silently
             continue
 
-    # If no issues found, report clean sweep
+    # No issues → mark explicitly clean
     if not issues:
-        issues = [{
-            "rule_id": "NONE",
-            "description": "No compliance issues detected.",
-            "status": "OK",
-            "extracted_text_snippet": None,
-        }]
+        issues = [
+            {
+                "rule_id": "NONE",
+                "description": "No compliance issues detected.",
+                "status": "OK",
+                "extracted_text_snippet": None,
+            }
+        ]
 
-    # Compute compliance score
+    # ────────────────── compute score ──────────────────
     compliance_score = _heuristic_score(issues)
 
-    # Persist report metadata
+    # ────────────────── persist metadata ──────────────────
     preview = document_text[:500] + ("…" if len(document_text) > 500 else "")
     row = {
         "user_id": user_id,
@@ -163,19 +245,21 @@ Respond with *valid JSON only*—no markdown, no surrounding text, and no additi
     ins = await db.compliance_reports.insert_one(row)
     report_id = str(ins.inserted_id)
 
-    # Generate PDF in threadpool
+    # ────────────────── generate PDF report ──────────────────
     pdf_buf: BytesIO = await run_in_threadpool(
-        generate_compliance_report_pdf, {**row, "_id": report_id}
+        generate_compliance_report_pdf,
+        {**row, "_id": report_id},
     )
     pdf_name = f"compliance_report_{report_id}.pdf"
     report_doc_id = await _store_pdf(db, user_id, pdf_buf, pdf_name)
 
-    # Update the DB row with PDF metadata
+    # add PDF metadata to DB record
     await db.compliance_reports.update_one(
         {"_id": ins.inserted_id},
         {"$set": {"report_doc_id": report_doc_id, "report_filename": pdf_name}},
     )
 
+    # ────────────────── response payload ──────────────────
     return {
         "report_id": report_id,
         "issues": issues,
@@ -185,12 +269,15 @@ Respond with *valid JSON only*—no markdown, no surrounding text, and no additi
     }
 
 
+# ═════════════════════ DB fetch / delete helpers ══════════════════════
 async def get_compliance_report(
     db: AsyncIOMotorDatabase,
     report_id: str,
     user_id: str,
 ) -> Dict[str, Any]:
-    """Retrieve a stored report (enforces ownership)."""
+    """
+    Retrieve a stored report, enforcing ownership.
+    """
     if not ObjectId.is_valid(report_id):
         raise HTTPException(400, "Invalid report ID.")
     doc = await db.compliance_reports.find_one(
@@ -202,7 +289,11 @@ async def get_compliance_report(
     return doc
 
 
+# ═════════════════════ report generators (DOCX / PDF) ══════════════════════
 def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
+    """
+    Build a nicely formatted DOCX from the compliance data.
+    """
     buf = BytesIO()
     document = Document()
 
@@ -250,9 +341,12 @@ def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
         t.cell(3, 1).text = issue["rule_id"]
         document.add_paragraph("")
 
+    # footer
     footer = document.sections[-1].footer
-    footer.paragraphs[0].text = f"Generated on {_dt.datetime.utcnow():%Y-%m-%d %H:%M:%S UTC}"
-    footer.paragraphs[0].alignment = 1
+    footer.paragraphs[0].text = (
+        f"Generated on {_dt.datetime.utcnow():%Y-%m-%d %H:%M:%S UTC}"
+    )
+    footer.paragraphs[0].alignment = 1  # centered
 
     document.save(buf)
     buf.seek(0)
@@ -260,6 +354,9 @@ def generate_compliance_report_docx(report_data: Dict[str, Any]) -> BytesIO:
 
 
 def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
+    """
+    Build a PDF report using ReportLab.
+    """
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -324,7 +421,10 @@ def generate_compliance_report_pdf(report_data: Dict[str, Any]) -> BytesIO:
             [
                 ["Status", Paragraph(issue["status"], styles["Normal"])],
                 ["Description", Paragraph(issue["description"], styles["Normal"])],
-                ["Snippet", Paragraph(issue.get("extracted_text_snippet") or "–", styles["Normal"])],
+                [
+                    "Snippet",
+                    Paragraph(issue.get("extracted_text_snippet") or "–", styles["Normal"]),
+                ],
                 ["Rule ID", Paragraph(issue["rule_id"], styles["Normal"])],
             ],
             colWidths=[120, 330],

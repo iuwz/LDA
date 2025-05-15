@@ -1,4 +1,3 @@
-# backend/app/mvc/controllers/documents.py
 """
 Document I/O helpers (GridFS + text-extraction).
 
@@ -20,7 +19,7 @@ from bson import ObjectId
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorGridFSBucket
 
-# ─────────────  text-extraction deps  ─────────────
+# ───────────── text-extraction deps ──────────────
 import fitz                                       # PyMuPDF
 from pdfminer.high_level import extract_text as miner_extract
 from pdfminer.layout import LAParams
@@ -35,11 +34,12 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-MIN_PRINTABLE_RATIO = 0.20     # < 20 % printable → likely garbage
-OCR_MAX_PAGES       = 30       # cap: OCR is expensive
+# tuned heuristics
+MIN_PRINTABLE_RATIO = 0.05     # < 5 % printable → likely garbage
+OCR_MAX_PAGES       = 50       # OCR is expensive but we allow up to 50 pages
 
 
-# ═════════════════  TEXT EXTRACTION  ═════════════════
+# ═════════════════ TEXT EXTRACTION ══════════════════
 async def extract_full_text_from_stream(stream, filename: str) -> str:
     """
     Extract **plain UTF-8** text from a GridFS / UploadFile stream.
@@ -56,7 +56,8 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
     # 1️⃣  PyMuPDF
     try:
         with fitz.open(stream=raw, filetype="pdf") as doc:
-            txt = "".join(p.get_text("text") for p in doc)
+            # keep blank lines between pages → helps GPT understand section breaks
+            txt = "\n\n".join(p.get_text("text") for p in doc)
         if _has_enough_text(txt):
             return txt
     except Exception as e:
@@ -74,12 +75,17 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
     # 3️⃣  OCR fallback
     if OCR_AVAILABLE:
         try:
+            # best effort: limit to actual page-count or hard cap
+            try:
+                page_cnt = fitz.open(stream=raw, filetype="pdf").page_count
+            except Exception:
+                page_cnt = OCR_MAX_PAGES
             images = convert_from_bytes(
                 raw,
                 dpi=300,
                 fmt="png",
                 first_page=1,
-                last_page=OCR_MAX_PAGES,
+                last_page=min(page_cnt, OCR_MAX_PAGES),
             )
             ocr_txt: List[str] = [
                 pytesseract.image_to_string(img, lang="eng") for img in images
@@ -105,7 +111,7 @@ def _has_enough_text(text: str, *, accept_short: bool = False) -> bool:
     return ratio >= MIN_PRINTABLE_RATIO and (len(text) > 100 or accept_short)
 
 
-# ═════════════════  GRIDFS HELPERS  ═════════════════
+# ═════════════════ GRIDFS HELPERS ══════════════════
 async def upload_file_to_gridfs(
     db: AsyncIOMotorDatabase, data: bytes, filename: str
 ):  # -> ObjectId
