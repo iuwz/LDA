@@ -15,7 +15,7 @@ COLL = "chat_sessions"
 
 
 # ───────────────────────────────── GPT-based legal-question classifier
-_CLASSIFIER_MODEL = "gpt-4o"  # low cost & fast
+_CLASSIFIER_MODEL = "o4-mini"  # low cost & fast
 _CLASSIFIER_PROMPT = """
 You are a legal-question detector. Determine if the user’s question is about any thing legal or near-legal in any way or form:
 
@@ -33,7 +33,7 @@ async def _is_legal_query(user_id: str, question: str) -> bool:
     """Ask the lightweight GPT model to tag LEGAL or NONLEGAL."""
     try:
         prompt = _CLASSIFIER_PROMPT.format(question=question.strip())
-        raw = call_gpt(
+        raw = await call_gpt(
             prompt=prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
