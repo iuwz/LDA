@@ -70,7 +70,7 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* ───────────── fetch uploads ───────────── */
+  /* ───────── fetch uploads ───────── */
   const refresh = async () => {
     setLoading(true);
     try {
@@ -87,12 +87,11 @@ export default function DashboardHome() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     void refresh();
   }, []);
 
-  /* ───────────── delete flow ───────────── */
+  /* ───────── delete flow ───────── */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -110,22 +109,16 @@ export default function DashboardHome() {
     }
   };
 
-  /* ───────────── row component ───────────── */
+  /* row component */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
-      className="
-        grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto]
-        items-center gap-2 sm:gap-4
-        rounded-lg border px-4 py-3
-        bg-white hover:bg-gray-50
-      "
+      className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 sm:gap-4
+                 rounded-lg border px-4 py-3 bg-white hover:bg-gray-50"
     >
-      <div className="flex items-center">
-        <FaCloudUploadAlt className="text-indigo-600" />
-      </div>
+      <FaCloudUploadAlt className="text-indigo-600" />
 
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
@@ -136,12 +129,8 @@ export default function DashboardHome() {
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="
-          flex items-center justify-center gap-1
-          rounded-md px-3 py-1
-          text-sm text-[#c17829] hover:bg-[#a66224]/10
-          w-full sm:w-auto
-        "
+        className="flex items-center gap-1 rounded-md px-3 py-1 text-sm text-[#c17829] hover:bg-[#a66224]/10
+                    w-full sm:w-auto"
       >
         <FaDownload /> Download
       </a>
@@ -149,11 +138,8 @@ export default function DashboardHome() {
       <button
         disabled={isDeleting}
         onClick={() => setPendingDel(d)}
-        className="
-          flex items-center justify-center gap-1
-          text-sm text-red-600 hover:text-red-800
-          disabled:opacity-50 w-full sm:w-auto
-        "
+        className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50
+                   w-full sm:w-auto"
       >
         <FaTrash /> Remove
       </button>
@@ -165,7 +151,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
-  /* ════════════════════════════════════════════════════════════ */
+  /* ───────── UI ───────── */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -177,15 +163,19 @@ export default function DashboardHome() {
           <ToolList tools={tools} />
         </section>
 
-        {/* uploads with bubbles */}
+        {/* uploads */}
         <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          {/* bubble overlay */}
-          <div className="absolute -inset-1/2 pointer-events-none overflow-hidden">
-            {[...Array(6)].map((_, i) => (
-              <BubbleGenerator key={i} />
+          {/* Bubbles overlay — expanded, visible, denser */}
+          <div
+            className="absolute -inset-[60%] pointer-events-none"
+            style={{ opacity: 0.9 }} /* stronger visibility */
+          >
+            {[...Array(12)].map((_, i) => (
+              <BubbleGenerator key={i} /> /* more bubbles for density */
             ))}
           </div>
 
+          {/* content */}
           <div className="relative z-10 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-xl font-semibold">Recent uploads</h3>
@@ -282,7 +272,7 @@ export default function DashboardHome() {
   );
 }
 
-/* ───────────────────────── inline upload ───────────────────────── */
+/* ───────── inline upload ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
