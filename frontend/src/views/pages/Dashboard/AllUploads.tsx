@@ -1,11 +1,12 @@
 // src/views/pages/Dashboard/AllUploads.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCloudUploadAlt,
   FaDownload,
   FaTrash,
   FaArrowLeft,
+  FaTimes,
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 
@@ -89,7 +90,6 @@ const AllUploads: React.FC = () => {
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
 
-      {/* download (matches Compliance style) */}
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
@@ -104,7 +104,6 @@ const AllUploads: React.FC = () => {
         <FaDownload /> Download
       </a>
 
-      {/* remove (matches Compliance style) */}
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
@@ -130,7 +129,10 @@ const AllUploads: React.FC = () => {
           <FaArrowLeft /> Back to dashboard
         </a>
 
-        <h1 className="text-2xl font-semibold">All uploads</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-semibold">All uploads</h1>
+          <InlineUpload onDone={fetchDocs} />
+        </div>
 
         {loading ? (
           <p className="text-gray-600">Loading…</p>
@@ -150,7 +152,6 @@ const AllUploads: React.FC = () => {
         )}
       </div>
 
-      {/* delete modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
@@ -171,7 +172,7 @@ const AllUploads: React.FC = () => {
                 <h4 className="text-lg font-semibold">Remove document</h4>
                 <p className="text-sm text-gray-700">
                   Delete{" "}
-                  <span className="font-medium">{pendingDel.filename}</span>?
+                  <span className="font-medium">{pendingDel?.filename}</span>?
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
@@ -201,3 +202,78 @@ const AllUploads: React.FC = () => {
 };
 
 export default AllUploads;
+
+/* ───────────────── InlineUpload (same as DashboardHome) ───────────────── */
+function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const click = () => (!file ? fileRef.current?.click() : upload());
+  const clearFile = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const upload = async () => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_BASE}/documents/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      if (!res.ok) {
+        const { detail = "Upload failed" } = await res.json().catch(() => ({}));
+        throw new Error(detail);
+      }
+      await onDone();
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (e: any) {
+      alert(e.message ?? "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.docx"
+        className="hidden"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={click}
+        disabled={busy}
+        className="w-full sm:w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+      >
+        {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
+      </Button>
+      {file && !busy && (
+        <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
+          {file.name}
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={clearFile}
+            className="ml-1 px-1"
+            title="Remove file"
+            aria-label="Remove selected file"
+          >
+            <FaTimes />
+          </Button>
+        </span>
+      )}
+    </div>
+  );
+}
