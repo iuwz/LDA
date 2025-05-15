@@ -1,3 +1,4 @@
+// src/views/pages/Home/index.tsx
 import React, { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -18,6 +19,7 @@ import shalfan from "../../../assets/images/shalfan.jpg";
 import saud from "../../../assets/images/saud.jpg";
 import sae from "../../../assets/images/sae.jpg";
 import fahad from "../../../assets/images/fahad.jpg";
+
 const SERVICES = [
   {
     icon: FaBalanceScale,
@@ -288,7 +290,7 @@ const TESTIMONIALS = [
     avatarUrl: shalfan,
   },
   {
-    name: "Fahad Alzuhair ",
+    name: "Fahad Alzuhair",
     role: "Finance Student",
     quote:
       "LDA's AI-Powered Legal Chatbot is like having a legal assistant on demand. It provides quick and accurate insights!",
@@ -301,14 +303,12 @@ function Testimonials() {
   const [perPage, setPerPage] = useState(3);
 
   useEffect(() => {
-    function update() {
+    const update = () => {
       const w = window.innerWidth;
-      // Keeping the responsive logic for how many cards are shown per page
-      // but the individual card size is now fixed.
       if (w >= 1024) setPerPage(3);
       else if (w >= 640) setPerPage(2);
       else setPerPage(1);
-    }
+    };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -346,14 +346,11 @@ function Testimonials() {
           <FaChevronRight />
         </button>
 
-        {/* Adjusted grid to center items and potentially handle fixed size */}
-        {/* You might need to further adjust the gap or parent container padding/width */}
-        <div className="flex justify-center items-center flex-wrap gap-6">
+        <div className="flex justify-center items-start flex-wrap gap-6">
           {visible.map((t, i) => (
             <motion.div
               key={i}
-              // Added fixed width and height classes
-              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1 w-[400px] h-[206px] flex flex-col justify-between"
+              className="relative bg-gray-50 rounded-2xl p-8 shadow-sm transition transform hover:shadow-lg hover:-translate-y-1 w-[400px] flex flex-col"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -363,15 +360,14 @@ function Testimonials() {
                 <img
                   src={t.avatarUrl}
                   alt={t.name}
-                  className="w-12 h-12 rounded-full mr-3 object-cover" // Added object-cover
+                  className="w-12 h-12 rounded-full mr-3 object-cover"
                 />
                 <div>
                   <p className="font-semibold text-[#2C2C4A]">{t.name}</p>
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
               </div>
-              {/* Added overflow-hidden and text ellipsis if needed, though fixed height might cause cut-off */}
-              <p className="text-gray-700 italic leading-relaxed overflow-hidden text-ellipsis">
+              <p className="text-gray-700 italic leading-relaxed">
                 "{t.quote}"
               </p>
             </motion.div>
