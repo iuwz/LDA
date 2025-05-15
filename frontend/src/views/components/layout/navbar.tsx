@@ -8,7 +8,7 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaHome,
-  FaServicestack,
+  FaConciergeBell,
   FaInfoCircle,
   FaEnvelope,
 } from "react-icons/fa";
@@ -17,7 +17,7 @@ import { Button } from "../../components/common/button";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80; // top-nav / drawer brand height
+const NAV_HEIGHT_PX = 80;
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -164,7 +164,7 @@ const Navbar: React.FC = () => {
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
-      {/* ───────── top-nav ───────── */}
+      {/* top-nav */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -181,7 +181,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* ───────── desktop links ───────── */}
+        {/* desktop links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -207,6 +207,7 @@ const Navbar: React.FC = () => {
                 } flex items-center space-x-1`
               }
             >
+              {/* using FaHome scaled for dashboard icon placeholder */}
               <FaHome style={{ transform: "scale(0.8)" }} size={16} />
               <span>Dashboard</span>
             </NavLink>
@@ -219,7 +220,7 @@ const Navbar: React.FC = () => {
               activeSection === "services" ? desktopActive : desktopInactive
             } flex items-center space-x-1`}
           >
-            <FaServicestack size={16} />
+            <FaConciergeBell size={16} />
             <span>Services</span>
           </Link>
 
@@ -248,7 +249,7 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* ───────── desktop auth ───────── */}
+        {/* desktop auth */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -309,7 +310,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* ───────── hamburger ───────── */}
+        {/* hamburger */}
         <div className="lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -324,7 +325,7 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* ───────── drawer ───────── */}
+      {/* drawer */}
       {isMobileMenuOpen && (
         <>
           <div
@@ -332,7 +333,6 @@ const Navbar: React.FC = () => {
             onClick={() => setIsMobileMenuOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
-            {/* brand */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -349,7 +349,6 @@ const Navbar: React.FC = () => {
               </NavLink>
             </div>
 
-            {/* links */}
             <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-center space-y-6">
               <NavLink
                 to="/"
@@ -377,7 +376,7 @@ const Navbar: React.FC = () => {
                 onClick={handleServicesClick}
                 className={mobileLink(activeSection === "services")}
               >
-                <FaServicestack size={16} />
+                <FaConciergeBell size={16} />
                 <span>Services</span>
               </Link>
 
@@ -399,7 +398,6 @@ const Navbar: React.FC = () => {
                 <span>Contact</span>
               </NavLink>
 
-              {/* auth area */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
