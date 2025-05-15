@@ -9,8 +9,6 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { Button } from "../../components/common/button";
-import { BubbleGenerator } from "../Home/home";
-import LoadingScreen from "../../components/common/LoadingScreen";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
@@ -24,15 +22,15 @@ interface Doc {
 }
 
 const AllUploads: React.FC = () => {
-  /* state */
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [pageReady, setPageReady] = useState(false); // gate full component
 
   /* fetch */
   const fetchDocs = async () => {
+    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -44,7 +42,7 @@ const AllUploads: React.FC = () => {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setPageReady(true); // render only after fetch completes
+      setLoading(false);
     }
   };
 
@@ -52,7 +50,7 @@ const AllUploads: React.FC = () => {
     void fetchDocs();
   }, []);
 
-  /* delete flow */
+  /* delete */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -107,24 +105,12 @@ const AllUploads: React.FC = () => {
     </motion.div>
   );
 
-  /* ───────────────── early return to avoid flicker ───────────────── */
-  if (!pageReady) return <LoadingScreen />;
-
   /* ─────────────────────────── UI ─────────────────────────── */
   return (
     <>
       <div className="p-6 max-w-4xl mx-auto">
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 space-y-6">
-          {/* single BubbleGenerator, overscanned to stop layout jumps */}
-          <div
-            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
-            style={{ opacity: 0.9 }}
-          >
-            <BubbleGenerator />
-          </div>
-
-          {/* header */}
-          <div className="relative z-10 flex flex-col gap-6">
+        <section className="rounded-2xl bg-white shadow border p-8 space-y-6">
+          <div className="flex flex-col gap-6">
             <a
               href="/dashboard"
               className="text-[#C17829] flex items-center gap-1 hover:underline"
@@ -137,8 +123,9 @@ const AllUploads: React.FC = () => {
               <InlineUpload onDone={fetchDocs} />
             </div>
 
-            {/* list */}
-            {err ? (
+            {loading ? (
+              <p className="text-gray-600">Loading…</p>
+            ) : err ? (
               <p className="text-red-600">{err}</p>
             ) : docs.length === 0 ? (
               <p className="text-gray-600">No documents uploaded yet.</p>
@@ -208,7 +195,7 @@ const AllUploads: React.FC = () => {
 
 export default AllUploads;
 
-/* ───────── InlineUpload (shared) ───────── */
+/* ───────── InlineUpload ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);

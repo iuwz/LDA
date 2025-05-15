@@ -1,5 +1,5 @@
 // src/views/pages/Dashboard/DashboardHome.tsx
-import React, { useEffect, useRef, useState, useMemo, useContext } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -18,7 +18,6 @@ import {
 import Banner from "../../components/common/Banner";
 import ToolList, { ToolCard } from "../../components/common/toolList";
 import { Button } from "../../components/common/button";
-import { BubbleGenerator } from "../Home/home";
 import { DashboardReadyContext } from "../../components/layout/DashboardLayout";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
@@ -66,26 +65,17 @@ const tools: ToolCard[] = [
 ];
 
 export default function DashboardHome() {
-  /* notify layout when done */
   const setLayoutReady = useContext(DashboardReadyContext);
 
-  /* local loading */
-  const [pageReady, setPageReady] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [err, setErr] = useState<string | null>(null);
-
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* bubbles */
-  const bubbles = useMemo(
-    () => [...Array(5)].map((_, i) => <BubbleGenerator key={i} />),
-    []
-  );
-
   /* fetch docs */
   const fetchAllData = async () => {
+    setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -97,8 +87,8 @@ export default function DashboardHome() {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setPageReady(true);
-      setLayoutReady(true); // tell layout we’re done
+      setLoading(false);
+      setLayoutReady(true);
     }
   };
 
@@ -106,9 +96,7 @@ export default function DashboardHome() {
     void fetchAllData();
   }, []);
 
-  if (!pageReady) return null; // layout keeps showing loader
-
-  /* delete flow (unchanged) */
+  /* delete */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -126,7 +114,7 @@ export default function DashboardHome() {
     }
   };
 
-  /* row component (unchanged) */
+  /* row */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -176,21 +164,16 @@ export default function DashboardHome() {
         </section>
 
         {/* uploads */}
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          <div
-            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
-            style={{ opacity: 0.9 }}
-          >
-            {bubbles}
-          </div>
-
-          <div className="relative z-10 flex flex-col gap-6">
+        <section className="rounded-2xl bg-white shadow border p-8">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-xl font-semibold">Recent Uploads</h3>
               <InlineUpload onDone={fetchAllData} />
             </div>
 
-            {err ? (
+            {loading ? (
+              <p className="text-gray-600">Loading…</p>
+            ) : err ? (
               <p className="text-red-600 py-4">
                 Error: {err}.{" "}
                 <Button
@@ -226,7 +209,7 @@ export default function DashboardHome() {
         </section>
       </div>
 
-      {/* delete modal (unchanged) */}
+      {/* delete modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
@@ -278,7 +261,7 @@ export default function DashboardHome() {
   );
 }
 
-/* ───────────────── InlineUpload (unchanged) ───────────────── */
+/* ───────── InlineUpload ───────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
