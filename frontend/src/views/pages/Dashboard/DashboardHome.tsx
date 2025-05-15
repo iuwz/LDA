@@ -186,7 +186,7 @@ export default function DashboardHome() {
 
           <div className="relative z-10 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h3 className="text-xl font-semibold">Recent uploads</h3>
+              <h3 className="text-xl font-semibold">Recent Uploads</h3>
               <InlineUpload onDone={fetchAllData} />
             </div>
 
