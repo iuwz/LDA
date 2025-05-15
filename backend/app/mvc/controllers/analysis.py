@@ -102,12 +102,13 @@ async def _analyse_chunk(chunk: str, idx: int, total: int) -> List[dict]:
     )
 
     raw = await run_in_threadpool(
-        call_gpt,
-        prompt=prompt,
-        system_message=SYSTEM_MESSAGE,
-        model=GPT_MODEL,
-        temperature=GPT_TEMP,
-        response_format={"type": "json_object"},  # modern models obey this
+    call_gpt,
+    prompt=prompt,
+    system_message=SYSTEM_MESSAGE,
+    model="o4-mini",
+    temperature=GPT_TEMP,
+    response_format={"type": "json_object"},
+    max_tokens=16384,
     )
 
     # best-case: valid JSON

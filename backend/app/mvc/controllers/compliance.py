@@ -186,9 +186,11 @@ Respond with VALID JSON only—no markdown and no additional commentary.
         try:
             resp = await run_in_threadpool(
                 call_gpt,
-                chunk,                         # prompt
+                chunk,
                 system_message=system_message,
+                model="o4-mini",
                 temperature=0.0,
+                max_tokens=16384,
             )
             parsed: Any = json.loads(resp) if resp else {}
             if isinstance(parsed, dict):

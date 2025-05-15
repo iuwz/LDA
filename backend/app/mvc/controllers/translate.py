@@ -111,7 +111,9 @@ async def run_translation_tool(
         translated_text = call_gpt(
             prompt=user_msg,
             system_message=sys_msg,
-        )
+            model="o4-mini",
+            max_tokens=16384
+        ) or ""
         if not translated_text:
             raise Exception("Translation response was empty")
 
@@ -175,7 +177,9 @@ async def run_file_translation_tool(
         translated_text = call_gpt(
             prompt=user_msg,
             system_message=sys_msg,
-        )
+            model="o4-mini",
+            max_tokens=16384
+        ) or ""
         if not translated_text:
             raise Exception("Translation response was empty")
     except Exception as e:
