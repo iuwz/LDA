@@ -177,7 +177,10 @@ export default function DashboardHome() {
         </section>
 
         {/* uploads */}
-        <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
+          {/* orange gradient bar */}
+          <div className="pointer-events-none absolute top-0 right-0 h-12 w-1/2 rounded-bl-2xl bg-gradient-to-l from-[var(--accent-light)] to-transparent" />
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 className="text-xl font-semibold">Recent uploads</h3>
             <InlineUpload onDone={refresh} />
