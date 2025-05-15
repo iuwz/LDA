@@ -11,7 +11,8 @@ import {
   FaTools,
   FaInfoCircle,
   FaEnvelope,
-  FaScroll, // NEW
+  FaToolbox, // NEW  (dashboard)
+  FaLightbulb, // NEW  (services)
 } from "react-icons/fa";
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
@@ -214,7 +215,7 @@ const Navbar: React.FC = () => {
                 } flex items-center gap-2`
               }
             >
-              <FaScroll size={16} /> {/* NEW icon */}
+              <FaToolbox size={16} /> {/* Dashboard icon */}
               <span>Dashboard</span>
             </NavLink>
           )}
@@ -226,7 +227,7 @@ const Navbar: React.FC = () => {
               activeSection === "services" ? deskActive : deskIdle
             } flex items-center gap-2`}
           >
-            <FaTools size={16} />
+            <FaLightbulb size={16} /> {/* Services icon */}
             <span>Services</span>
           </Link>
 
@@ -342,7 +343,7 @@ const Navbar: React.FC = () => {
 
           {/* Drawer panel */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
-            {/* Drawer header: duplicate brand so it stays visible */}
+            {/* Drawer header */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -380,7 +381,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => mobLink(isActive)}
                 >
-                  <FaScroll size={16} /> {/* NEW icon */}
+                  <FaToolbox size={16} />
                   <span>Dashboard</span>
                 </NavLink>
               )}
@@ -390,7 +391,7 @@ const Navbar: React.FC = () => {
                 onClick={handleServicesClick}
                 className={mobLink(activeSection === "services")}
               >
-                <FaTools size={16} />
+                <FaLightbulb size={16} />
                 <span>Services</span>
               </Link>
 
