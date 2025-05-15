@@ -17,6 +17,7 @@ import {
 import Banner from "../../components/common/Banner";
 import ToolList, { ToolCard } from "../../components/common/toolList";
 import { Button } from "../../components/common/button";
+import { BubbleGenerator } from "../Home/home";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const toDate = (id: string) =>
@@ -176,50 +177,54 @@ export default function DashboardHome() {
           <ToolList tools={tools} />
         </section>
 
-        {/* uploads */}
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
-          {/* orange gradient bar */}
-          <div className="pointer-events-none absolute top-0 right-0 h-12 w-1/2 rounded-bl-2xl bg-gradient-to-l from-[var(--accent-light)] to-transparent" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h3 className="text-xl font-semibold">Recent uploads</h3>
-            <InlineUpload onDone={refresh} />
+        {/* uploads with bubbles */}
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
+          <div className="absolute inset-0 pointer-events-none">
+            <BubbleGenerator />
+            <BubbleGenerator />
           </div>
 
-          {loading && docs.length === 0 ? (
-            <p className="text-gray-600">Loading documents…</p>
-          ) : err ? (
-            <p className="text-red-600 py-4">
-              Error: {err}.{" "}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={refresh}
-                className="text-[#C17829] hover:underline"
-              >
-                Try again
-              </Button>
-            </p>
-          ) : docs.length === 0 ? (
-            <p className="text-gray-600">No documents uploaded yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {recent.map((d, i) => (
-                <Row key={d._id} d={d} i={i} />
-              ))}
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h3 className="text-xl font-semibold">Recent uploads</h3>
+              <InlineUpload onDone={refresh} />
             </div>
-          )}
 
-          {docs.length > 5 && (
-            <div className="self-end">
-              <Link
-                to="/dashboard/uploads"
-                className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
-              >
-                View all <FaArrowRight size={12} />
-              </Link>
-            </div>
-          )}
+            {loading && docs.length === 0 ? (
+              <p className="text-gray-600">Loading documents…</p>
+            ) : err ? (
+              <p className="text-red-600 py-4">
+                Error: {err}.{" "}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={refresh}
+                  className="text-[#C17829] hover:underline"
+                >
+                  Try again
+                </Button>
+              </p>
+            ) : docs.length === 0 ? (
+              <p className="text-gray-600">No documents uploaded yet.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {recent.map((d, i) => (
+                  <Row key={d._id} d={d} i={i} />
+                ))}
+              </div>
+            )}
+
+            {docs.length > 5 && (
+              <div className="self-end">
+                <Link
+                  to="/dashboard/uploads"
+                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                >
+                  View all <FaArrowRight size={12} />
+                </Link>
+              </div>
+            )}
+          </div>
         </section>
       </div>
 
