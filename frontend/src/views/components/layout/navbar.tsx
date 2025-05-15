@@ -110,6 +110,27 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
+  /* ───────── helper: always scroll to services ───────── */
+  const handleServicesClick = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => {
+    e.preventDefault(); // stop default hash behaviour
+    setIsMobileMenuOpen(false);
+
+    if (location.pathname !== "/") {
+      // go to home, then scroll
+      navigate("/#services");
+    } else {
+      document
+        .getElementById("services")
+        ?.scrollIntoView({ behavior: "smooth" });
+      // make sure URL hash is correct (for refresh/back-button behaviour)
+      if (window.location.hash !== "#services") {
+        window.history.replaceState(null, "", "#services");
+      }
+    }
+  };
+
   /* ───────── callbacks ───────── */
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((v) => !v);
@@ -189,7 +210,7 @@ const Navbar: React.FC = () => {
             className={`relative px-1 pb-1 ${
               activeSection === "services" ? activeLink : inactiveLink
             }`}
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={handleServicesClick}
           >
             Services
           </Link>
@@ -313,7 +334,7 @@ const Navbar: React.FC = () => {
           <Link
             to="/#services"
             className="text-xl"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={handleServicesClick}
           >
             Services
           </Link>
