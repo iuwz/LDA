@@ -17,12 +17,10 @@ COLL = "chat_sessions"
 # ───────────────────────────────── GPT-based legal-question classifier
 _CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"  # low cost & fast
 _CLASSIFIER_PROMPT = """
-You are a legal-question detector. Determine if the user’s question is about:
-  • legal matters, anything related to legal compliance, new laws, regulations,  contracts, near-legal matters, anything similar or related to the legal field in any way
-  • OR something else.
+You are a legal-question detector. Determine if the user’s question is about any thing legal or near-legal in any way or form :
 
 Respond with exactly one token (no extra text):
-LEGAL    — if it’s legal or near-legal
+LEGAL    — if it’s legal or near-legal in any way or form
 NONLEGAL — otherwise
 
 Examples:
