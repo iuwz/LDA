@@ -10,7 +10,7 @@ import {
   FaLanguage,
   FaCloudUploadAlt,
   FaDownload,
-  FaTrashAlt,
+  FaTrash,
   FaTimes,
   FaArrowRight,
 } from "react-icons/fa";
@@ -69,6 +69,7 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  /* ───────────── fetch uploads ───────────── */
   const refresh = async () => {
     setLoading(true);
     try {
@@ -90,6 +91,7 @@ export default function DashboardHome() {
     void refresh();
   }, []);
 
+  /* ───────────── delete flow ───────────── */
   const confirmDelete = async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
@@ -107,6 +109,7 @@ export default function DashboardHome() {
     }
   };
 
+  /* ───────────── row component ───────────── */
   const Row = ({ d, i }: { d: Doc; i: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -132,29 +135,27 @@ export default function DashboardHome() {
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full sm:w-auto"
+        className="
+          flex items-center justify-center gap-1
+          rounded-md px-3 py-1
+          text-sm text-[#c17829] hover:bg-[#a66224]/10
+          w-full sm:w-auto
+        "
       >
-        <Button
-          size="xs"
-          variant="outline"
-          className="w-full sm:w-24 h-9 flex items-center justify-center gap-1"
-        >
-          <FaDownload /> Download
-        </Button>
+        <FaDownload /> Download
       </a>
 
-      <Button
-        size="xs"
-        variant="outline"
+      <button
         disabled={isDeleting}
         onClick={() => setPendingDel(d)}
         className="
-          w-full sm:w-24 h-9 flex items-center justify-center gap-1
-          border-red-600 text-red-600 hover:bg-red-600 hover:text-white
+          flex items-center justify-center gap-1
+          text-sm text-red-600 hover:text-red-800
+          disabled:opacity-50 w-full sm:w-auto
         "
       >
-        <FaTrashAlt /> Remove
-      </Button>
+        <FaTrash /> Remove
+      </button>
     </motion.div>
   );
 
@@ -163,6 +164,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
+  /* ════════════════════════════════════════════════════════════ */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -270,9 +272,9 @@ export default function DashboardHome() {
   );
 }
 
-// InlineUpload helper
+/* ───────────────────────── inline upload ───────────────────────── */
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
-  const fileRef = React.useRef<HTMLInputElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
