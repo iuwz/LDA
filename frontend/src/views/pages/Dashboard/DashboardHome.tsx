@@ -14,8 +14,10 @@ import {
   FaTimes,
   FaArrowRight,
 } from "react-icons/fa";
+
 import Banner from "../../components/common/Banner";
 import ToolList, { ToolCard } from "../../components/common/toolList";
+import LoadingScreen from "../../components/common/LoadingScreen";
 import { Button } from "../../components/common/button";
 import { BubbleGenerator } from "../Home/home";
 
@@ -64,20 +66,25 @@ const tools: ToolCard[] = [
 ];
 
 export default function DashboardHome() {
+  /* page-level loading gate */
+  const [pageReady, setPageReady] = useState(false);
+
+  /* uploads state */
   const [docs, setDocs] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  /* delete modal state */
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* bubbles overlay (cached once) */
+  /* bubbles overlay (freeze once) */
   const bubbles = useMemo(
     () => [...Array(12)].map((_, i) => <BubbleGenerator key={i} />),
     []
   );
 
-  /* fetch uploads */
-  const refresh = async () => {
+  /* fetch uploads then lift the gate */
+  const fetchAllData = async () => {
     try {
       const r = await fetch(`${API_BASE}/documents`, {
         credentials: "include",
@@ -89,12 +96,16 @@ export default function DashboardHome() {
     } catch (e: any) {
       setErr(e.message);
     } finally {
-      setLoading(false);
+      setPageReady(true); // everything needed for first paint is ready
     }
   };
+
   useEffect(() => {
-    void refresh();
+    void fetchAllData();
   }, []);
+
+  /* early return: full-screen loader until gate lifts */
+  if (!pageReady) return <LoadingScreen />;
 
   /* delete flow */
   const confirmDelete = async () => {
@@ -153,7 +164,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
-  /* ────────────────────────────── UI ────────────────────────────── */
+  /* — UI (now safe to render) — */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -165,61 +176,60 @@ export default function DashboardHome() {
           <ToolList tools={tools} />
         </section>
 
-        {/* uploads (render only **after** initial fetch like Banner) */}
-        {!loading && (
-          <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-            <div
-              className="absolute -inset-[60%] overflow-hidden pointer-events-none"
-              style={{ opacity: 0.9 }}
-            >
-              {bubbles}
+        {/* uploads */}
+        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
+          {/* bubbles overlay */}
+          <div
+            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+            style={{ opacity: 0.9 }}
+          >
+            {bubbles}
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h3 className="text-xl font-semibold">Recent uploads</h3>
+              <InlineUpload
+                onDone={async () => {
+                  await fetchAllData();
+                }}
+              />
             </div>
 
-            <div className="relative z-10 flex flex-col gap-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h3 className="text-xl font-semibold">Recent uploads</h3>
-                <InlineUpload
-                  onDone={async () => {
-                    await refresh();
-                  }}
-                />
+            {err ? (
+              <p className="text-red-600 py-4">
+                Error: {err}.{" "}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => await fetchAllData()}
+                  className="text-[#C17829] hover:underline"
+                >
+                  Try again
+                </Button>
+              </p>
+            ) : docs.length === 0 ? (
+              <p className="text-gray-600">No documents uploaded yet.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {recent.map((d, i) => (
+                  <Row key={d._id} d={d} i={i} />
+                ))}
               </div>
+            )}
 
-              {err ? (
-                <p className="text-red-600 py-4">
-                  Error: {err}.{" "}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => await refresh()}
-                    className="text-[#C17829] hover:underline"
-                  >
-                    Try again
-                  </Button>
-                </p>
-              ) : docs.length === 0 ? (
-                <p className="text-gray-600">No documents uploaded yet.</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {recent.map((d, i) => (
-                    <Row key={d._id} d={d} i={i} />
-                  ))}
-                </div>
-              )}
-
-              {docs.length > 5 && (
-                <div className="self-end">
-                  <Link
-                    to="/dashboard/uploads"
-                    className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
-                  >
-                    View all <FaArrowRight size={12} />
-                  </Link>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+            {docs.length > 5 && (
+              <div className="self-end">
+                <Link
+                  to="/dashboard/uploads"
+                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                >
+                  View all <FaArrowRight size={12} />
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
 
       {/* delete modal */}
