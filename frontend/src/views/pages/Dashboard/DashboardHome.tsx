@@ -70,7 +70,7 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* — bubbles overlay (cached once) — */
+  /* bubbles overlay (cached once) */
   const bubbles = useMemo(
     () => [...Array(12)].map((_, i) => <BubbleGenerator key={i} />),
     []
@@ -92,7 +92,9 @@ export default function DashboardHome() {
       setLoading(false);
     }
   };
-  useEffect(() => void refresh(), []);
+  useEffect(() => {
+    void refresh();
+  }, []);
 
   /* delete flow */
   const confirmDelete = async () => {
@@ -151,7 +153,7 @@ export default function DashboardHome() {
     .sort((a, b) => (a._id < b._id ? 1 : -1))
     .slice(0, 5);
 
-  /* — UI — */
+  /* ────────────────────────────── UI ────────────────────────────── */
   return (
     <>
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
@@ -163,63 +165,61 @@ export default function DashboardHome() {
           <ToolList tools={tools} />
         </section>
 
-        {/* uploads */}
-        <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
-          {/* bubbles from the start (like Banner) */}
-          <div
-            className="absolute -inset-[60%] overflow-hidden pointer-events-none"
-            style={{ opacity: 0.9 }}
-          >
-            {bubbles}
-          </div>
-
-          <div className="relative z-10 flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h3 className="text-xl font-semibold">Recent uploads</h3>
-              {/* async wrapper so type matches () => Promise<void> */}
-              <InlineUpload
-                onDone={async () => {
-                  await refresh();
-                }}
-              />
+        {/* uploads (render only **after** initial fetch like Banner) */}
+        {!loading && (
+          <section className="relative rounded-2xl overflow-hidden bg-white shadow border p-8">
+            <div
+              className="absolute -inset-[60%] overflow-hidden pointer-events-none"
+              style={{ opacity: 0.9 }}
+            >
+              {bubbles}
             </div>
 
-            {loading && docs.length === 0 ? (
-              <p className="text-gray-600">Loading documents…</p>
-            ) : err ? (
-              <p className="text-red-600 py-4">
-                Error: {err}.{" "}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => await refresh()}
-                  className="text-[#C17829] hover:underline"
-                >
-                  Try again
-                </Button>
-              </p>
-            ) : docs.length === 0 ? (
-              <p className="text-gray-600">No documents uploaded yet.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {recent.map((d, i) => (
-                  <Row key={d._id} d={d} i={i} />
-                ))}
+            <div className="relative z-10 flex flex-col gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h3 className="text-xl font-semibold">Recent uploads</h3>
+                <InlineUpload
+                  onDone={async () => {
+                    await refresh();
+                  }}
+                />
               </div>
-            )}
 
-            {docs.length > 5 && (
-              <div className="self-end">
-                <Link
-                  to="/dashboard/uploads"
-                  className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
-                >
-                  View all <FaArrowRight size={12} />
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
+              {err ? (
+                <p className="text-red-600 py-4">
+                  Error: {err}.{" "}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => await refresh()}
+                    className="text-[#C17829] hover:underline"
+                  >
+                    Try again
+                  </Button>
+                </p>
+              ) : docs.length === 0 ? (
+                <p className="text-gray-600">No documents uploaded yet.</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {recent.map((d, i) => (
+                    <Row key={d._id} d={d} i={i} />
+                  ))}
+                </div>
+              )}
+
+              {docs.length > 5 && (
+                <div className="self-end">
+                  <Link
+                    to="/dashboard/uploads"
+                    className="inline-flex items-center gap-1 text-[#C17829] hover:underline rounded-md font-medium"
+                  >
+                    View all <FaArrowRight size={12} />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* delete modal */}
