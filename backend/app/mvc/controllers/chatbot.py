@@ -1,20 +1,3 @@
-"""
-Central chatbot-persistence logic (LEGAL-ONLY edition – robust GPT classifier + heuristic fallback)
-────────────────────────────────────────────────────────────────────────────
-This module stores chat history in MongoDB, mediates calls to OpenAI via
-`backend.app.core.openai_client.call_gpt`, and enforces a guard-rail:
-
-1.  It first calls a *lightweight* GPT model to classify whether the user’s
-    question is legal or near-legal (contracts, privacy policies, compliance,
-    regulations, data protection, etc.).
-2.  If the classifier responds LEGAL, or if a simple keyword heuristic matches
-    privacy/compliance drafting terms, the question is routed to the *main*
-    GPT model for a substantive legal answer.
-3.  Otherwise, the assistant politely refuses, indicating it only handles
-    legal questions.
-
-Collection layout details unchanged.
-"""
 from __future__ import annotations
 
 import re
@@ -33,43 +16,48 @@ COLL = "chat_sessions"
 
 # ───────────────────────────────── GPT-based legal-question classifier
 _CLASSIFIER_MODEL = "gpt-3.5-turbo-0125"  # low cost & fast
-_CLASSIFIER_SYSTEM_MESSAGE = (
-    "You are a classification assistant.\n"
-    "Determine if the following user question seeks legal or near-legal information or advice. "
-    "Near-legal includes drafting policies, contracts, compliance checks, data protection, or regulatory guidance.\n\n"
-    "Output exactly one token: LEGAL or NONLEGAL. No extra text."
-)
-_CLASSIFIER_REGEX = re.compile(r"\b(LEGAL|NONLEGAL)\b", re.I)
+_CLASSIFIER_PROMPT = """
+You are a legal-question detector. Determine if the user’s question is about:
+  • legal matters, anything related to legal compliance, new laws, regulations,  contracts, near-legal matters, anything similar or related to the legal field in any way
+  • OR something else.
 
-# Heuristic fallback for privacy/compliance drafting
-_HEURISTIC_KEYWORDS = [
-    "privacy policy", "contract", "nda", "non-disclosure agreement",
-    "terms of service", "compliance", "regulation", "data protection",
-]
+Respond with exactly one token (no extra text):
+LEGAL    — if it’s legal or near-legal
+NONLEGAL — otherwise
+
+Examples:
+Q: “How do I write an NDA between two startups?”
+A: LEGAL
+
+Q: “Explain GDPR data-processing agreement terms”
+A: LEGAL
+
+Q: “What’s the weather in Paris?”
+A: NONLEGAL
+
+Q: “How do I bake sourdough bread?”
+A: NONLEGAL
+
+Now classify this:
+Q: "{question}"
+A:"""
+
 
 async def _is_legal_query(user_id: str, question: str) -> bool:
-    """Use GPT classifier, then heuristic fallback on privacy/compliance terms."""
+    """Ask the lightweight GPT model to tag LEGAL or NONLEGAL."""
     try:
-        # Classify with system_message support
-        raw_resp = call_gpt(
-            prompt=question,
-            system_message=_CLASSIFIER_SYSTEM_MESSAGE,
+        prompt = _CLASSIFIER_PROMPT.format(question=question.strip())
+        raw = call_gpt(
+            prompt=prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
-            max_tokens=4,
+            max_tokens=1,
         ) or ""
-        logger.debug("Classifier raw response for %s: %s", user_id, raw_resp)
-        match = _CLASSIFIER_REGEX.search(raw_resp)
-        if match and match.group(1).upper() == "LEGAL":
-            return True
-    except Exception as exc:
-        logger.exception("Classifier error, continuing to heuristic: %s", exc)
-    # Heuristic check for common drafting/compliance topics
-    q_lower = question.lower()
-    if any(keyword in q_lower for keyword in _HEURISTIC_KEYWORDS):
-        logger.debug("Heuristic fallback triggered for question: %s", question)
-        return True
-    return False
+        logger.debug("Classifier response for %s → %s", user_id, raw)
+        return raw.strip().upper() == "LEGAL"
+    except Exception:
+        logger.exception("Classifier failed; defaulting to NONLEGAL")
+        return False
 
 
 # ───────────────────────────────── helpers
@@ -116,7 +104,7 @@ async def chat(
         sid = await _ensure_session(db, user_id, query)
         new_session = True
 
-    # 2. classify or heuristic
+    # 2. classify via GPT-only
     legal = await _is_legal_query(user_id, query)
 
     if legal:
@@ -180,9 +168,10 @@ async def get_messages(
     def _iso(ts: Any) -> str:
         return ts.isoformat() if isinstance(ts, datetime) else str(ts)
     return [
-        {"sender": m["sender"], "text": m["text"], "timestamp": _iso(m["timestamp"]) }
+        {"sender": m["sender"], "text": m["text"], "timestamp": _iso(m["timestamp"])}
         for m in doc["messages"]
     ]
+
 
 async def delete_session(
     db: AsyncIOMotorDatabase, *, user_id: str, session_id: str
