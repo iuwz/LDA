@@ -121,7 +121,7 @@ function SignInForm({
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
                 className="absolute inset-y-0 right-4 flex items-center text-gray-400"
-                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-label={showPw ? "Hide password" : "Show Password"}
                 title={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? <FaEyeSlash /> : <FaEye />}
