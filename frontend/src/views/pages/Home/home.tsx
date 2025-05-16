@@ -310,7 +310,7 @@ const TESTIMONIALS = [
     name: "Zeyad Aldosari",
     role: "Software Engineer",
     quote:
-      "LDA's risk assessment tool made it effortless to spot potential legal risks in my documents before submission.",
+      "LDA's risk assessment tool made it effortless to spot potential legal risks in my documents.",
     avatarUrl: zeyad,
   },
 ];
