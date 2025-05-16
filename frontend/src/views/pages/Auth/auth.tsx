@@ -1,12 +1,13 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-All orange-tone buttons now share the same gradient styling used in the
-Contact page, including the  “Verify / Resend”  **and**  “Verify”  buttons.
-White buttons remain unchanged.
-
-On small screens, the bottom toggle button now mimics the secondary pill
-style of the Navbar’s Login button.
+Update - 2025-05-16
+──────────────────────────────────────────────────────────────────
+• All orange-tone buttons share the gradient styling (unchanged).
+• White buttons remain unchanged.
+• **Mobile-only toggle** at the bottom now reuses the Navbar’s
+  secondary pill look (transparent bg, accent text + border,
+  gradient fill & white text on hover).
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -22,7 +23,7 @@ import { FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────── Sign-In ───────── */
+/* ───────── Sign-In form ───────── */
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -79,8 +80,8 @@ function SignInForm({
             <input
               type="email"
               className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base
-                               focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
-                               ${credError ? "border-red-500" : ""}`}
+                         focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                         ${credError ? "border-red-500" : ""}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
@@ -103,14 +104,13 @@ function SignInForm({
               <input
                 type={showPw ? "text" : "password"}
                 className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base
-                                 focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
-                                 ${credError ? "border-red-500" : ""}`}
+                           focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                           ${credError ? "border-red-500" : ""}`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 required
               />
-
               <button
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
@@ -138,7 +138,7 @@ function SignInForm({
   );
 }
 
-/* ───────── Sign-Up ───────── */
+/* ───────── Sign-Up form ───────── */
 interface SignUpFormProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -231,7 +231,7 @@ function SignUpForm({
             <input
               type="text"
               className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg text-base
-              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                         focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="First name"
@@ -240,7 +240,7 @@ function SignUpForm({
             <input
               type="text"
               className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg text-base
-              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                         focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Last name"
@@ -260,11 +260,11 @@ function SignUpForm({
                 }}
                 placeholder="Email"
                 className={`flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
-                       focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
-                       ${emailError ? "border-red-500" : ""}`}
+                           focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]
+                           ${emailError ? "border-red-500" : ""}`}
                 required
               />
-              {/* Send / Resend button */}
+              {/* Send/Resend */}
               <Button
                 type="button"
                 disabled={!canSend || isSending}
@@ -290,9 +290,8 @@ function SignUpForm({
                   maxLength={6}
                   placeholder="6-digit code"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
-              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                             focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
-                {/* Code-verify button */}
                 <Button
                   type="button"
                   onClick={handleVerifyCode}
@@ -318,7 +317,7 @@ function SignUpForm({
               <input
                 type={showPw ? "text" : "password"}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base
-              focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
+                           focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -385,8 +384,9 @@ function SignUpForm({
   );
 }
 
-/* ───────── Master Auth ───────── */
+/* ───────── Master Auth component ───────── */
 export default function Auth() {
+  /* state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
@@ -420,9 +420,7 @@ export default function Auth() {
     } catch (e: any) {
       if (e.message?.toLowerCase().includes("invalid email or password")) {
         setLoginCredError("Invalid e-mail / password combination");
-      } else {
-        setError(e.message);
-      }
+      } else setError(e.message);
     }
   };
 
@@ -440,13 +438,11 @@ export default function Auth() {
     } catch (e: any) {
       if (e.message?.toLowerCase().includes("email already registered")) {
         setSignupEmailError("That e-mail is already registered");
-      } else {
-        setError(e.message);
-      }
+      } else setError(e.message);
     }
   };
 
-  /* send / verify code */
+  /* email code */
   const handleSendCode = async () => {
     setCodeError(null);
     setIsSending(true);
@@ -472,7 +468,7 @@ export default function Auth() {
     }
   };
 
-  /* URL param / state check */
+  /* URL param / state */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -637,9 +633,9 @@ export default function Auth() {
               {isSignUp ? "Already have an account?" : "New to our platform?"}
             </p>
             <Button
+              variant="secondary" /* pill outline like Navbar Login */
               onClick={() => setIsSignUp((s) => !s)}
-              /* -------------- updated pill-outline style -------------- */
-              className="inline-flex items-center justify-center text-[#C17829] border border-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition
+              className="inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition
                          hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
             >
               {isSignUp ? "Sign In" : "Create Account"}
