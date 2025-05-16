@@ -10,7 +10,7 @@ import {
   FaBrain,
   FaShieldAlt,
   FaUsers,
-  FaExpand,
+  FaGavel, // NEW  ← gavel icon for “Compliance-Ready”
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
@@ -133,8 +133,8 @@ function ServicesSection() {
 
 /* ───────────────────────── Bubble background ───────────────────────── */
 export const BubbleGenerator: React.FC = () => {
-  const BUBBLE_COUNT = 20; // adjusted to around twenty bubbles
-  /* Generate bubble data **once** to prevent flicker */
+  const BUBBLE_COUNT = 20; // around twenty bubbles
+  /* Generate bubble data once to prevent flicker */
   const bubbles = useMemo(
     () =>
       Array.from({ length: BUBBLE_COUNT }).map((_, i) => {
@@ -212,9 +212,9 @@ const whyFeatures = [
     text: "Intuitive design that streamlines legal workflows for all.",
   },
   {
-    icon: FaExpand,
-    title: "Scalable & Flexible",
-    text: "Easily integrates with your existing systems.",
+    icon: FaGavel, // UPDATED
+    title: "Compliance-Ready", // UPDATED
+    text: "Continuously evolving rules engine keeps every analysis aligned with current regulations.", // UPDATED
   },
 ];
 
