@@ -1,14 +1,23 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-c  • fix “Code sent!” banner showing alongside e-mail error
+RELEASE 3-e  • 2025-05-16
 ──────────────────────────────────────────────────────────────────
-Summary of key UX/functionality:
-• Smart Send Code / Resend logic with inline confirmations.
-• Inline validation + green ✓ icons for completed fields.
-• ‘Code sent!’ banner now hides automatically if an error such as
-  “E-mail already registered” appears.
-• Consistent tool-tips, loading spinners, and password checklist.
+This file supersedes every earlier snippet. Install it as-is!
+
+Fix ✨  “Code sent!” banner now appears **only** if the backend
+successfully accepted `sendVerificationCode`. If the server responds
+with “Email already registered” (or any error), the green banner will
+NOT show.
+
+Key mechanics
+─────────────
+• `handleSendCodeWrapped` (in the Master `Auth` component) returns a
+  **boolean** – `true` on HTTP 2xx, `false` on any thrown error.
+• `SignUpForm` calls this function and sets `showSuccess` only when the
+  boolean is `true`.
+• Any change to `emailError`, `error`, or `codeError` immediately hides
+  the banner.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -186,7 +195,8 @@ interface SignUpFormProps {
   codeVerified: boolean;
   codeError: string | null;
   canSend: boolean;
-  handleSendCode: () => void;
+  /* returns boolean – true if sendVerificationCode succeeded */
+  handleSendCode: () => Promise<boolean>;
   handleVerifyCode: () => void;
   onSubmit: () => void;
   error?: string | null;
@@ -231,9 +241,9 @@ function SignUpForm({
     lastName: "",
     email: "",
   });
-  const [codeSentMsg, setCodeSentMsg] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // banner flag
 
-  /* inline validation */
+  /* validation */
   const validate = () => {
     const errs: any = {};
     if (!firstName.trim()) errs.firstName = "First name is required";
@@ -244,22 +254,17 @@ function SignUpForm({
     return Object.keys(errs).length === 0;
   };
 
-  /* send / resend */
+  /* Send / Resend */
   const handleSend = async () => {
     if (!validate()) return;
-    await handleSendCode();
-    setCodeSentMsg(true);
-    setTimeout(() => setCodeSentMsg(false), 3000);
+    const ok = await handleSendCode(); // backend call
+    setShowSuccess(ok); // banner only if true
   };
 
-  /* hide banner on error */
+  /* hide banner when an error appears */
   useEffect(() => {
-    if (emailError) setCodeSentMsg(false);
-  }, [emailError]);
-
-  useEffect(() => {
-    if (error) setCodeSentMsg(false);
-  }, [error]);
+    if (emailError || error || codeError) setShowSuccess(false);
+  }, [emailError, error, codeError]);
 
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
@@ -283,8 +288,7 @@ function SignUpForm({
             {error}
           </motion.div>
         )}
-
-        {codeSentMsg && !emailError && !error && (
+        {showSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -294,7 +298,6 @@ function SignUpForm({
             Code sent! Check your inbox.
           </motion.div>
         )}
-
         {codeVerified && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -377,7 +380,7 @@ function SignUpForm({
             </div>
           </div>
 
-          {/* Email + Send / Resend */}
+          {/* Email + Send/Resend */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -520,9 +523,7 @@ function SignUpForm({
             disabled={
               !isAllValid ||
               !codeVerified ||
-              Object.keys(localErrors).some(
-                (k) => localErrors[k as keyof typeof localErrors]
-              )
+              Object.values(localErrors).some(Boolean)
             }
             className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
@@ -536,7 +537,7 @@ function SignUpForm({
 
 /* ───────── Master Auth component ───────── */
 export default function Auth() {
-  /* state */
+  /* core state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -545,6 +546,7 @@ export default function Auth() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [loginCredError, setLoginCredError] = useState<string | null>(null);
   const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
@@ -554,28 +556,36 @@ export default function Auth() {
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
 
+  /* derived */
+  const canSend = !codeSent && EMAIL_REGEX.test(email);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* smart canSend */
-  const canSend = !codeSent && EMAIL_REGEX.test(email);
-
-  /* handlers */
-  const handleSendCodeWrapped = async () => {
+  /* send code (return success bool) */
+  const handleSendCodeWrapped = async (): Promise<boolean> => {
     setCodeError(null);
+    setSignupEmailError(null);
     setIsSending(true);
     try {
       await sendVerificationCode(email);
       setCodeSent(true);
+      return true;
     } catch (e: any) {
-      if (e.status === 429)
+      if (e.message?.toLowerCase().includes("email already registered")) {
+        setSignupEmailError("Email already registered");
+      } else if (e.status === 429) {
         setCodeError("E-mail quota reached – please try again tomorrow.");
-      else setCodeError(e.message || "Could not send e-mail.");
+      } else {
+        setCodeError(e.message || "Could not send e-mail.");
+      }
+      return false;
     } finally {
       setIsSending(false);
     }
   };
 
+  /* verify */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -586,6 +596,7 @@ export default function Auth() {
     }
   };
 
+  /* sign up */
   const handleSignUp = async () => {
     setError(null);
     setSignupEmailError(null);
@@ -598,12 +609,13 @@ export default function Auth() {
       });
       navigate("/dashboard");
     } catch (e: any) {
-      if (e.message?.toLowerCase().includes("email already registered")) {
+      if (e.message?.toLowerCase().includes("email already registered"))
         setSignupEmailError("Email already registered");
-      } else setError(e.message);
+      else setError(e.message);
     }
   };
 
+  /* sign in */
   const handleSignIn = async () => {
     setError(null);
     setLoginCredError(null);
@@ -632,13 +644,14 @@ export default function Auth() {
     }
   }, [location]);
 
-  /* password validators */
+  /* password live validation */
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
   const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
+  /* JSX */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
