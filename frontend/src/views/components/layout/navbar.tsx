@@ -16,13 +16,11 @@ import {
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
-/* ───────── constants ───────── */
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
-const NAV_HEIGHT_PX = 80; // same height for top-nav and drawer header
+const NAV_HEIGHT_PX = 80;
 
 const Navbar: React.FC = () => {
-  /* ───────── state ───────── */
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -37,7 +35,6 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── highlight Home / Services on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -60,7 +57,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [location.pathname]);
 
-  /* ───────── auth check ───────── */
   useEffect(() => {
     fetch(`${API_BASE}/auth/me`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -74,7 +70,6 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  /* ───────── resize listener ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -84,7 +79,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ───────── close profile dropdown on outside-click ───────── */
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -99,7 +93,6 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
-  /* ───────── lock body scroll when drawer open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -107,7 +100,6 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  /* ───────── auto-scroll to #services on hash ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -116,13 +108,11 @@ const Navbar: React.FC = () => {
     }
   }, [location.hash]);
 
-  /* ───────── helpers ───────── */
   const handleServicesClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
   ) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
-
     if (location.pathname !== "/") {
       navigate("/#services");
     } else {
@@ -156,7 +146,6 @@ const Navbar: React.FC = () => {
 
   const getIconSz = () => (screenWidth < 350 ? 16 : 18);
 
-  /* ───────── reusable class strings ───────── */
   const deskActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const deskIdle = "hover:text-[#C17829] transition-colors";
   const mobLink = (a: boolean) =>
@@ -168,15 +157,12 @@ const Navbar: React.FC = () => {
   const registerBtn =
     "w-[105px] h-[40px] inline-flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition hover:scale-105";
 
-  /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
-      {/* ───────── Top-nav (desktop + hamburger) ───────── */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
       >
-        {/* Brand */}
         <div className="flex-1">
           <NavLink to="/" end className="flex items-center space-x-2">
             <FaBalanceScale className="text-2xl text-[#2C2C4A]" />
@@ -189,7 +175,6 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* Desktop links */}
         <div className="hidden lg:flex flex-1 justify-center space-x-8 text-[#2C2C4A]">
           <NavLink
             to="/"
@@ -256,7 +241,6 @@ const Navbar: React.FC = () => {
           </NavLink>
         </div>
 
-        {/* Desktop auth */}
         <div className="hidden lg:flex flex-1 justify-end items-center space-x-4 min-w-[150px]">
           {authChecked ? (
             isAuthenticated ? (
@@ -317,7 +301,6 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Hamburger (mobile) */}
         <div className="lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -332,18 +315,14 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* ───────── Mobile drawer ───────── */}
       {isMobileMenuOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          {/* Drawer panel */}
           <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col overflow-hidden">
-            {/* Drawer header */}
             <div
               className="flex items-center h-full px-4 border-b"
               style={{ height: NAV_HEIGHT_PX }}
@@ -363,7 +342,6 @@ const Navbar: React.FC = () => {
               </NavLink>
             </div>
 
-            {/* Drawer links */}
             <div className="flex-1 overflow-y-auto pt-6 flex flex-col items-start pl-6 space-y-6">
               <NavLink
                 to="/"
@@ -413,7 +391,6 @@ const Navbar: React.FC = () => {
                 <span>Contact</span>
               </NavLink>
 
-              {/* Auth controls in drawer */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
@@ -437,27 +414,30 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                /* ===== aligned, stacked buttons ===== */
                 <div className="mt-8 pl-6 flex flex-col gap-4 items-start">
-                  <Button
-                    size="md"
-                    variant="secondary"
-                    className={loginBtn}
-                    onClick={handleLoginClick}
-                  >
-                    <div className="flex items-center gap-2">
-                      <LogIn size={16} />
-                      <span>Login</span>
-                    </div>
-                  </Button>
-                  <Button
-                    size="md"
-                    variant="primary"
-                    className={registerBtn}
-                    onClick={handleRegisterClick}
-                  >
-                    Register
-                  </Button>
+                  <div className="ml-[2px]">
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      className={loginBtn}
+                      onClick={handleLoginClick}
+                    >
+                      <div className="flex items-center gap-2">
+                        <LogIn size={16} />
+                        <span>Login</span>
+                      </div>
+                    </Button>
+                  </div>
+                  <div className="ml-[2px]">
+                    <Button
+                      size="md"
+                      variant="primary"
+                      className={registerBtn}
+                      onClick={handleRegisterClick}
+                    >
+                      Register
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
