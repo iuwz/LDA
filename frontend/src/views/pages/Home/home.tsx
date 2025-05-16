@@ -19,6 +19,7 @@ import shalfan from "../../../assets/images/shalfan.jpg";
 import saud from "../../../assets/images/saud.jpg";
 import sae from "../../../assets/images/sae.jpg";
 import fahad from "../../../assets/images/fahad.jpg";
+import zeyad from "../../../assets/images/zeyad.jpg";
 
 /* ───────────────────────── Services data ───────────────────────── */
 const SERVICES = [
@@ -304,6 +305,13 @@ const TESTIMONIALS = [
     quote:
       "LDA's AI-Powered Legal Chatbot is like having a legal assistant on-demand.",
     avatarUrl: fahad,
+  },
+  {
+    name: "Zeyad Aldosari",
+    role: "Software Engineer",
+    quote:
+      "LDA's risk assessment tool made it effortless to spot potential legal risks in my documents before submission.",
+    avatarUrl: zeyad,
   },
 ];
 
