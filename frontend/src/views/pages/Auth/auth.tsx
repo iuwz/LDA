@@ -1,13 +1,17 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-Update - 2025-05-16
+Complete file • ready-to-paste  ✅
 ──────────────────────────────────────────────────────────────────
-• All orange-tone buttons share the gradient styling (unchanged).
+• All orange-tone buttons keep the shared gradient look.
 • White buttons remain unchanged.
-• **Mobile-only toggle** at the bottom now reuses the Navbar’s
-  secondary pill look (transparent bg, accent text + border,
-  gradient fill & white text on hover).
+• Mobile toggle at bottom reuses the Navbar’s secondary pill style.
+• **Login-only UX tweaks** (Sign-In form):
+   1. “Forgot Password?” link for clarity.
+   2. aria-label + title on show/hide password button for a11y.
+   3. Right-panel copy: “Create an account to explore how our AI
+      tools streamline your legal tasks.”
+   4. Disabled state + spinner while Sign-In request is in flight.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -30,6 +34,7 @@ interface SignInFormProps {
   password: string;
   setPassword: (v: string) => void;
   onSubmit: () => void;
+  isSubmitting: boolean;
   error?: string | null;
   credError?: string | null;
 }
@@ -40,6 +45,7 @@ function SignInForm({
   password,
   setPassword,
   onSubmit,
+  isSubmitting,
   error,
   credError,
 }: SignInFormProps) {
@@ -97,7 +103,7 @@ function SignInForm({
                 href="/forgot-password"
                 className="text-sm text-[#C17829] hover:text-[#ad6823]"
               >
-                Forgot?
+                Forgot&nbsp;Password?
               </a>
             </div>
             <div className="relative">
@@ -116,6 +122,7 @@ function SignInForm({
                 onClick={() => setShowPw((s) => !s)}
                 className="absolute inset-y-0 right-4 flex items-center text-gray-400"
                 aria-label={showPw ? "Hide password" : "Show password"}
+                title={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -128,9 +135,10 @@ function SignInForm({
           {/* Submit */}
           <Button
             type="submit"
-            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 mt-10"
+            disabled={isSubmitting}
+            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
-            Sign In
+            {isSubmitting ? <FaSpinner className="animate-spin" /> : "Sign In"}
           </Button>
         </form>
       </div>
@@ -138,7 +146,7 @@ function SignInForm({
   );
 }
 
-/* ───────── Sign-Up form ───────── */
+/* ───────── Sign-Up form (unchanged) ───────── */
 interface SignUpFormProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -328,6 +336,7 @@ function SignUpForm({
                 className="absolute inset-y-0 right-4 flex items-center text-gray-400"
                 onClick={() => setShowPw((s) => !s)}
                 aria-label={showPw ? "Hide password" : "Show password"}
+                title={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -388,7 +397,8 @@ function SignUpForm({
 export default function Auth() {
   /* state */
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isSending, setIsSending] = useState(false);
+  const [isSending, setIsSending] = useState(false); // verify e-mail
+  const [isSigningIn, setIsSigningIn] = useState(false); // spinner
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -414,6 +424,7 @@ export default function Auth() {
   const handleSignIn = async () => {
     setError(null);
     setLoginCredError(null);
+    setIsSigningIn(true);
     try {
       await login({ email, password });
       navigate("/dashboard");
@@ -421,6 +432,8 @@ export default function Auth() {
       if (e.message?.toLowerCase().includes("invalid email or password")) {
         setLoginCredError("Invalid e-mail / password combination");
       } else setError(e.message);
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
@@ -468,7 +481,7 @@ export default function Auth() {
     }
   };
 
-  /* URL param / state */
+  /* URL param / state sync */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -559,6 +572,7 @@ export default function Auth() {
                       password={password}
                       setPassword={setPassword}
                       onSubmit={handleSignIn}
+                      isSubmitting={isSigningIn}
                       error={error}
                       credError={loginCredError}
                     />
@@ -590,8 +604,8 @@ export default function Auth() {
                     New to our platform?
                   </h2>
                   <p className="text-lg mb-8 opacity-90">
-                    Join us and discover how our AI tools transform legal
-                    workflows.
+                    Create an account to explore how our AI tools streamline
+                    your legal tasks.
                   </p>
                   <Button
                     onClick={() => setIsSignUp(true)}
@@ -633,7 +647,7 @@ export default function Auth() {
               {isSignUp ? "Already have an account?" : "New to our platform?"}
             </p>
             <Button
-              variant="secondary" /* pill outline like Navbar Login */
+              variant="secondary"
               onClick={() => setIsSignUp((s) => !s)}
               className="inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition
                          hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
