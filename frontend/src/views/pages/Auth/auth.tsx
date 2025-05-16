@@ -24,20 +24,13 @@ import {
   verifyEmailCode,
   checkEmailExists,
 } from "../../../api";
-import {
-  FaEye,
-  FaEyeSlash,
-  FaSpinner,
-  FaCheck,
-  FaTimes,
-} from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
 /* ───────── Shared constants ───────── */
-const EMAIL_REGEX =
-  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 /* ───────── Tooltip helper (still used for the eye icon) ───────── */
 const Tooltip = ({ text }: { text: string }) => (
@@ -102,9 +95,7 @@ function SignInForm({
         >
           {/* Email */}
           <div>
-            <label className="block text-gray-700 mb-2 text-sm">
-              Email
-            </label>
+            <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
               <input
                 type="email"
@@ -128,9 +119,7 @@ function SignInForm({
 
           {/* Password */}
           <div>
-            <label className="block text-gray-700 mb-2 text-sm">
-              Password
-            </label>
+            <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
@@ -529,8 +518,8 @@ function SignUpForm({
                   hasMinLength ? "text-green-600" : "text-gray-500"
                 }`}
               >
-                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
-                ≥ 8 characters
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
+                characters
               </li>
             </ul>
           </div>
@@ -567,12 +556,8 @@ export default function Auth() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState<string | null>(null);
-  const [loginCredError, setLoginCredError] = useState<string | null>(
-    null
-  );
-  const [signupEmailError, setSignupEmailError] = useState<
-    string | null
-  >(null);
+  const [loginCredError, setLoginCredError] = useState<string | null>(null);
+  const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
 
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
@@ -580,8 +565,7 @@ export default function Auth() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   /* derived */
-  const canSend =
-    !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
+  const canSend = !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -698,8 +682,7 @@ export default function Auth() {
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
-  const isAllValid =
-    hasUppercase && hasNumber && hasSymbol && hasMinLength;
+  const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
   /* JSX */
   return (
@@ -846,9 +829,7 @@ export default function Auth() {
           {/* mobile toggle */}
           <div className="md:hidden w-full p-4 text-center border-t border-gray-100">
             <p className="text-gray-600 mb-3 text-sm">
-              {isSignUp
-                ? "Already have an account?"
-                : "New to our platform?"}
+              {isSignUp ? "Already have an account?" : "New to our platform?"}
             </p>
             <Button
               variant="secondary"
