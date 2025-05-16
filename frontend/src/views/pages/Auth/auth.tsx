@@ -1,18 +1,22 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-h • 2025-05-17  
-This file completely replaces every previous snippet.  
-Copy-paste it over **frontend/src/views/pages/Auth/auth.tsx**.
+RELEASE 3-j • 2025-05-17  
+Copy-paste this file over **frontend/src/views/pages/Auth/auth.tsx**.
 
-Changes vs. 3-g
-────────────────
-1. Spinner inside the e-mail field now always rotates (`animate-spin`)
-   and has explicit `h-4 w-4` size so it’s visible.
-2. Tooltip on the red ✗ removed – we rely on the inline error message
-   “Email already registered” below the field.
+Key points
+──────────
+• ❌ Removed the tiny spinner that used to appear while the e-mail
+  availability check runs.  
+• ✅ Added a strict client-side e-mail validator that matches every rule
+  you listed.  
+    – Shows red ✗ and message **“Write a valid e-mail”** whenever the
+      address violates *any* rule.  
+• Server-side availability check still runs silently and shows  
+  “Email already registered” + ✗ if taken.  
+• All other behaviour (send-code spinner, password eye tooltip, etc.)
+  is unchanged.
 
-Everything else works exactly as before.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -24,15 +28,49 @@ import {
   verifyEmailCode,
   checkEmailExists,
 } from "../../../api";
-import { FaEye, FaEyeSlash, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaCheck,
+  FaTimes,
+  FaCircleNotch,
+} from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────── Shared constants ───────── */
-const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+/* ═════════════════════ Strict e-mail validator ═══════════════════ */
+function isValidEmail(email: string): boolean {
+  if (!email || email.length > 320 || /\s/.test(email)) return false;
+  const parts = email.split("@");
+  if (parts.length !== 2) return false;
 
-/* ───────── Tooltip helper (still used for the eye icon) ───────── */
+  const [local, domain] = parts;
+  if (local.length < 1 || local.length > 64) return false;
+  if (domain.length < 1 || domain.length > 255) return false;
+  if (domain.indexOf(".") === -1) return false; // must contain a dot
+
+  // local allowed chars
+  if (!/^[A-Za-z0-9._+-]+$/.test(local)) return false;
+  // domain allowed chars
+  if (!/^[A-Za-z0-9.-]+$/.test(domain)) return false;
+
+  // start / end must be alnum
+  if (!/^[A-Za-z0-9]/.test(local) || !/[A-Za-z0-9]$/.test(local)) return false;
+  if (!/^[A-Za-z0-9]/.test(domain) || !/[A-Za-z0-9]$/.test(domain))
+    return false;
+
+  // no consecutive dots
+  if (local.includes("..") || domain.includes("..")) return false;
+
+  // TLD ≥ 2 letters
+  const tld = domain.split(".").pop()!;
+  if (!/^[A-Za-z]{2,}$/.test(tld)) return false;
+
+  return true;
+}
+
+/* ───────── Tooltip helper (used only for password eye icon) ─────── */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -40,7 +78,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═════════════════════════ Sign-In Form ════════════════════════ */
+/* ═════════════════════════ Sign-In form ══════════════════════════ */
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -167,7 +205,7 @@ function SignInForm({
             className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
             {isSubmitting ? (
-              <FaSpinner className="animate-spin h-4 w-4" />
+              <FaCircleNotch className="animate-spin h-4 w-4" />
             ) : (
               "Sign In"
             )}
@@ -178,7 +216,7 @@ function SignInForm({
   );
 }
 
-/* ═════════════════════ Sign-Up Form ═════════════════════ */
+/* ═════════════════════ Sign-Up form ════════════════════════ */
 interface SignUpFormProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -244,27 +282,30 @@ function SignUpForm({
   });
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* client-side validation helper */
+  /* helper used on submit */
   const validate = () => {
     const errs: any = {};
     if (!firstName.trim()) errs.firstName = "First name is required";
     if (!lastName.trim()) errs.lastName = "Last name is required";
-    if (!EMAIL_REGEX.test(email.trim()))
-      errs.email = "Enter a valid e-mail (example@domain.com)";
+    if (!isValidEmail(email.trim())) errs.email = "Write a valid e-mail";
     setLocalErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  /* Send / Resend */
   const handleSend = async () => {
     if (!validate()) return;
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
 
-  /* hide “Code sent!” if any error pops up */
   useEffect(() => {
     if (emailError || error || codeError) setShowSuccess(false);
   }, [emailError, error, codeError]);
+
+  /* live e-mail format check */
+  const liveEmailError =
+    email.length && !isValidEmail(email) ? "Write a valid e-mail" : "";
 
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
@@ -317,7 +358,7 @@ function SignUpForm({
             onSubmit();
           }}
         >
-          {/* names */}
+          {/* Names */}
           <div className="flex gap-3">
             {/* first */}
             <div className="relative w-1/2">
@@ -380,7 +421,7 @@ function SignUpForm({
             </div>
           </div>
 
-          {/* e-mail + Send/Resend */}
+          {/* Email */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -390,31 +431,22 @@ function SignUpForm({
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setCode("");
-                    if (localErrors.email)
-                      setLocalErrors({ ...localErrors, email: "" });
                   }}
                   placeholder="Email"
                   className={`w-full px-4 py-3 border rounded-lg text-base
                              focus:outline-none focus:ring-2 focus:ring-[#C17829]
                              ${
-                               localErrors.email || emailError
+                               liveEmailError || emailError
                                  ? "border-red-500"
                                  : "border-gray-300 focus:border-transparent"
                              }`}
                   required
                 />
-
-                {/* icon / spinner / check */}
-                {checkingEmail ? (
-                  <FaSpinner className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#C17829]" />
-                ) : emailError ? (
+                {emailError || liveEmailError ? (
                   <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
-                ) : (
-                  EMAIL_REGEX.test(email) &&
-                  !localErrors.email && (
-                    <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
-                  )
-                )}
+                ) : isValidEmail(email) && !checkingEmail ? (
+                  <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
+                ) : null}
               </div>
 
               <Button
@@ -424,7 +456,7 @@ function SignUpForm({
                 className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 {isSending ? (
-                  <FaSpinner className="h-4 w-4 animate-spin" />
+                  <FaCircleNotch className="h-4 w-4 animate-spin" />
                 ) : codeSent ? (
                   "Resend"
                 ) : (
@@ -432,14 +464,14 @@ function SignUpForm({
                 )}
               </Button>
             </div>
-            {(localErrors.email || emailError) && (
+            {(liveEmailError || emailError) && (
               <p className="text-red-600 text-sm mt-1">
-                {localErrors.email || emailError}
+                {emailError || liveEmailError}
               </p>
             )}
           </div>
 
-          {/* verification code */}
+          {/* Verification code */}
           {codeSent && (
             <div className="mt-4 flex gap-3 items-center">
               <input
@@ -542,9 +574,9 @@ function SignUpForm({
   );
 }
 
-/* ═══════════════════ Master Auth component ═══════════════════ */
+/* ═════════════════ Master Auth component ══════════════════════ */
 export default function Auth() {
-  /* core state */
+  /* state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -565,21 +597,21 @@ export default function Auth() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   /* derived */
-  const canSend = !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
+  const canSend = !codeSent && isValidEmail(email) && !signupEmailError;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live e-mail availability check */
+  /* live availability check */
   useEffect(() => {
-    if (!EMAIL_REGEX.test(email)) {
+    if (!isValidEmail(email)) {
       setSignupEmailError(null);
       return;
     }
 
     let stale = false;
     setCheckingEmail(true);
-    const timer = setTimeout(async () => {
+    const debounce = setTimeout(async () => {
       try {
         await checkEmailExists(email);
         if (!stale) setSignupEmailError(null);
@@ -588,14 +620,15 @@ export default function Auth() {
       } finally {
         if (!stale) setCheckingEmail(false);
       }
-    }, 400); // debounce
+    }, 400);
+
     return () => {
       stale = true;
-      clearTimeout(timer);
+      clearTimeout(debounce);
     };
   }, [email]);
 
-  /* send-verification-code wrapper */
+  /* send code */
   const handleSendCodeWrapped = async (): Promise<boolean> => {
     setCodeError(null);
     setSignupEmailError(null);
@@ -605,13 +638,11 @@ export default function Auth() {
       setCodeSent(true);
       return true;
     } catch (e: any) {
-      if (e.message?.toLowerCase().includes("email already registered")) {
+      if (e.message?.toLowerCase().includes("email already registered"))
         setSignupEmailError("Email already registered");
-      } else if (e.status === 429) {
+      else if (e.status === 429)
         setCodeError("E-mail quota reached – please try again tomorrow.");
-      } else {
-        setCodeError(e.message || "Could not send e-mail.");
-      }
+      else setCodeError(e.message || "Could not send e-mail.");
       return false;
     } finally {
       setIsSending(false);
@@ -677,7 +708,7 @@ export default function Auth() {
     }
   }, [location]);
 
-  /* password live validation */
+  /* password live validation flags */
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
@@ -767,7 +798,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* illustration side – unchanged */}
+          {/* illustration side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
