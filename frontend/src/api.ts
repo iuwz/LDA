@@ -104,21 +104,17 @@ export async function checkEmailExists(email: string): Promise<boolean> {
     { ...common, method: "GET" }
   );
 
-  /* 404 → address not found → OK (available) */
-  if (res.status === 404) return true;
-
-  /* any other non-2xx is a real error */
   if (!res.ok) {
+    // network/server error → surface to caller
     const txt = await res.text().catch(() => res.statusText);
     throw new Error(txt || "Failed to check e-mail");
   }
 
-  /* 200 with JSON { exists: boolean } */
   const data: { exists?: boolean } =
     (await res.json().catch(() => ({}))) ?? {};
 
   if (data.exists) throw new Error("Email already registered");
-  return true; // free to use
+  return true;                   // address is free
 }
 
 
