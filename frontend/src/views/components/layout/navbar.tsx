@@ -437,8 +437,8 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                /* ===== fixed row, wraps if needed ===== */
-                <div className="mt-8 px-4 flex flex-wrap gap-4 items-center justify-start">
+                /* ===== aligned, stacked buttons ===== */
+                <div className="mt-8 pl-6 flex flex-col gap-4 items-start">
                   <Button
                     size="md"
                     variant="secondary"
