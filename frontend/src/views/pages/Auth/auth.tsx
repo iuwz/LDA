@@ -1,16 +1,19 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-f • 2025-05-17  
-This file supersedes every earlier snippet. Install it as-is!
+RELEASE 3-g • 2025-05-17
+This file **replaces every earlier snippet**. Copy-paste it over your
+old file intact.
 
-✨ Fixes  
-• When the backend returns “Email already registered,” the green ✅ is
-  replaced by a red ❌ inside the e-mail field.  
-• Hovering the ❌ shows a tooltip – “Account already registered.”
-
-All other behaviour (send / verify code, banners, validation, etc.)
-remains unchanged.
+New behaviour
+─────────────
+• As soon as the user types a syntactically-valid e-mail address we
+  debounce-ping `checkEmailExists(email)`.
+    – If the server says the address is already registered the input
+      shows a red ❌ with tooltip “Account already registered”.
+    – If it’s free you get the usual green ✅.
+    – A tiny spinner appears while the request is in-flight.
+• “Send Code” is disabled while the address is taken.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -20,6 +23,7 @@ import {
   register,
   sendVerificationCode,
   verifyEmailCode,
+  checkEmailExists, //  ← you add this helper in your api layer
 } from "../../../api";
 import { FaEye, FaEyeSlash, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -193,6 +197,7 @@ interface SignUpFormProps {
   onSubmit: () => void;
   error?: string | null;
   emailError?: string | null;
+  checkingEmail: boolean; // NEW
   hasUppercase: boolean;
   hasNumber: boolean;
   hasSymbol: boolean;
@@ -221,6 +226,7 @@ function SignUpForm({
   onSubmit,
   error,
   emailError,
+  checkingEmail,
   hasUppercase,
   hasNumber,
   hasSymbol,
@@ -260,8 +266,8 @@ function SignUpForm({
 
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
+      {/* header */}
       <div>
-        {/* header */}
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
             Create&nbsp;Account
@@ -396,7 +402,9 @@ function SignUpForm({
                   required
                 />
                 {/* icon logic */}
-                {emailError ? (
+                {checkingEmail ? (
+                  <FaSpinner className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[#C17829]" />
+                ) : emailError ? (
                   <>
                     <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
                     {emailError
@@ -544,6 +552,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false); // NEW
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -560,12 +569,41 @@ export default function Auth() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   /* derived */
-  const canSend = !codeSent && EMAIL_REGEX.test(email);
+  const canSend = !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* send code (return success bool) */
+  /* real-time e-mail availability check */
+  useEffect(() => {
+    if (!EMAIL_REGEX.test(email)) {
+      setSignupEmailError(null);
+      return;
+    }
+    let stale = false;
+    setCheckingEmail(true);
+    const timer = setTimeout(async () => {
+      try {
+        await checkEmailExists(email);
+        if (!stale) setSignupEmailError(null);
+      } catch (e: any) {
+        if (!stale)
+          setSignupEmailError(
+            e.message?.toLowerCase().includes("registered")
+              ? "Email already registered"
+              : e.message
+          );
+      } finally {
+        if (!stale) setCheckingEmail(false);
+      }
+    }, 400); // debounce
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [email]);
+
+  /* send code */
   const handleSendCodeWrapped = async (): Promise<boolean> => {
     setCodeError(null);
     setSignupEmailError(null);
@@ -688,6 +726,7 @@ export default function Auth() {
                           setCodeSent(false);
                           setCodeVerified(false);
                           setCode("");
+                          setSignupEmailError(null);
                         }
                       }}
                       password={password}
@@ -704,6 +743,7 @@ export default function Auth() {
                       onSubmit={handleSignUp}
                       error={error}
                       emailError={signupEmailError}
+                      checkingEmail={checkingEmail}
                       hasUppercase={hasUppercase}
                       hasNumber={hasNumber}
                       hasSymbol={hasSymbol}

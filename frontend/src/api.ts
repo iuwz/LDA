@@ -96,6 +96,25 @@ export function verifyEmailCode(email: string, code: string) {
     }).then(r => handleResponse<{ verified: boolean }>(r));
 }
 
+// 👇 just change <true> → <boolean>
+export function checkEmailExists(email: string): Promise<boolean> {
+  return fetch(
+    `${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`,
+    { ...common, method: "GET" }
+  ).then(async (res) => {
+    if (!res.ok) {
+      const txt = await res.text().catch(() => res.statusText);
+      throw new Error(txt || "Failed to check e-mail");
+    }
+
+    /* backend: { exists: boolean } */
+    const data = await res.json().catch(() => ({ exists: false }));
+    if (data?.exists) throw new Error("Email already registered");
+    return true;                          // ← still fine; type is boolean
+  });
+}
+
+
 /* ═══════════════════════════ RISK  ════════════════════════════ */
 
 export interface RiskItemBackend {
