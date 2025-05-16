@@ -1,23 +1,16 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-e  • 2025-05-16
-──────────────────────────────────────────────────────────────────
+RELEASE 3-f • 2025-05-17  
 This file supersedes every earlier snippet. Install it as-is!
 
-Fix ✨  “Code sent!” banner now appears **only** if the backend
-successfully accepted `sendVerificationCode`. If the server responds
-with “Email already registered” (or any error), the green banner will
-NOT show.
+✨ Fixes  
+• When the backend returns “Email already registered,” the green ✅ is
+  replaced by a red ❌ inside the e-mail field.  
+• Hovering the ❌ shows a tooltip – “Account already registered.”
 
-Key mechanics
-─────────────
-• `handleSendCodeWrapped` (in the Master `Auth` component) returns a
-  **boolean** – `true` on HTTP 2xx, `false` on any thrown error.
-• `SignUpForm` calls this function and sets `showSuccess` only when the
-  boolean is `true`.
-• Any change to `emailError`, `error`, or `codeError` immediately hides
-  the banner.
+All other behaviour (send / verify code, banners, validation, etc.)
+remains unchanged.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -28,8 +21,8 @@ import {
   sendVerificationCode,
   verifyEmailCode,
 } from "../../../api";
+import { FaEye, FaEyeSlash, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEye, FaEyeSlash, FaSpinner, FaCheck } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
@@ -195,7 +188,6 @@ interface SignUpFormProps {
   codeVerified: boolean;
   codeError: string | null;
   canSend: boolean;
-  /* returns boolean – true if sendVerificationCode succeeded */
   handleSendCode: () => Promise<boolean>;
   handleVerifyCode: () => void;
   onSubmit: () => void;
@@ -241,7 +233,7 @@ function SignUpForm({
     lastName: "",
     email: "",
   });
-  const [showSuccess, setShowSuccess] = useState(false); // banner flag
+  const [showSuccess, setShowSuccess] = useState(false);
 
   /* validation */
   const validate = () => {
@@ -257,8 +249,8 @@ function SignUpForm({
   /* Send / Resend */
   const handleSend = async () => {
     if (!validate()) return;
-    const ok = await handleSendCode(); // backend call
-    setShowSuccess(ok); // banner only if true
+    const ok = await handleSendCode();
+    setShowSuccess(ok);
   };
 
   /* hide banner when an error appears */
@@ -383,7 +375,7 @@ function SignUpForm({
           {/* Email + Send/Resend */}
           <div>
             <div className="flex gap-3">
-              <div className="relative flex-1">
+              <div className="relative flex-1 group">
                 <input
                   type="email"
                   value={email}
@@ -403,11 +395,22 @@ function SignUpForm({
                              }`}
                   required
                 />
-                {EMAIL_REGEX.test(email) &&
-                  !emailError &&
+                {/* icon logic */}
+                {emailError ? (
+                  <>
+                    <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
+                    {emailError
+                      .toLowerCase()
+                      .includes("already registered") && (
+                      <Tooltip text="Account already registered" />
+                    )}
+                  </>
+                ) : (
+                  EMAIL_REGEX.test(email) &&
                   !localErrors.email && (
                     <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
-                  )}
+                  )
+                )}
               </div>
 
               <Button
