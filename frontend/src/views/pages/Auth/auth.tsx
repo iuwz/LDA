@@ -5,9 +5,8 @@ All orange-tone buttons now share the same gradient styling used in the
 Contact page, including the  “Verify / Resend”  **and**  “Verify”  buttons.
 White buttons remain unchanged.
 
-On small screens, the toggle button at the bottom ( “Create Account” when
-sign-in is active and “Sign In” when sign-up is active ) now uses the same
-*secondary* look as the Login button in the Navbar.
+On small screens, the bottom toggle button now mimics the secondary pill
+style of the Navbar’s Login button.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -293,7 +292,7 @@ function SignUpForm({
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
               focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
-                {/* Code-verify button (now gradient) */}
+                {/* Code-verify button */}
                 <Button
                   type="button"
                   onClick={handleVerifyCode}
@@ -639,7 +638,9 @@ export default function Auth() {
             </p>
             <Button
               onClick={() => setIsSignUp((s) => !s)}
-              className="inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
+              /* -------------- updated pill-outline style -------------- */
+              className="inline-flex items-center justify-center text-[#C17829] border border-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition
+                         hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
             >
               {isSignUp ? "Sign In" : "Create Account"}
             </Button>

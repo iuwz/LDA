@@ -436,7 +436,8 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-start pl-1 space-y-4 w-full pr-10">
+                /* ======= CHANGED BLOCK ======= */
+                <div className="mt-6 flex w-full items-center justify-between gap-4 pr-10">
                   <Button
                     size="md"
                     variant="secondary"
@@ -457,6 +458,7 @@ const Navbar: React.FC = () => {
                     Register
                   </Button>
                 </div>
+                /* ======= END CHANGED BLOCK ======= */
               )}
             </div>
           </div>
