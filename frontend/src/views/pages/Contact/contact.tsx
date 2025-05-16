@@ -57,15 +57,6 @@ export default function Contact() {
     }, 150);
   };
 
-  /* ───────── reusable gradient-border wrapper ───────── */
-  const GradientBorder: React.FC<{ children: React.ReactNode }> = ({
-    children,
-  }) => (
-    <div className="p-[2px] rounded-lg bg-gradient-to-r from-[#C17829] to-[#E3A063]">
-      {children}
-    </div>
-  );
-
   return (
     <main className="bg-white font-sans">
       {/* ───────────────── Hero ───────────────── */}
@@ -94,7 +85,7 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Whether you have questions, feedback, or need support, drop us a
-            message and we’ll reply within&nbsp;24&nbsp;hours.
+            message and we’ll reply within 24&nbsp;hours.
           </motion.p>
 
           <motion.a
@@ -176,59 +167,51 @@ export default function Contact() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <label className="block">
                     <span className="text-gray-800 font-medium">Name</span>
-                    <GradientBorder>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        className="w-full px-4 py-3 rounded-lg bg-white text-base focus:outline-none focus:ring-2 focus:ring-transparent"
-                        required
-                      />
-                    </GradientBorder>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                      required
+                    />
                   </label>
 
                   <label className="block">
                     <span className="text-gray-800 font-medium">Email</span>
-                    <GradientBorder>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Your email"
-                        className="w-full px-4 py-3 rounded-lg bg-white text-base focus:outline-none focus:ring-2 focus:ring-transparent"
-                        required
-                      />
-                    </GradientBorder>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                      required
+                    />
                   </label>
                 </div>
 
                 <label className="block">
                   <span className="text-gray-800 font-medium">Subject</span>
-                  <GradientBorder>
-                    <input
-                      type="text"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Subject"
-                      className="w-full px-4 py-3 rounded-lg bg-white text-base focus:outline-none focus:ring-2 focus:ring-transparent"
-                      required
-                    />
-                  </GradientBorder>
+                  <input
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Subject"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                    required
+                  />
                 </label>
 
                 <label className="block">
                   <span className="text-gray-800 font-medium">Message</span>
-                  <GradientBorder>
-                    <textarea
-                      rows={4}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Your message…"
-                      className="w-full px-4 py-3 rounded-lg bg-white text-base focus:outline-none focus:ring-2 focus:ring-transparent"
-                      required
-                    />
-                  </GradientBorder>
+                  <textarea
+                    rows={4}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Your message…"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]"
+                    required
+                  />
                 </label>
 
                 <AnimatePresence>
