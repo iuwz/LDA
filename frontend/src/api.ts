@@ -97,21 +97,28 @@ export function verifyEmailCode(email: string, code: string) {
 }
 
 // 👇 just change <true> → <boolean>
-export function checkEmailExists(email: string): Promise<boolean> {
-  return fetch(
+/* src/api.ts  – replace the helper with this version */
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const res = await fetch(
     `${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`,
     { ...common, method: "GET" }
-  ).then(async (res) => {
-    if (!res.ok) {
-      const txt = await res.text().catch(() => res.statusText);
-      throw new Error(txt || "Failed to check e-mail");
-    }
+  );
 
-    /* backend: { exists: boolean } */
-    const data = await res.json().catch(() => ({ exists: false }));
-    if (data?.exists) throw new Error("Email already registered");
-    return true;                          // ← still fine; type is boolean
-  });
+  /* 404 → address not found → OK (available) */
+  if (res.status === 404) return true;
+
+  /* any other non-2xx is a real error */
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(txt || "Failed to check e-mail");
+  }
+
+  /* 200 with JSON { exists: boolean } */
+  const data: { exists?: boolean } =
+    (await res.json().catch(() => ({}))) ?? {};
+
+  if (data.exists) throw new Error("Email already registered");
+  return true; // free to use
 }
 
 
