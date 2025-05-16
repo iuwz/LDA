@@ -1,10 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-Fully-integrated file with:
-• e-mail verification (send + verify 6-digit code)
-• clear “email already registered” / “invalid credentials” messages
-• Create-Account disabled until code is verified
+Orange-tone buttons now share the same gradient styling used in the
+Contact page.  The white buttons are unchanged.  
+On small screens, the bottom toggle button now matches the secondary
+“Login” styling from the Navbar.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -12,15 +12,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   login,
   register,
-  sendVerificationCode,   // NEW
-  verifyEmailCode,       // NEW
+  sendVerificationCode,
+  verifyEmailCode,
 } from "../../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────── Sign-In (balanced height) ───────── */
+/* ───────── Sign-In ───────── */
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -44,6 +44,7 @@ function SignInForm({
 
   return (
     <div className="min-h-[440px] flex flex-col justify-between">
+      {/* header */}
       <div>
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
@@ -122,10 +123,10 @@ function SignInForm({
             )}
           </div>
 
+          {/* Submit */}
           <Button
             type="submit"
-            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823] mt-10"
-            style={{ marginTop: "50px" }}
+            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 mt-10"
           >
             Sign In
           </Button>
@@ -135,12 +136,8 @@ function SignInForm({
   );
 }
 
-
-
-/* ───────── Sign-Up (balanced height + checklist ✓) ───────── */
-
+/* ───────── Sign-Up ───────── */
 interface SignUpFormProps {
-  /* data */
   firstName: string;
   setFirstName: (v: string) => void;
   lastName: string;
@@ -150,7 +147,6 @@ interface SignUpFormProps {
   password: string;
   setPassword: (v: string) => void;
   isSending: boolean;
-  /* verification */
   codeSent: boolean;
   code: string;
   setCode: (v: string) => void;
@@ -159,13 +155,9 @@ interface SignUpFormProps {
   canSend: boolean;
   handleSendCode: () => void;
   handleVerifyCode: () => void;
-
-  /* submit + error */
   onSubmit: () => void;
   error?: string | null;
   emailError?: string | null;
-
-  /* password-rule flags */
   hasUppercase: boolean;
   hasNumber: boolean;
   hasSymbol: boolean;
@@ -204,7 +196,7 @@ function SignUpForm({
 
   return (
     <div className="min-h-[440px] flex flex-col justify-between">
-      {/* ── header ────────────────────────────────────────────── */}
+      {/* header */}
       <div>
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
@@ -224,7 +216,7 @@ function SignUpForm({
           </motion.div>
         )}
 
-        {/* ── form ────────────────────────────────────────────── */}
+        {/* form */}
         <form
           className="space-y-5"
           onSubmit={(e) => {
@@ -274,16 +266,16 @@ function SignUpForm({
                 type="button"
                 disabled={!canSend || isSending}
                 onClick={handleSendCode}
-                className="shrink-0 px-4 py-3 bg-[#C17829] text-white rounded-lg text-sm disabled:opacity-40"
+                className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
-                {isSending
-                  ? <FaSpinner className="animate-spin" />
-                  : (codeSent ? "Resend" : "Verify")
-                }
+                {isSending ? (
+                  <FaSpinner className="animate-spin" />
+                ) : codeSent ? (
+                  "Resend"
+                ) : (
+                  "Verify"
+                )}
               </Button>
-              {emailError && (
-                <p className="text-red-600 text-sm mt-1">{emailError}</p>
-              )}
             </div>
 
             {codeSent && !codeVerified && (
@@ -316,7 +308,7 @@ function SignUpForm({
             )}
           </div>
 
-          {/* Password — fixed */}
+          {/* Password */}
           <div>
             <div className="relative">
               <input
@@ -338,32 +330,48 @@ function SignUpForm({
               </button>
             </div>
 
-            {/* checklist now outside the relative box */}
+            {/* checklist */}
             <ul className="mt-2 text-sm space-y-0.5">
-              <li className={`flex items-center ${hasUppercase ? "text-green-600" : "text-gray-500"}`}>
+              <li
+                className={`flex items-center ${
+                  hasUppercase ? "text-green-600" : "text-gray-500"
+                }`}
+              >
                 <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
                 Uppercase letter
               </li>
-              <li className={`flex items-center ${hasNumber ? "text-green-600" : "text-gray-500"}`}>
+              <li
+                className={`flex items-center ${
+                  hasNumber ? "text-green-600" : "text-gray-500"
+                }`}
+              >
                 <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
                 Number
               </li>
-              <li className={`flex items-center ${hasSymbol ? "text-green-600" : "text-gray-500"}`}>
+              <li
+                className={`flex items-center ${
+                  hasSymbol ? "text-green-600" : "text-gray-500"
+                }`}
+              >
                 <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
                 Special character
               </li>
-              <li className={`flex items-center ${hasMinLength ? "text-green-600" : "text-gray-500"}`}>
-                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
-                ≥ 8 characters
+              <li
+                className={`flex items-center ${
+                  hasMinLength ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
+                characters
               </li>
             </ul>
           </div>
 
-          {/* submit */}
+          {/* Submit */}
           <Button
             type="submit"
             disabled={!isAllValid || !codeVerified}
-            className="w-full bg-[#C17829] text-white py-3 rounded-full text-base disabled:opacity-40"
+            className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
             Create Account
           </Button>
@@ -373,14 +381,11 @@ function SignUpForm({
   );
 }
 
-
-
-/* ───────────────────────── Master Auth ───────────────────────── */
-
+/* ───────── Master Auth ───────── */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  /* user details */
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -388,19 +393,20 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [loginCredError, setLoginCredError] = useState<string | null>(null);
   const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
-  /* NEW verification state */
+
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
-  const canSend = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(
-    email.trim()
-  ) && !codeSent;
+
+  const canSend =
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email.trim()) &&
+    !codeSent;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* ───── handlers ───── */
+  /* handlers */
   const handleSignIn = async () => {
     setError(null);
     setLoginCredError(null);
@@ -408,7 +414,6 @@ export default function Auth() {
       await login({ email, password });
       navigate("/dashboard");
     } catch (e: any) {
-      /* backend always returns the same sentence for bad creds */
       if (e.message?.toLowerCase().includes("invalid email or password")) {
         setLoginCredError("Invalid e-mail / password combination");
       } else {
@@ -437,16 +442,16 @@ export default function Auth() {
     }
   };
 
-  /* NEW: send / verify code */
+  /* send / verify code */
   const handleSendCode = async () => {
-    setCodeError(null);
     setCodeError(null);
     setIsSending(true);
     try {
       await sendVerificationCode(email);
       setCodeSent(true);
     } catch (e: any) {
-      if (e.status === 429) setCodeError("E-mail quota reached – please try again tomorrow.");
+      if (e.status === 429)
+        setCodeError("E-mail quota reached – please try again tomorrow.");
       else setCodeError(e.message || "Could not send e-mail.");
     } finally {
       setIsSending(false);
@@ -480,13 +485,12 @@ export default function Auth() {
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
-  const isAllValid =
-    hasUppercase && hasNumber && hasSymbol && hasMinLength;
+  const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  /* ───────── JSX ───────── */
+  /* JSX */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
-      {/* auth card */}
+      {/* card */}
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
         <motion.div
           className="w-full max-w-6xl flex flex-wrap overflow-hidden bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl"
@@ -630,7 +634,7 @@ export default function Auth() {
             </p>
             <Button
               onClick={() => setIsSignUp((s) => !s)}
-              className="px-6 py-2 rounded-full bg-transparent border border-[#C17829] text-[#C17829] hover:bg-[#C17829] hover:text-white transition-all text-sm"
+              className="px-6 py-2 rounded-full font-semibold text-sm text-[#C17829] transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
             >
               {isSignUp ? "Sign In" : "Create Account"}
             </Button>
