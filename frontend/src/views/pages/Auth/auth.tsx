@@ -1,10 +1,13 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-Orange-tone buttons now share the same gradient styling used in the
-Contact page.  The white buttons are unchanged.  
-On small screens, the bottom toggle button now matches the secondary
-“Login” styling from the Navbar.
+All orange-tone buttons now share the same gradient styling used in the
+Contact page, including the  “Verify / Resend”  **and**  “Verify”  buttons.
+White buttons remain unchanged.
+
+On small screens, the toggle button at the bottom ( “Create Account” when
+sign-in is active and “Sign In” when sign-up is active ) now uses the same
+*secondary* look as the Login button in the Navbar.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -262,6 +265,7 @@ function SignUpForm({
                        ${emailError ? "border-red-500" : ""}`}
                 required
               />
+              {/* Send / Resend button */}
               <Button
                 type="button"
                 disabled={!canSend || isSending}
@@ -289,11 +293,12 @@ function SignUpForm({
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base
               focus:outline-none focus:border-transparent focus:shadow-none focus:ring-2 focus:ring-[#C17829]"
                 />
+                {/* Code-verify button (now gradient) */}
                 <Button
                   type="button"
                   onClick={handleVerifyCode}
                   disabled={code.length !== 6}
-                  className="px-4 py-3 bg-[#2C2C4A] text-white rounded-lg text-sm disabled:opacity-40"
+                  className="px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
                 >
                   Verify
                 </Button>
@@ -634,7 +639,7 @@ export default function Auth() {
             </p>
             <Button
               onClick={() => setIsSignUp((s) => !s)}
-              className="px-6 py-2 rounded-full font-semibold text-sm text-[#C17829] transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
+              className="inline-flex items-center justify-center text-[#C17829] rounded-full font-semibold text-sm px-6 py-2 transition hover:bg-gradient-to-r hover:from-[#C17829] hover:to-[#E3A063] hover:text-white"
             >
               {isSignUp ? "Sign In" : "Create Account"}
             </Button>
