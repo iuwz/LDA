@@ -16,6 +16,7 @@ import {
 import { LogIn } from "lucide-react";
 import { Button } from "../../components/common/button";
 
+/* ───────── constants ───────── */
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 const ACCENT = "#C17829";
 const NAV_HEIGHT_PX = 80; // same height for top-nav and drawer header
@@ -36,7 +37,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── highlight “Home / Services” on scroll ───────── */
+  /* ───────── highlight Home / Services on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -106,7 +107,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  /* ───────── auto-scroll to #services if hash present ───────── */
+  /* ───────── auto-scroll to #services on hash ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -155,7 +156,7 @@ const Navbar: React.FC = () => {
 
   const getIconSz = () => (screenWidth < 350 ? 16 : 18);
 
-  /* ───────── reusable classes ───────── */
+  /* ───────── reusable class strings ───────── */
   const deskActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const deskIdle = "hover:text-[#C17829] transition-colors";
   const mobLink = (a: boolean) =>
@@ -436,7 +437,7 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                /* ===== FLEX ROW FOR LOGIN + REGISTER ===== */
+                /* ===== FIXED ROW WITH GAP, LEFT-ALIGNED ===== */
                 <div className="mt-8 pl-2 flex items-center gap-4">
                   <Button
                     size="md"
@@ -444,7 +445,7 @@ const Navbar: React.FC = () => {
                     className={loginBtn}
                     onClick={handleLoginClick}
                   >
-                    <div className="flex items-center gap-2 justify-center">
+                    <div className="flex items-center gap-2">
                       <LogIn size={16} />
                       <span>Login</span>
                     </div>
@@ -458,7 +459,6 @@ const Navbar: React.FC = () => {
                     Register
                   </Button>
                 </div>
-                /* ========================================= */
               )}
             </div>
           </div>
