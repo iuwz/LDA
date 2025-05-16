@@ -342,7 +342,7 @@ const Navbar: React.FC = () => {
           />
 
           {/* Drawer panel */}
-          <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col">
+          <div className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden flex flex-col overflow-hidden">
             {/* Drawer header */}
             <div
               className="flex items-center h-full px-4 border-b"
@@ -437,8 +437,8 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                /* ===== FIXED ROW WITH GAP, LEFT-ALIGNED ===== */
-                <div className="mt-8 pl-2 flex items-center gap-4">
+                /* ===== fixed row, wraps if needed ===== */
+                <div className="mt-8 px-4 flex flex-wrap gap-4 items-center justify-start">
                   <Button
                     size="md"
                     variant="secondary"
