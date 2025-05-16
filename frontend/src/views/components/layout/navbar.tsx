@@ -36,7 +36,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  /* ───────── scroll section detection ───────── */
+  /* ───────── highlight “Home / Services” on scroll ───────── */
   useEffect(() => {
     if (location.pathname !== "/") {
       setActiveSection(null);
@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
       .finally(() => setAuthChecked(true));
   }, []);
 
-  /* ───────── window resize listener ───────── */
+  /* ───────── resize listener ───────── */
   useEffect(() => {
     const onResize = () => {
       setScreenWidth(window.innerWidth);
@@ -83,7 +83,7 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ───────── close dropdown on outside click ───────── */
+  /* ───────── close profile dropdown on outside-click ───────── */
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (
@@ -98,7 +98,7 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handle);
   }, [isProfileDropdownOpen]);
 
-  /* ───────── lock scroll when drawer open ───────── */
+  /* ───────── lock body scroll when drawer open ───────── */
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
@@ -106,7 +106,7 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  /* ───────── smooth-scroll to services on hash ───────── */
+  /* ───────── auto-scroll to #services if hash present ───────── */
   useEffect(() => {
     if (location.hash === "#services") {
       document
@@ -155,7 +155,7 @@ const Navbar: React.FC = () => {
 
   const getIconSz = () => (screenWidth < 350 ? 16 : 18);
 
-  /* ───────── common styles ───────── */
+  /* ───────── reusable classes ───────── */
   const deskActive = `text-[${ACCENT}] font-semibold border-b-2 border-[${ACCENT}]`;
   const deskIdle = "hover:text-[#C17829] transition-colors";
   const mobLink = (a: boolean) =>
@@ -170,7 +170,7 @@ const Navbar: React.FC = () => {
   /* ───────── JSX ───────── */
   return (
     <div className="relative font-sans" ref={profileRef}>
-      {/* ───────── Top-nav (always visible) ───────── */}
+      {/* ───────── Top-nav (desktop + hamburger) ───────── */}
       <nav
         className="sticky top-0 z-50 flex items-center bg-white px-6 py-3 shadow-md"
         style={{ height: NAV_HEIGHT_PX }}
@@ -316,7 +316,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Hamburger */}
+        {/* Hamburger (mobile) */}
         <div className="lg:hidden">
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -412,7 +412,7 @@ const Navbar: React.FC = () => {
                 <span>Contact</span>
               </NavLink>
 
-              {/* Auth in drawer */}
+              {/* Auth controls in drawer */}
               {!authChecked ? (
                 <div className="h-8 w-32" />
               ) : isAuthenticated ? (
@@ -436,8 +436,8 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                /* ======= CHANGED BLOCK ======= */
-                <div className="mt-6 flex w-full items-center justify-between gap-4 pr-10">
+                /* ===== FLEX ROW FOR LOGIN + REGISTER ===== */
+                <div className="mt-8 pl-2 flex items-center gap-4">
                   <Button
                     size="md"
                     variant="secondary"
@@ -458,7 +458,7 @@ const Navbar: React.FC = () => {
                     Register
                   </Button>
                 </div>
-                /* ======= END CHANGED BLOCK ======= */
+                /* ========================================= */
               )}
             </div>
           </div>
