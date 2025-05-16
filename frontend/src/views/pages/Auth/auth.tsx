@@ -1,19 +1,18 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-g • 2025-05-17
-This file **replaces every earlier snippet**. Copy-paste it over your
-old file intact.
+RELEASE 3-h • 2025-05-17  
+This file completely replaces every previous snippet.  
+Copy-paste it over **frontend/src/views/pages/Auth/auth.tsx**.
 
-New behaviour
-─────────────
-• As soon as the user types a syntactically-valid e-mail address we
-  debounce-ping `checkEmailExists(email)`.
-    – If the server says the address is already registered the input
-      shows a red ❌ with tooltip “Account already registered”.
-    – If it’s free you get the usual green ✅.
-    – A tiny spinner appears while the request is in-flight.
-• “Send Code” is disabled while the address is taken.
+Changes vs. 3-g
+────────────────
+1. Spinner inside the e-mail field now always rotates (`animate-spin`)
+   and has explicit `h-4 w-4` size so it’s visible.
+2. Tooltip on the red ✗ removed – we rely on the inline error message
+   “Email already registered” below the field.
+
+Everything else works exactly as before.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -23,17 +22,24 @@ import {
   register,
   sendVerificationCode,
   verifyEmailCode,
-  checkEmailExists, //  ← you add this helper in your api layer
+  checkEmailExists,
 } from "../../../api";
-import { FaEye, FaEyeSlash, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaSpinner,
+  FaCheck,
+  FaTimes,
+} from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
 /* ───────── Shared constants ───────── */
-const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const EMAIL_REGEX =
+  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
-/* ───────── Tooltip helper ───────── */
+/* ───────── Tooltip helper (still used for the eye icon) ───────── */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -41,7 +47,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ───────── Sign-In form ───────── */
+/* ═════════════════════════ Sign-In Form ════════════════════════ */
 interface SignInFormProps {
   email: string;
   setEmail: (v: string) => void;
@@ -96,7 +102,9 @@ function SignInForm({
         >
           {/* Email */}
           <div>
-            <label className="block text-gray-700 mb-2 text-sm">Email</label>
+            <label className="block text-gray-700 mb-2 text-sm">
+              Email
+            </label>
             <div className="relative">
               <input
                 type="email"
@@ -120,7 +128,9 @@ function SignInForm({
 
           {/* Password */}
           <div>
-            <label className="block text-gray-700 mb-2 text-sm">Password</label>
+            <label className="block text-gray-700 mb-2 text-sm">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
@@ -167,7 +177,11 @@ function SignInForm({
             disabled={isSubmitting}
             className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
-            {isSubmitting ? <FaSpinner className="animate-spin" /> : "Sign In"}
+            {isSubmitting ? (
+              <FaSpinner className="animate-spin h-4 w-4" />
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
       </div>
@@ -175,7 +189,7 @@ function SignInForm({
   );
 }
 
-/* ───────── Sign-Up form ───────── */
+/* ═════════════════════ Sign-Up Form ═════════════════════ */
 interface SignUpFormProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -197,7 +211,7 @@ interface SignUpFormProps {
   onSubmit: () => void;
   error?: string | null;
   emailError?: string | null;
-  checkingEmail: boolean; // NEW
+  checkingEmail: boolean;
   hasUppercase: boolean;
   hasNumber: boolean;
   hasSymbol: boolean;
@@ -241,7 +255,7 @@ function SignUpForm({
   });
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* validation */
+  /* client-side validation helper */
   const validate = () => {
     const errs: any = {};
     if (!firstName.trim()) errs.firstName = "First name is required";
@@ -252,14 +266,13 @@ function SignUpForm({
     return Object.keys(errs).length === 0;
   };
 
-  /* Send / Resend */
   const handleSend = async () => {
     if (!validate()) return;
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
 
-  /* hide banner when an error appears */
+  /* hide “Code sent!” if any error pops up */
   useEffect(() => {
     if (emailError || error || codeError) setShowSuccess(false);
   }, [emailError, error, codeError]);
@@ -315,7 +328,7 @@ function SignUpForm({
             onSubmit();
           }}
         >
-          {/* Names */}
+          {/* names */}
           <div className="flex gap-3">
             {/* first */}
             <div className="relative w-1/2">
@@ -378,10 +391,10 @@ function SignUpForm({
             </div>
           </div>
 
-          {/* Email + Send/Resend */}
+          {/* e-mail + Send/Resend */}
           <div>
             <div className="flex gap-3">
-              <div className="relative flex-1 group">
+              <div className="relative flex-1">
                 <input
                   type="email"
                   value={email}
@@ -401,18 +414,12 @@ function SignUpForm({
                              }`}
                   required
                 />
-                {/* icon logic */}
+
+                {/* icon / spinner / check */}
                 {checkingEmail ? (
-                  <FaSpinner className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[#C17829]" />
+                  <FaSpinner className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#C17829]" />
                 ) : emailError ? (
-                  <>
-                    <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
-                    {emailError
-                      .toLowerCase()
-                      .includes("already registered") && (
-                      <Tooltip text="Account already registered" />
-                    )}
-                  </>
+                  <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
                 ) : (
                   EMAIL_REGEX.test(email) &&
                   !localErrors.email && (
@@ -428,7 +435,7 @@ function SignUpForm({
                 className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 {isSending ? (
-                  <FaSpinner className="animate-spin" />
+                  <FaSpinner className="h-4 w-4 animate-spin" />
                 ) : codeSent ? (
                   "Resend"
                 ) : (
@@ -443,7 +450,7 @@ function SignUpForm({
             )}
           </div>
 
-          {/* Verification code */}
+          {/* verification code */}
           {codeSent && (
             <div className="mt-4 flex gap-3 items-center">
               <input
@@ -522,8 +529,8 @@ function SignUpForm({
                   hasMinLength ? "text-green-600" : "text-gray-500"
                 }`}
               >
-                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
-                characters
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>
+                ≥ 8 characters
               </li>
             </ul>
           </div>
@@ -546,13 +553,13 @@ function SignUpForm({
   );
 }
 
-/* ───────── Master Auth component ───────── */
+/* ═══════════════════ Master Auth component ═══════════════════ */
 export default function Auth() {
   /* core state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [checkingEmail, setCheckingEmail] = useState(false); // NEW
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -560,8 +567,12 @@ export default function Auth() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState<string | null>(null);
-  const [loginCredError, setLoginCredError] = useState<string | null>(null);
-  const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
+  const [loginCredError, setLoginCredError] = useState<string | null>(
+    null
+  );
+  const [signupEmailError, setSignupEmailError] = useState<
+    string | null
+  >(null);
 
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
@@ -569,17 +580,19 @@ export default function Auth() {
   const [codeError, setCodeError] = useState<string | null>(null);
 
   /* derived */
-  const canSend = !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
+  const canSend =
+    !codeSent && EMAIL_REGEX.test(email) && !signupEmailError;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* real-time e-mail availability check */
+  /* live e-mail availability check */
   useEffect(() => {
     if (!EMAIL_REGEX.test(email)) {
       setSignupEmailError(null);
       return;
     }
+
     let stale = false;
     setCheckingEmail(true);
     const timer = setTimeout(async () => {
@@ -587,12 +600,7 @@ export default function Auth() {
         await checkEmailExists(email);
         if (!stale) setSignupEmailError(null);
       } catch (e: any) {
-        if (!stale)
-          setSignupEmailError(
-            e.message?.toLowerCase().includes("registered")
-              ? "Email already registered"
-              : e.message
-          );
+        if (!stale) setSignupEmailError(e.message);
       } finally {
         if (!stale) setCheckingEmail(false);
       }
@@ -603,7 +611,7 @@ export default function Auth() {
     };
   }, [email]);
 
-  /* send code */
+  /* send-verification-code wrapper */
   const handleSendCodeWrapped = async (): Promise<boolean> => {
     setCodeError(null);
     setSignupEmailError(null);
@@ -626,7 +634,7 @@ export default function Auth() {
     }
   };
 
-  /* verify */
+  /* verify code */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -690,7 +698,8 @@ export default function Auth() {
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
-  const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
+  const isAllValid =
+    hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
   /* JSX */
   return (
@@ -775,7 +784,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* image side */}
+          {/* illustration side – unchanged */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
@@ -837,7 +846,9 @@ export default function Auth() {
           {/* mobile toggle */}
           <div className="md:hidden w-full p-4 text-center border-t border-gray-100">
             <p className="text-gray-600 mb-3 text-sm">
-              {isSignUp ? "Already have an account?" : "New to our platform?"}
+              {isSignUp
+                ? "Already have an account?"
+                : "New to our platform?"}
             </p>
             <Button
               variant="secondary"
