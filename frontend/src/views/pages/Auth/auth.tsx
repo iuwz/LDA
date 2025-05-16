@@ -1,11 +1,14 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 3-b  • 2025-05-16
+RELEASE 3-c  • fix “Code sent!” banner showing alongside e-mail error
 ──────────────────────────────────────────────────────────────────
-✔ Fixes TS2304 “Cannot find name 'emailRegex'”
-   → Introduces module-level `EMAIL_REGEX` so every component sees it.
-✔ Contains all previous UX upgrades for Sign-In and Sign-Up flows.
+Summary of key UX/functionality:
+• Smart Send Code / Resend logic with inline confirmations.
+• Inline validation + green ✓ icons for completed fields.
+• ‘Code sent!’ banner now hides automatically if an error such as
+  “E-mail already registered” appears.
+• Consistent tool-tips, loading spinners, and password checklist.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect } from "react";
@@ -21,10 +24,10 @@ import { FaEye, FaEyeSlash, FaSpinner, FaCheck } from "react-icons/fa";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ★ Module-wide e-mail regex – available everywhere */
+/* ───────── Shared constants ───────── */
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
-/* ───────── Shared Tooltip helper ───────── */
+/* ───────── Tooltip helper ───────── */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -249,8 +252,17 @@ function SignUpForm({
     setTimeout(() => setCodeSentMsg(false), 3000);
   };
 
+  /* hide banner on error */
+  useEffect(() => {
+    if (emailError) setCodeSentMsg(false);
+  }, [emailError]);
+
+  useEffect(() => {
+    if (error) setCodeSentMsg(false);
+  }, [error]);
+
   return (
-    <div className="min-h-[460px] flex flex-col justify-between">
+    <div className="min-h-[480px] flex flex-col justify-between">
       <div>
         {/* header */}
         <div className="text-center mb-8">
@@ -271,7 +283,8 @@ function SignUpForm({
             {error}
           </motion.div>
         )}
-        {codeSentMsg && (
+
+        {codeSentMsg && !emailError && !error && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -281,6 +294,7 @@ function SignUpForm({
             Code sent! Check your inbox.
           </motion.div>
         )}
+
         {codeVerified && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -372,7 +386,7 @@ function SignUpForm({
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setCode(""); // clear code on email change
+                    setCode("");
                     if (localErrors.email)
                       setLocalErrors({ ...localErrors, email: "" });
                   }}
@@ -506,7 +520,9 @@ function SignUpForm({
             disabled={
               !isAllValid ||
               !codeVerified ||
-              Object.keys(localErrors).length > 0
+              Object.keys(localErrors).some(
+                (k) => localErrors[k as keyof typeof localErrors]
+              )
             }
             className="w-full inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-base shadow-lg transition transform hover:scale-105 disabled:opacity-40"
           >
@@ -544,7 +560,7 @@ export default function Auth() {
   /* smart canSend */
   const canSend = !codeSent && EMAIL_REGEX.test(email);
 
-  /* handlers — send, verify, signup, signin */
+  /* handlers */
   const handleSendCodeWrapped = async () => {
     setCodeError(null);
     setIsSending(true);
@@ -583,7 +599,7 @@ export default function Auth() {
       navigate("/dashboard");
     } catch (e: any) {
       if (e.message?.toLowerCase().includes("email already registered")) {
-        setSignupEmailError("That e-mail is already registered");
+        setSignupEmailError("Email already registered");
       } else setError(e.message);
     }
   };
@@ -616,14 +632,13 @@ export default function Auth() {
     }
   }, [location]);
 
-  /* PW validators */
+  /* password validators */
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
   const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  /* JSX */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
@@ -704,8 +719,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* image & mobile toggle sections (unchanged from previous) */}
-          {/* … keep identical markup for promo panels and mobile toggle … */}
+          {/* image side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
