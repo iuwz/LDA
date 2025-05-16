@@ -6,6 +6,7 @@ import {
   FaRobot,
   FaClipboardCheck,
   FaPenFancy,
+  FaLanguage,
   FaBrain,
   FaShieldAlt,
   FaUsers,
@@ -24,23 +25,15 @@ import zeyad from "../../../assets/images/zeyad.jpg";
 /* ───────────────────────── Services data ───────────────────────── */
 const SERVICES = [
   {
-    icon: FaBalanceScale,
-    title: "Advanced Document Analysis",
+    icon: FaPenFancy,
+    title: "Risk & Rephrasing Tools",
     description:
-      "AI-driven compliance checks, risk assessment, and rephrasing in one place.",
+      "Polish your documents, removing ambiguity and pre-empting pitfalls.",
     bullets: [
-      "Automated scanning for legal breaches",
-      "Instant rephrasing suggestions",
-      "In-depth risk scoring",
+      "Automated language refinement",
+      "Customizable risk thresholds",
+      "Change-tracking for collaboration",
     ],
-    link: "/dashboard",
-  },
-  {
-    icon: FaRobot,
-    title: "AI-Powered Legal Chatbot",
-    description:
-      "On-demand legal guidance and quick references to relevant statutes or precedents.",
-    bullets: ["24/7 availability", "Context-aware Q&A", "Seamless integration"],
     link: "/dashboard",
   },
   {
@@ -56,15 +49,23 @@ const SERVICES = [
     link: "/dashboard",
   },
   {
-    icon: FaPenFancy,
-    title: "Risk & Rephrasing Tools",
+    icon: FaLanguage,
+    title: "Language Translation Service",
     description:
-      "Polish your documents, removing ambiguity and pre-empting pitfalls.",
+      "Accurately translate legal documents between English and Arabic while preserving meaning.",
     bullets: [
-      "Automated language refinement",
-      "Customizable risk thresholds",
-      "Change-tracking for collaboration",
+      "Bidirectional English ↔ Arabic support",
+      "Terminology-aware translations",
+      "Works with PDF & DOCX files",
     ],
+    link: "/dashboard",
+  },
+  {
+    icon: FaRobot,
+    title: "AI-Powered Legal Chatbot",
+    description:
+      "On-demand legal guidance and quick references to relevant statutes or precedents.",
+    bullets: ["24/7 availability", "Context-aware Q&A", "Seamless integration"],
     link: "/dashboard",
   },
 ];
