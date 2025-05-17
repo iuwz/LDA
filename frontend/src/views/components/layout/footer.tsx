@@ -27,11 +27,11 @@ export default function Footer() {
           </div>
 
           {/* Column 2: Quick Links */}
-          <div className="space-y-4 text-center sm:text-left">
+          <div className="space-y-4 text-center">
             <h3 className="text-lg font-semibold inline-block border-b-2 border-[#C17829] pb-1">
               Quick Links
             </h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm flex flex-col items-center">
               <li>
                 <a href="/" className="hover:text-[#C17829] transition-colors">
                   Home
