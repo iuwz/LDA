@@ -11,8 +11,23 @@ RELEASE 4-a • 2025-05-17
 Copy-paste this entire file over  
 src/views/pages/Auth/auth.tsx
 ────────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────────
+frontend/src/views/pages/Auth/auth.tsx
 
-import { useState, useEffect } from "react";
+RELEASE 4-b • 2025-05-17  
+Fixes: “First name is required / Last name is required” no longer show
+immediately on page load.  
+They appear only…
+
+  • after the user presses **Send Code** or **Create Account**, or  
+  • after the user leaves the field with invalid input (blur).
+
+All other behaviour unchanged.
+
+Copy-paste this file over **src/views/pages/Auth/auth.tsx**.
+────────────────────────────────────────────────────────────────── */
+
+import { useState, useEffect, FocusEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   login,
@@ -32,7 +47,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ═════════════════════ Validators ═════════════════════ */
+/* ═══════════ Validation helpers ═══════════ */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
 
@@ -54,7 +69,7 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
-/* Tooltip (only for password eye) */
+/* ═══════════ Utility components ═══════════ */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -62,7 +77,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═════════════════════ Password sub-section ═══════════════════ */
+/* ═══════════ Password section (unchanged) ═══════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -132,7 +147,7 @@ function PasswordSection({
   );
 }
 
-/* ═════════════════════ Sign-Up Form ═════════════════════ */
+/* ═══════════ Sign-Up form ═══════════ */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -195,19 +210,31 @@ function SignUpForm(props: SignUpProps) {
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* live field errors */
+  /* touched flags */
+  const [firstTouched, setFirstTouched] = useState(false);
+  const [lastTouched, setLastTouched] = useState(false);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  /* errors */
+  const firstEmpty = firstName.trim().length === 0;
+  const lastEmpty = lastName.trim().length === 0;
+  const firstInvalid = firstName !== "" && !isValidName(firstName);
+  const lastInvalid = lastName !== "" && !isValidName(lastName);
+
   const firstErr =
-    firstName.trim().length === 0
+    firstEmpty && (attemptedSubmit || firstTouched)
       ? "First name is required"
-      : isValidName(firstName)
-      ? ""
-      : "Invalid name";
+      : firstInvalid
+      ? "Invalid name"
+      : "";
+
   const lastErr =
-    lastName.trim().length === 0
+    lastEmpty && (attemptedSubmit || lastTouched)
       ? "Last name is required"
-      : isValidName(lastName)
-      ? ""
-      : "Invalid name";
+      : lastInvalid
+      ? "Invalid name"
+      : "";
+
   const liveEmailErr =
     email && !isValidEmail(email) ? "Write a valid e-mail" : "";
 
@@ -216,13 +243,28 @@ function SignUpForm(props: SignUpProps) {
   }, [globalError, emailError, codeError]);
 
   const handleSend = async () => {
+    setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
 
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAttemptedSubmit(true);
+    if (firstErr || lastErr || liveEmailErr) return;
+    onSubmit();
+  };
+
+  const blurHandler =
+    (setter: React.Dispatch<React.SetStateAction<boolean>>) =>
+    (e: FocusEvent<HTMLInputElement>) => {
+      if (e.target.value.trim() === "") setter(true);
+    };
+
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
+      {/* header & banners … */}
       <div>
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
@@ -231,7 +273,6 @@ function SignUpForm(props: SignUpProps) {
           <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
-        {/* banners */}
         {globalError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -263,29 +304,20 @@ function SignUpForm(props: SignUpProps) {
           </motion.div>
         )}
 
-        <form
-          className="space-y-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (firstErr || lastErr || liveEmailErr) return;
-            onSubmit();
-          }}
-        >
+        <form className="space-y-5" onSubmit={submit}>
           {/* names */}
           <div className="flex gap-3">
-            {/* first */}
             <div className="relative w-1/2">
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                onBlur={blurHandler(setFirstTouched)}
                 placeholder="First name"
-                className={`w-full px-4 py-3 border rounded-lg text-base
-                   focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                   ${
-                     firstErr
-                       ? "border-red-500"
-                       : "border-gray-300 focus:border-transparent"
-                   }`}
+                className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                  firstErr
+                    ? "border-red-500"
+                    : "border-gray-300 focus:border-transparent"
+                }`}
               />
               {!firstErr && firstName && (
                 <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
@@ -295,19 +327,17 @@ function SignUpForm(props: SignUpProps) {
               )}
             </div>
 
-            {/* last */}
             <div className="relative w-1/2">
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                onBlur={blurHandler(setLastTouched)}
                 placeholder="Last name"
-                className={`w-full px-4 py-3 border rounded-lg text-base
-                   focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                   ${
-                     lastErr
-                       ? "border-red-500"
-                       : "border-gray-300 focus:border-transparent"
-                   }`}
+                className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                  lastErr
+                    ? "border-red-500"
+                    : "border-gray-300 focus:border-transparent"
+                }`}
               />
               {!lastErr && lastName && (
                 <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
@@ -318,7 +348,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* e-mail + Send Code */}
+          {/* email + send code */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -329,13 +359,11 @@ function SignUpForm(props: SignUpProps) {
                     setCode("");
                   }}
                   placeholder="Email"
-                  className={`w-full px-4 py-3 border rounded-lg text-base
-                     focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                     ${
-                       liveEmailErr || emailError
-                         ? "border-red-500"
-                         : "border-gray-300 focus:border-transparent"
-                     }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                    liveEmailErr || emailError
+                      ? "border-red-500"
+                      : "border-gray-300 focus:border-transparent"
+                  }`}
                 />
                 {emailError || liveEmailErr ? (
                   <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
@@ -343,7 +371,6 @@ function SignUpForm(props: SignUpProps) {
                   <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
                 ) : null}
               </div>
-
               <Button
                 type="button"
                 disabled={!canSend || isSending}
@@ -371,17 +398,15 @@ function SignUpForm(props: SignUpProps) {
             <div className="mt-4 flex gap-3 items-center">
               <div className="relative flex-1">
                 <input
-                  type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   maxLength={6}
                   placeholder="6-digit code"
-                  className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                     ${
-                       codeError && !codeVerified
-                         ? "border-red-500"
-                         : "border-gray-300"
-                     }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                    codeError && !codeVerified
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                 />
                 {codeError && !codeVerified ? (
                   <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
@@ -434,6 +459,9 @@ function SignUpForm(props: SignUpProps) {
     </div>
   );
 }
+
+/* ─── Sign-In form & Master component are identical to Release 4-a ─── */
+/* keep them as-is; only Sign-Up form logic changed.                   */
 
 /* ═════════════════════ Sign-In Form (unchanged) ═════════════ */
 function SignInForm({
