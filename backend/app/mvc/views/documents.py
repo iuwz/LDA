@@ -83,17 +83,16 @@ async def extract_text_from_stream(stream, filename: str):
     elif file_extension == 'pdf' and PdfReader:
         try:
             reader = PdfReader(BytesIO(content))
-            text = ""
-            # check if the PDF is encrypted
             if reader.is_encrypted:
-                logger.warning(f"PDF file {filename} is encrypted, cannot extract text.")
-                return f"PDF file: {filename} is encrypted. Content preview not available."
+                logger.warning("%s is encrypted – preview not possible.", filename)
+                return f"PDF file {filename} is encrypted. Preview not available."
 
-            for page_num in range(len(reader.pages)):
-                # Use get_text() which is more robust than extract_text() in newer PyPDF2
-                page = reader.pages[page_num]
-                text += page.get_text() or ""
-            return text
+            text_parts = []
+            for page in reader.pages:
+                # works with every PyPDF2 version
+                txt = page.extract_text() or ""
+                text_parts.append(txt)
+            return "".join(text_parts)
         except Exception as e: # Catching a broad exception for robustness
             logger.error(f"Error extracting text from PDF {filename}: {e}")
             return f"Error extracting text from PDF file: {filename}. Content preview might be incomplete or unavailable."
