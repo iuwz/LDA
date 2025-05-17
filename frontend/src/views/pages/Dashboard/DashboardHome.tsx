@@ -161,6 +161,7 @@ export default function DashboardHome() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     refresh();
   }, []);
@@ -190,24 +191,28 @@ export default function DashboardHome() {
       className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
+
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
+
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 sm:w-auto"
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50 sm:w-auto"
       >
         <FaDownload /> Download
       </a>
+
+      {/* icon-only Remove button, matching AllUploads styling */}
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
+        className="flex items-center justify-center rounded-md p-2 text-red-600 hover:bg-red-600/10 disabled:opacity-50"
       >
-        <FaTrashAlt /> Remove
+        <FaTrashAlt />
       </button>
     </motion.div>
   );
@@ -232,7 +237,7 @@ export default function DashboardHome() {
           />
         </section>
 
-        {/* uploads */}
+        {/* recent uploads */}
         <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 className="text-xl font-semibold">Recent uploads</h3>
@@ -274,7 +279,7 @@ export default function DashboardHome() {
         </section>
       </div>
 
-      {/* delete modal */}
+      {/* delete confirmation modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
