@@ -17,6 +17,7 @@ import Home from "./views/pages/Home/home";
 import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
 import PrivacyPolicy from "./views/pages/Legal/privacy";
+import TermsOfService from "./views/pages/Legal/terms";
 import Auth from "./views/pages/Auth/auth";
 import ForgotPassword from "./views/pages/Auth/ForgotPassword";
 import ResetPassword from "./views/pages/Auth/ResetPassword";
@@ -162,6 +163,16 @@ export default function App() {
             <>
               <Navbar />
               <PrivacyPolicy />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <>
+              <Navbar />
+              <TermsOfService />
               <Footer />
             </>
           }
