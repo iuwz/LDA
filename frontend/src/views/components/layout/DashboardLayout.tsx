@@ -21,9 +21,9 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import LoadingScreen from "../common/LoadingScreen";
 import { logout } from "../../../api";
 
-export const DashboardReadyContext = createContext<(v: boolean) => void>(
-  () => {}
-);
+export const DashboardReadyContext = createContext<(v: boolean) => void>(() => {
+  /* no-op */
+});
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -147,7 +147,7 @@ const DashboardLayout: React.FC = () => {
               className="md:hidden p-1 hover:bg-gray-100 rounded"
               onClick={() => setSidebarOpen(false)}
             >
-              <FaTimes />
+              <FaTimes size={14} />
             </button>
           </div>
 
@@ -165,7 +165,7 @@ const DashboardLayout: React.FC = () => {
                 }`
               }
             >
-              <HiHome className="mr-3" />
+              <HiHome size={14} className="mr-3" />
               <span className="truncate">Home</span>
             </NavLink>
 
@@ -183,7 +183,7 @@ const DashboardLayout: React.FC = () => {
                   }`
                 }
               >
-                <Icon className="mr-3" />
+                <Icon size={14} className="mr-3" />
                 <span className="truncate">{title}</span>
               </NavLink>
             ))}
@@ -200,7 +200,7 @@ const DashboardLayout: React.FC = () => {
                   }`
                 }
               >
-                <FaUserShield className="mr-3" />
+                <FaUserShield size={14} className="mr-3" />
                 <span className="truncate">Admin Panel</span>
               </NavLink>
             )}
@@ -209,7 +209,7 @@ const DashboardLayout: React.FC = () => {
               onClick={handleLogout}
               className="mt-4 w-full flex items-center px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-gray-100"
             >
-              <FaSignOutAlt className="mr-3" /> Logout
+              <FaSignOutAlt size={14} className="mr-3" /> Logout
             </button>
           </div>
 
@@ -218,7 +218,7 @@ const DashboardLayout: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
-                  {initials || <FaCog />}
+                  {initials || <FaCog size={14} />}
                 </div>
                 <div>
                   <p className="text-sm font-medium truncate">
@@ -233,7 +233,7 @@ const DashboardLayout: React.FC = () => {
                 className="p-1 hover:bg-gray-100 rounded"
                 onClick={() => setAccMenu((v) => !v)}
               >
-                <FaCog />
+                <FaCog size={14} />
               </button>
             </div>
 
@@ -244,7 +244,7 @@ const DashboardLayout: React.FC = () => {
                   onClick={() => setSidebarOpen(false)}
                   className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                 >
-                  <FaUser className="mr-2" /> Profile
+                  <FaUser size={14} className="mr-2" /> Profile
                 </NavLink>
                 {isAdmin && (
                   <NavLink
@@ -252,14 +252,14 @@ const DashboardLayout: React.FC = () => {
                     onClick={() => setSidebarOpen(false)}
                     className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                   >
-                    <FaUserShield className="mr-2" /> Admin Panel
+                    <FaUserShield size={14} className="mr-2" /> Admin Panel
                   </NavLink>
                 )}
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
                 >
-                  <FaSignOutAlt className="mr-2" /> Logout
+                  <FaSignOutAlt size={14} className="mr-2" /> Logout
                 </button>
               </div>
             )}
