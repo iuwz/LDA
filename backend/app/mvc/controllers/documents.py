@@ -47,9 +47,10 @@ logger = logging.getLogger(__name__)
 
 # tuned heuristics
 MIN_PRINTABLE_RATIO = 0.05     # < 5 % printable → likely garbage
-OCR_MAX_PAGES       = 50       # OCR is expensive but we allow up to 50 pages
-# vision:
-VISION_MAX_PAGES    = 15       # safety cap – don’t upload huge PDFs to GPT
+OCR_MAX_PAGES       = 50
+VISION_MAX_PAGES    = int(os.getenv("VISION_MAX_PAGES", 3))
+VISION_DPI          = int(os.getenv("VISION_DPI", 150))
+VISION_MAX_TOKENS   = int(os.getenv("VISION_MAX_TOKENS", 2048))
 
 
 # ═════════════════ TEXT EXTRACTION ══════════════════
@@ -140,7 +141,7 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
             # → rasterise pages
             from pdf2image import convert_from_bytes
             pages = convert_from_bytes(
-                raw, dpi=300, fmt="png",
+                raw, dpi=VISION_DPI, fmt="png",
                 first_page=1, last_page=min(VISION_MAX_PAGES, 999)
             )
             for p in pages:
@@ -163,7 +164,8 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
                 model="gpt-4o",           # ← ONLY here, everywhere else still o4-mini
                 temperature=0.0,
                 images=imgs,
-                max_completion_tokens=8192,
+                image_detail="low",                 # cheaper
+                max_completion_tokens=VISION_MAX_TOKENS,
             )
             if _has_enough_text(vision_txt, accept_short=True):
                 return vision_txt

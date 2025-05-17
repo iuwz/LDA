@@ -106,7 +106,8 @@ async def call_gpt(
     *,
     model: str = "o4-mini",
     temperature: Optional[float] = None,
-    images: Optional[List[Union[bytes, str]]] = None,   # ← NEW
+    images: Optional[List[Union[bytes, str]]] = None,
+    image_detail: str = "low",                    # NEW  ←─────┐
     max_completion_tokens: Optional[int] = None,
     **openai_extra: Any,
 ) -> str:
@@ -160,7 +161,8 @@ async def call_gpt(
                         base64.b64encode(img).decode()
                     )
                 user_content.append(
-                    {"type": "image_url", "image_url": {"url": img}}
+                    {"type": "image_url",
+                     "image_url": {"url": img, "detail": image_detail}}
                 )
 
             messages: list[Dict[str, Any]] = []
