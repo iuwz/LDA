@@ -13,7 +13,6 @@ import {
   FaDownload,
   FaTrashAlt,
   FaTimes,
-  FaHome,          // ← added
 } from "react-icons/fa";
 import Banner from "../../components/common/Banner";
 import ToolList, { ToolCard } from "../../components/common/toolList";
@@ -87,8 +86,7 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         body: form,
       });
       if (!res.ok) {
-        const { detail = "Upload failed" } =
-          await res.json().catch(() => ({}));
+        const { detail = "Upload failed" } = await res.json().catch(() => ({}));
         throw new Error(detail);
       }
       await onDone();
@@ -229,16 +227,6 @@ export default function DashboardHome() {
 
   return (
     <>
-      {/* ▾ mobile-only back-to-home link ▾ */}
-      <header className="sm:hidden p-4">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-indigo-600 font-medium hover:underline"
-        >
-          <FaHome /> Home
-        </Link>
-      </header>
-
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
         <Banner />
 
@@ -317,7 +305,7 @@ export default function DashboardHome() {
                 <h4 className="text-lg font-semibold">Remove document</h4>
                 <p className="text-sm text-gray-700">
                   Are you sure you want to delete{" "}
-                  <span className="font-medium">{pendingDel.filename}</span>?{" "}
+                  <span className="font-medium">{pendingDel.filename}</span>?
                   This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
