@@ -33,7 +33,7 @@ async def _is_legal_query(user_id: str, question: str) -> bool:
     """Ask the lightweight GPT model to tag LEGAL or NONLEGAL."""
     try:
         prompt = _CLASSIFIER_PROMPT.format(question=question.strip())
-        raw = call_gpt(
+        raw = await call_gpt(
             prompt=prompt,
             model=_CLASSIFIER_MODEL,
             temperature=0,
@@ -94,7 +94,7 @@ async def chat(
 
     if legal:
         assistant_reply = (
-            call_gpt(query) or
+            await call_gpt(prompt=query) or
             "Sorry, I'm unable to respond right now – please try again later."
         )
     else:

@@ -108,7 +108,7 @@ async def run_translation_tool(
     )
 
     try:
-        translated_text = call_gpt(
+        translated_text = await call_gpt(
             prompt=user_msg,
             system_message=sys_msg,
             model="o4-mini",
@@ -174,7 +174,7 @@ async def run_file_translation_tool(
     )
 
     try:
-        translated_text = call_gpt(
+        translated_text = await call_gpt(
             prompt=user_msg,
             system_message=sys_msg,
             model="o4-mini",

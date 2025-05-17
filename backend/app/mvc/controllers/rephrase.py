@@ -112,7 +112,7 @@ async def run_rephrase_tool(
             f"You are a legal rewriting AI. Rephrase the following "
             f"to a {style} style, preserving meaning. Return only plain text."
         )
-        revised = (call_gpt(
+        revised = (await call_gpt(
             prompt=original,
             system_message=system_msg,
             model="o4-mini",
@@ -159,7 +159,7 @@ async def run_rephrase_tool(
     f'{{"rephrased_text":"..."}}'
 )
 
-    ai = call_gpt(
+    ai = await call_gpt(
     prompt=original,
     system_message=system_msg,
     model="o4-mini",
