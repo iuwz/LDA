@@ -1,10 +1,9 @@
 /* ────────────────────────────────────────────────────────────────
    src/views/pages/Legal/privacy.tsx
 
-   RELEASE 1-d • 2025-05-17
-   ‣ Removed top accent bar that sat under the Navbar.
-   ‣ Each policy card now has overflow-hidden and the gradient bar gets
-     rounded-t-2xl so it perfectly follows the curved corners.
+   RELEASE 1-e • 2025-05-17
+   ‣ Added a rich animated Bubble background (four layers) behind the
+     policy content, matching the look-and-feel applied to the Terms page.
 ────────────────────────────────────────────────────────────────── */
 
 import React from "react";
@@ -21,6 +20,7 @@ import {
   FaInfoCircle,
   FaEnvelope,
 } from "react-icons/fa";
+import { BubbleGenerator } from "../Home/home"; // new import
 
 /* ───────────────────────── Policy sections ───────────────────────── */
 const SECTIONS = [
@@ -59,7 +59,6 @@ const SECTIONS = [
     title: "7. Cookies & Tracking",
     text: `LDA uses first-party cookies for session management and security (e.g., CSRF tokens). No third-party advertising or cross-site tracking cookies are employed.`,
   },
-
   {
     icon: FaRegEdit,
     title: "8. Policy Updates",
@@ -76,13 +75,18 @@ const SECTIONS = [
 export default function PrivacyPolicy() {
   return (
     <main className="font-sans text-gray-800 bg-white">
-      {/* policy body */}
       <section
         id="policy"
-        className="bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
+        className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden"
       >
+        {/* quadruple bubble layers for a denser backdrop */}
+        <BubbleGenerator />
+        <BubbleGenerator />
+        <BubbleGenerator />
+        <BubbleGenerator />
+
         <motion.div
-          className="max-w-5xl mx-auto"
+          className="relative z-10 max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
