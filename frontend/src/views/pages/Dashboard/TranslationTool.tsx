@@ -425,32 +425,39 @@ const TranslationTool: React.FC = () => {
                   : "Translate Document"}
               </motion.button>
             ) : (
-              <a
-                href={docUrl || "#"}
-                onClick={(e) => {
-                  if (isMainDownloadLinkDisabled) {
-                    e.preventDefault();
+              <motion.button
+                onClick={() => {
+                  if (isMainDownloadLinkDisabled) return;
+
+                  if (docUrl) {
+                    const a = document.createElement("a");
+                    a.href = docUrl;
+                    a.download =
+                      result?.translatedFilename || "translated_document";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
                   } else if (
-                    !docUrl &&
                     result?.resultDocId &&
                     result?.translatedFilename
                   ) {
-                    e.preventDefault();
                     downloadDocumentById(
                       result.resultDocId,
                       result.translatedFilename
                     );
                   }
                 }}
-                download={result?.translatedFilename || "translated_document"}
-                className={`inline-flex items-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
+                disabled={isMainDownloadLinkDisabled}
+                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md shadow-sm transition-colors ${
                   isMainDownloadLinkDisabled
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[color:var(--accent-light)] text-[color:var(--accent-dark)] hover:bg-[color:var(--accent-dark)] hover:text-white"
+                    : "bg-[rgb(193,120,41)] hover:bg-[rgb(173,108,37)] text-white"
                 }`}
+                whileHover={{ scale: isMainDownloadLinkDisabled ? 1 : 1.05 }}
+                whileTap={{ scale: isMainDownloadLinkDisabled ? 1 : 0.95 }}
               >
                 <FaDownload /> Download Translated Document
-              </a>
+              </motion.button>
             )}
           </div>
         ) : (
