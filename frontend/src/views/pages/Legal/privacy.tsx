@@ -37,7 +37,7 @@ const SECTIONS = [
   {
     icon: FaShieldAlt,
     title: "3. Document Privacy & AI Processing",
-    text: `Uploaded documents are stored encrypted at rest and are processed only to generate the requested analysis (risk, compliance, rephrasing, translation, chatbot). We never use your content to train our AI models, and no document data is logged or re-shared with the OpenAI service beyond the secure, ephemeral inference call.`,
+    text: `Uploaded documents are stored encrypted at rest and are processed only to generate the requested analysis (risk, compliance, rephrasing, translation). We never use your content to train our AI models, and no document data is logged or re-shared with the OpenAI service beyond the secure, ephemeral inference call.`,
   },
   {
     icon: FaLock,
@@ -59,20 +59,16 @@ const SECTIONS = [
     title: "7. Cookies & Tracking",
     text: `LDA uses first-party cookies for session management and security (e.g., CSRF tokens). No third-party advertising or cross-site tracking cookies are employed.`,
   },
-  {
-    icon: FaUserSecret,
-    title: "8. Your Rights",
-    text: `You may access, download, correct, or delete your personal data at any time through your account settings. Contact us to exercise additional rights under applicable data-protection laws.`,
-  },
+
   {
     icon: FaRegEdit,
-    title: "9. Policy Updates",
+    title: "8. Policy Updates",
     text: `We may update this Privacy Policy to reflect new features or legal requirements. Material changes will be announced in-app at least 7 days before they take effect.`,
   },
   {
     icon: FaEnvelope,
-    title: "10. Contact Us",
-    text: `Questions about privacy? Email us at privacy@lda-legal.com and we’ll respond within 48 hours.`,
+    title: "9. Contact Us",
+    text: `Questions about privacy? Email us at legaldocumentanalyzer@gmail.com and we’ll respond within 48 hours.`,
   },
 ];
 
