@@ -1,30 +1,12 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 4-a • 2025-05-17
-  ✔ Strict e-mail validator (all rules)
-  ✔ First / Last name: required + letters-only
-  ✔ No spinner in e-mail field
-  ✔ ✗ icon + red border on **Invalid code** (verify step)
-  ✔ Everything else identical to previous behaviour
-
-Copy-paste this entire file over  
-src/views/pages/Auth/auth.tsx
-────────────────────────────────────────────────────────────────── */
-/* ────────────────────────────────────────────────────────────────
-frontend/src/views/pages/Auth/auth.tsx
-
-RELEASE 4-b • 2025-05-17  
-Fixes: “First name is required / Last name is required” no longer show
-immediately on page load.  
-They appear only…
-
-  • after the user presses **Send Code** or **Create Account**, or  
-  • after the user leaves the field with invalid input (blur).
-
-All other behaviour unchanged.
-
-Copy-paste this file over **src/views/pages/Auth/auth.tsx**.
+RELEASE 4-b • 2025-05-17
+• Strict e-mail validator (all rules)  
+• First / Last name: required + letters-only (error appears only after
+  blur or an attempted submit)  
+• No spinner in e-mail field while checking availability  
+• ✗ icon + red border on **Invalid code** (verify step)  
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -47,7 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ═══════════ Validation helpers ═══════════ */
+/* ═══════════ Validators ═══════════ */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
 
@@ -69,7 +51,7 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
-/* ═══════════ Utility components ═══════════ */
+/* ═══════════ Misc UI helpers ═══════════ */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -77,7 +59,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════ Password section (unchanged) ═══════════ */
+/* ═══════════ Password section ═══════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -210,14 +192,14 @@ function SignUpForm(props: SignUpProps) {
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* touched flags */
+  /* flags to know if fields were interacted with */
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  /* errors */
-  const firstEmpty = firstName.trim().length === 0;
-  const lastEmpty = lastName.trim().length === 0;
+  /* ─── per-field error strings ─── */
+  const firstEmpty = firstName.trim() === "";
+  const lastEmpty = lastName.trim() === "";
   const firstInvalid = firstName !== "" && !isValidName(firstName);
   const lastInvalid = lastName !== "" && !isValidName(lastName);
 
@@ -242,6 +224,7 @@ function SignUpForm(props: SignUpProps) {
     if (globalError || emailError || codeError) setShowSuccess(false);
   }, [globalError, emailError, codeError]);
 
+  /* ─── handlers ─── */
   const handleSend = async () => {
     setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
@@ -249,23 +232,24 @@ function SignUpForm(props: SignUpProps) {
     setShowSuccess(ok);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submitForm = (e: React.FormEvent) => {
     e.preventDefault();
     setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
     onSubmit();
   };
 
-  const blurHandler =
-    (setter: React.Dispatch<React.SetStateAction<boolean>>) =>
+  const makeBlur =
+    (setTouched: React.Dispatch<React.SetStateAction<boolean>>) =>
     (e: FocusEvent<HTMLInputElement>) => {
-      if (e.target.value.trim() === "") setter(true);
+      if (e.target.value.trim() === "") setTouched(true);
     };
 
+  /* ─── JSX ─── */
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
-      {/* header & banners … */}
       <div>
+        {/* header */}
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
             Create&nbsp;Account
@@ -273,6 +257,7 @@ function SignUpForm(props: SignUpProps) {
           <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
+        {/* banners */}
         {globalError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -304,14 +289,16 @@ function SignUpForm(props: SignUpProps) {
           </motion.div>
         )}
 
-        <form className="space-y-5" onSubmit={submit}>
+        {/* form */}
+        <form className="space-y-5" onSubmit={submitForm}>
           {/* names */}
           <div className="flex gap-3">
+            {/* first */}
             <div className="relative w-1/2">
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                onBlur={blurHandler(setFirstTouched)}
+                onBlur={makeBlur(setFirstTouched)}
                 placeholder="First name"
                 className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
                   firstErr
@@ -327,11 +314,12 @@ function SignUpForm(props: SignUpProps) {
               )}
             </div>
 
+            {/* last */}
             <div className="relative w-1/2">
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                onBlur={blurHandler(setLastTouched)}
+                onBlur={makeBlur(setLastTouched)}
                 placeholder="Last name"
                 className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
                   lastErr
@@ -393,7 +381,7 @@ function SignUpForm(props: SignUpProps) {
             )}
           </div>
 
-          {/* verification code */}
+          {/* verification */}
           {codeSent && (
             <div className="mt-4 flex gap-3 items-center">
               <div className="relative flex-1">
@@ -460,10 +448,7 @@ function SignUpForm(props: SignUpProps) {
   );
 }
 
-/* ─── Sign-In form & Master component are identical to Release 4-a ─── */
-/* keep them as-is; only Sign-Up form logic changed.                   */
-
-/* ═════════════════════ Sign-In Form (unchanged) ═════════════ */
+/* ═══════════ Sign-In form (unchanged) ═══════════ */
 function SignInForm({
   email,
   setEmail,
@@ -490,7 +475,7 @@ function SignInForm({
       <div>
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
-            Sign&nbsp;In
+            Sign In
           </h2>
           <p className="text-gray-600 text-base">Access your account</p>
         </div>
@@ -513,18 +498,17 @@ function SignInForm({
             onSubmit();
           }}
         >
+          {/* email field */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
               <input
                 type="email"
-                className={`w-full px-4 py-3 border rounded-lg shadow-sm text-base
-                 focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                 ${
-                   credError
-                     ? "border-red-500"
-                     : "border-gray-300 focus:border-transparent"
-                 }`}
+                className={`w-full px-4 py-3 border rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                  credError
+                    ? "border-red-500"
+                    : "border-gray-300 focus:border-transparent"
+                }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -536,18 +520,17 @@ function SignInForm({
             </div>
           </div>
 
+          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
-                className={`w-full px-4 py-3 border rounded-lg shadow-sm text-base
-                 focus:outline-none focus:ring-2 focus:ring-[#C17829]
-                 ${
-                   credError
-                     ? "border-red-500"
-                     : "border-gray-300 focus:border-transparent"
-                 }`}
+                className={`w-full px-4 py-3 border rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                  credError
+                    ? "border-red-500"
+                    : "border-gray-300 focus:border-transparent"
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
@@ -573,11 +556,12 @@ function SignInForm({
                 href="/forgot-password"
                 className="text-sm text-[#C17829] hover:text-[#ad6823]"
               >
-                Forgot&nbsp;Password?
+                Forgot Password?
               </a>
             </div>
           </div>
 
+          {/* submit */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -595,9 +579,9 @@ function SignInForm({
   );
 }
 
-/* ═════════════════════ Master component ═══════════════════ */
+/* ═══════════ Master Auth component ═══════════ */
 export default function Auth() {
-  /* state */
+  /* base state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -623,7 +607,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live e-mail check */
+  /* e-mail availability check */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -668,7 +652,7 @@ export default function Auth() {
     }
   };
 
-  /* verify code */
+  /* verify */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -715,7 +699,7 @@ export default function Auth() {
     }
   };
 
-  /* URL param sync */
+  /* sync URL ?form=login|register */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -734,7 +718,7 @@ export default function Auth() {
   const hasMinLength = password.length >= 8;
   const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  /* JSX */
+  /* ─── JSX layout ─── */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
@@ -809,7 +793,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* illustration side – unchanged */}
+          {/* illustration side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
@@ -819,7 +803,6 @@ export default function Auth() {
                 ease: [0.43, 0.13, 0.23, 0.96],
               }}
             >
-              {/* sign-in promo */}
               <PromoCard
                 title="New to our platform?"
                 subtitle="Create an account to explore how our AI tools streamline your legal tasks."
@@ -827,7 +810,6 @@ export default function Auth() {
                 onClick={() => setIsSignUp(true)}
                 gradient="from-[#2C2C4A]/70 to-[#C17829]/50"
               />
-              {/* sign-up promo */}
               <PromoCard
                 title="Already have an account?"
                 subtitle="Sign in to continue your legal journey with us."
@@ -857,7 +839,7 @@ export default function Auth() {
   );
 }
 
-/* simple promo card for illustration side */
+/* promo card used on illustration side */
 function PromoCard({
   title,
   subtitle,
