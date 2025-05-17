@@ -1,5 +1,3 @@
-
-
 // src/components/layout/DashboardLayout.tsx
 import React, { useState, useEffect, createContext } from "react";
 import {
@@ -24,10 +22,11 @@ import LoadingScreen from "../common/LoadingScreen";
 import { logout } from "../../../api";
 
 export const DashboardReadyContext = createContext<(v: boolean) => void>(
-  () => { }
+  () => {}
 );
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
+const ICON_SIZE = 20;
 
 const navItems = [
   { icon: FaTachometerAlt, title: "Dashboard", path: "/dashboard", end: true },
@@ -109,7 +108,7 @@ const DashboardLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch { }
+    } catch {}
     navigate("/auth", { replace: true });
   };
 
@@ -149,7 +148,7 @@ const DashboardLayout: React.FC = () => {
               className="md:hidden p-1 hover:bg-gray-100 rounded"
               onClick={() => setSidebarOpen(false)}
             >
-              <FaTimes />
+              <FaTimes size={ICON_SIZE} />
             </button>
           </div>
 
@@ -160,13 +159,14 @@ const DashboardLayout: React.FC = () => {
               to="/"
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors md:hidden ${isActive
-                  ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                  : "text-gray-700 hover:bg-gray-100"
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors md:hidden ${
+                  isActive
+                    ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`
               }
             >
-              <HiHome className="mr-3" />
+              <HiHome size={ICON_SIZE} className="mr-3" />
               <span className="truncate">Home</span>
             </NavLink>
 
@@ -177,13 +177,14 @@ const DashboardLayout: React.FC = () => {
                 end={end}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                    ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                    : "text-gray-700 hover:bg-gray-100"
+                  `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`
                 }
               >
-                <Icon className="mr-3" />
+                <Icon size={ICON_SIZE} className="mr-3" />
                 <span className="truncate">{title}</span>
               </NavLink>
             ))}
@@ -193,13 +194,14 @@ const DashboardLayout: React.FC = () => {
                 to="/admin"
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                    ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
-                    : "text-gray-700 hover:bg-gray-100"
+                  `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`
                 }
               >
-                <FaUserShield className="mr-3" />
+                <FaUserShield size={ICON_SIZE} className="mr-3" />
                 <span className="truncate">Admin Panel</span>
               </NavLink>
             )}
@@ -208,7 +210,8 @@ const DashboardLayout: React.FC = () => {
               onClick={handleLogout}
               className="mt-4 w-full flex items-center px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-gray-100"
             >
-              <FaSignOutAlt className="mr-3" /> Logout
+              <FaSignOutAlt size={ICON_SIZE} className="mr-3" />
+              Logout
             </button>
           </div>
 
@@ -217,7 +220,7 @@ const DashboardLayout: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-[#2C2C4A] rounded-full flex items-center justify-center text-white font-semibold">
-                  {initials || <FaCog />}
+                  {initials || <FaCog size={ICON_SIZE} />}
                 </div>
                 <div>
                   <p className="text-sm font-medium truncate">
@@ -232,7 +235,7 @@ const DashboardLayout: React.FC = () => {
                 className="p-1 hover:bg-gray-100 rounded"
                 onClick={() => setAccMenu((v) => !v)}
               >
-                <FaCog />
+                <FaCog size={ICON_SIZE} />
               </button>
             </div>
 
@@ -243,7 +246,8 @@ const DashboardLayout: React.FC = () => {
                   onClick={() => setSidebarOpen(false)}
                   className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                 >
-                  <FaUser className="mr-2" /> Profile
+                  <FaUser size={ICON_SIZE} className="mr-2" />
+                  Profile
                 </NavLink>
                 {isAdmin && (
                   <NavLink
@@ -251,14 +255,16 @@ const DashboardLayout: React.FC = () => {
                     onClick={() => setSidebarOpen(false)}
                     className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
                   >
-                    <FaUserShield className="mr-2" /> Admin Panel
+                    <FaUserShield size={ICON_SIZE} className="mr-2" />
+                    Admin Panel
                   </NavLink>
                 )}
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md"
                 >
-                  <FaSignOutAlt className="mr-2" /> Logout
+                  <FaSignOutAlt size={ICON_SIZE} className="mr-2" />
+                  Logout
                 </button>
               </div>
             )}
@@ -267,8 +273,9 @@ const DashboardLayout: React.FC = () => {
 
         {/* main */}
         <div
-          className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? "md:pl-64" : "md:pl-0"
-            }`}
+          className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+            sidebarOpen ? "md:pl-64" : "md:pl-0"
+          }`}
         >
           <header className="flex items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 h-12">
             <div className="flex items-center">
@@ -276,7 +283,11 @@ const DashboardLayout: React.FC = () => {
                 className="md:hidden mr-3 p-1 text-[#2C2C4A] hover:bg-gray-100 rounded"
                 onClick={() => setSidebarOpen((v) => !v)}
               >
-                {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+                {sidebarOpen ? (
+                  <FaTimes size={ICON_SIZE} />
+                ) : (
+                  <FaBars size={ICON_SIZE} />
+                )}
               </button>
               <h1 className="text-lg sm:text-xl font-semibold text-[#2C2C4A] truncate">
                 {titleFor(location.pathname)}
@@ -286,7 +297,7 @@ const DashboardLayout: React.FC = () => {
               to="/"
               className="hidden sm:flex items-center p-2 text-[#2C2C4A] hover:text-[#C17829]"
             >
-              <HiHome className="w-5 h-5" />
+              <HiHome size={ICON_SIZE} className="w-5 h-5" />
             </NavLink>
           </header>
 
