@@ -1,10 +1,12 @@
 /* ────────────────────────────────────────────────────────────────
    frontend/src/views/pages/Auth/auth.tsx
 
-   RELEASE 5-n • 2025-05-17
+   RELEASE 5-o • 2025-05-17
    ‣ Visible feedback on every “Resend” click.
    ‣ 60-second client-side cooldown after each e-mail to avoid spam.
-   ‣ All auth buttons remain exactly 112 × 44 px (Tailwind `w-28 h-11`).
+   ‣ All auth buttons stay exactly 112 × 44 px (Tailwind w-28 h-11).
+   ‣ **NEW:** Sign-In e-mail now validates live just like Sign-Up
+     (red border + ❌ tick + helper text when the address is invalid).
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -203,7 +205,7 @@ function SignUpForm(props: any) {
   const send = async () => {
     setAttempted(true);
     if (firstErr || lastErr || liveEmailErr) return;
-    setShowSuccess(false); // reset banner, so animation repeats
+    setShowSuccess(false); // reset banner so animation repeats
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
@@ -421,7 +423,7 @@ function SignUpForm(props: any) {
   );
 }
 
-/* ═════════════════════ Sign-In form (unchanged) ═════════════════════ */
+/* ═════════════════════ Sign-In form (live e-mail validation) ═════════════════════ */
 function SignInForm({
   email,
   setEmail,
@@ -442,6 +444,10 @@ function SignInForm({
   credError?: string | null;
 }) {
   const [showPw, setShowPw] = useState(false);
+
+  /* live syntactic e-mail check */
+  const liveEmailErr =
+    email && !isValidEmail(email) ? "Write a valid e-mail" : "";
 
   return (
     <div className="min-h-[440px] flex flex-col justify-between">
@@ -477,7 +483,7 @@ function SignInForm({
               <input
                 type="email"
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
-                  credError
+                  credError || liveEmailErr
                     ? "border-red-500"
                     : "border-gray-300 focus:border-transparent"
                 }`}
@@ -486,10 +492,17 @@ function SignInForm({
                 placeholder="you@example.com"
                 required
               />
-              {!credError && email && (
+              {credError || liveEmailErr ? (
+                <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
+              ) : email ? (
                 <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
-              )}
+              ) : null}
             </div>
+            {(credError || liveEmailErr) && (
+              <p className="text-red-600 text-sm mt-1">
+                {credError || liveEmailErr}
+              </p>
+            )}
           </div>
 
           <div>
