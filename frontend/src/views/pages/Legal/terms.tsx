@@ -1,12 +1,9 @@
 /* ────────────────────────────────────────────────────────────────
    src/views/pages/Legal/terms.tsx
 
-   RELEASE 1-a • 2025-05-17
-   ‣ New “Terms of Service” public page.
-   ‣ Mirrors Privacy Policy styling:
-       – warm-beige background (#f7ede1)
-       – white rounded-2xl cards with top gradient bar
-       – serif headings, Tailwind utilities, Framer-Motion fade/slide-in
+   RELEASE 1-b • 2025-05-17
+   ‣ Added animated Bubble background (double density) behind the content,
+     matching the “hero” effect on the Home page but with more bubbles.
 ────────────────────────────────────────────────────────────────── */
 
 import React from "react";
@@ -24,6 +21,7 @@ import {
   FaGavel,
   FaEnvelope,
 } from "react-icons/fa";
+import { BubbleGenerator } from "../Home/home"; // reuse component
 
 /* ───────────────────────── Terms sections ───────────────────────── */
 const SECTIONS = [
@@ -90,10 +88,14 @@ export default function TermsOfService() {
     <main className="font-sans text-gray-800 bg-white">
       <section
         id="terms"
-        className="bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20"
+        className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden"
       >
+        {/* double bubble layers for higher density */}
+        <BubbleGenerator />
+        <BubbleGenerator />
+
         <motion.div
-          className="max-w-5xl mx-auto"
+          className="relative z-10 max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
