@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, Optional, Iterator, AsyncIterator, List, Union
+from typing import Any, Dict, Optional, Iterator, AsyncIterator
 
 from dotenv import load_dotenv
 from openai import OpenAI, AsyncOpenAI
@@ -105,9 +105,7 @@ async def call_gpt(
     system_message: Optional[str] = None,
     *,
     model: str = "o4-mini",
-    temperature: Optional[float] = None,
-    images: Optional[List[Union[bytes, str]]] = None,
-    image_detail: str = "low",                    # NEW  ←─────┐
+    temperature: Optional[float] = None,                    # NEW  ←─────┐
     max_completion_tokens: Optional[int] = None,
     **openai_extra: Any,
 ) -> str:
@@ -145,34 +143,6 @@ async def call_gpt(
         # pass-through any other recognised extras (stream, response_format…)
         kwargs.update(openai_extra)
 
-        # ────────────── vision branch (GPT-4o only) ───────────────────
-        if images:
-            if not model.startswith("gpt-4o"):
-                raise ValueError("Image input is supported only by GPT-4o* models.")
-
-            user_content: list[Any] = []
-            if prompt:
-                user_content.append({"type": "text", "text": prompt})
-            for img in images:
-                # accept raw bytes OR already-hosted https url
-                if isinstance(img, bytes):
-                    img = (
-                        "data:image/png;base64," +
-                        base64.b64encode(img).decode()
-                    )
-                user_content.append(
-                    {"type": "image_url",
-                     "image_url": {"url": img, "detail": image_detail}}
-                )
-
-            messages: list[Dict[str, Any]] = []
-            if system_message:
-                messages.append({"role": "system", "content": system_message})
-            messages.append({"role": "user", "content": user_content})
-            kwargs["messages"] = messages
-
-            resp = await async_client.chat.completions.create(**kwargs)
-            return (resp.choices[0].message.content or "").strip()
 
         # ────────────── normal chat branch ─────────────────────────────
         if is_chat:
