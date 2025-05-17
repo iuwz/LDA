@@ -13,6 +13,7 @@ import {
   FaDownload,
   FaTrashAlt,
   FaTimes,
+  FaSpinner,
 } from "react-icons/fa";
 import Banner from "../../components/common/Banner";
 import ToolList, { ToolCard } from "../../components/common/toolList";
@@ -113,12 +114,12 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         variant="primary"
         onClick={click}
         disabled={busy}
-        className="w-48 h-9 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        className="h-9 w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 sm:w-48"
       >
         {busy ? "Uploading…" : file ? "Upload" : "Choose File to upload"}
       </Button>
       {file && !busy && (
-        <span className="flex items-center gap-1 text-sm text-gray-700 truncate max-w-xs">
+        <span className="flex max-w-xs items-center gap-1 truncate text-sm text-gray-700">
           {file.name}
           <Button
             size="xs"
@@ -197,26 +198,17 @@ export default function DashboardHome() {
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 sm:w-auto"
       >
-        <Button
-          size="xs"
-          variant="outline"
-          className="w-24 h-9 flex items-center justify-center"
-        >
-          <FaDownload className="mr-2" />
-          Download
-        </Button>
+        <FaDownload /> Download
       </a>
-      <Button
-        size="xs"
-        variant="outline"
-        className="w-24 h-9 flex items-center justify-center border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+      <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
       >
-        <FaTrashAlt className="mr-2" />
-        Remove
-      </Button>
+        <FaTrashAlt /> Remove
+      </button>
     </motion.div>
   );
 
@@ -252,14 +244,12 @@ export default function DashboardHome() {
           ) : err ? (
             <p className="text-red-600 py-4">
               Error: {err}.{" "}
-              <Button
-                size="sm"
-                variant="outline"
+              <button
                 onClick={refresh}
-                className="text-indigo-600 hover:underline"
+                className="text-[#c17829] hover:underline rounded-md font-medium"
               >
                 Try again
-              </Button>
+              </button>
             </p>
           ) : docs.length === 0 ? (
             <p className="text-gray-600">No documents uploaded yet.</p>
@@ -275,7 +265,7 @@ export default function DashboardHome() {
             <div className="self-end">
               <Link
                 to="/dashboard/uploads"
-                className="inline-flex items-center gap-1 text-indigo-600 hover:underline rounded-md font-medium"
+                className="inline-flex items-center gap-1 text-[#c17829] hover:underline rounded-md font-medium"
               >
                 View all <FaArrowRight size={12} />
               </Link>
@@ -301,31 +291,33 @@ export default function DashboardHome() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-                <h4 className="text-lg font-semibold">Remove document</h4>
+              <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
+                  Remove document
+                </h4>
                 <p className="text-sm text-gray-700">
                   Are you sure you want to delete{" "}
                   <span className="font-medium">{pendingDel.filename}</span>?
                   This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  <button
                     onClick={() => setPendingDel(null)}
                     disabled={isDeleting}
+                    className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  </button>
+                  <button
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
-                    Delete
-                  </Button>
+                    {isDeleting && (
+                      <FaSpinner className="mr-2 inline-block animate-spin" />
+                    )}
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </button>
                 </div>
               </div>
             </motion.div>
