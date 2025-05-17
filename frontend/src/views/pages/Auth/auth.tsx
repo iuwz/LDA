@@ -1,16 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-a • 2025-05-17
-Changes vs 4-b
-1. **Progressive disclosure** – the four password-rules bullets are
-   hidden until the user types at least one character in the password
-   field, then they fade + slide in.  
-2. E-mail verification section was already collapsible (shown only after
-   “Send Code” succeeds); no code change required.
-
-Copy-paste this ENTIRE file over  
-src/views/pages/Auth/auth.tsx
+RELEASE 5-b • 2025-05-17
+• Password-rules checklist now appears inside a soft grey container  
+  with rounded corners and smoother slide-fade (0.45 s).  
+• All other behaviour identical to 5-a.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -63,7 +57,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════ Password section (rules appear after typing) ═══════════ */
+/* ═══════════ Password section (rules in grey box, smooth) ═══════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -100,52 +94,67 @@ function PasswordSection({
 
       <AnimatePresence initial={false}>
         {rulesVisible && (
-          <motion.ul
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="mt-2 text-sm space-y-0.5"
+          <motion.div
+            key="rules"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.45, ease: "easeOut" },
+            }}
+            exit={{
+              opacity: 0,
+              y: -6,
+              transition: { duration: 0.3, ease: "easeIn" },
+            }}
+            className="mt-3 rounded-lg bg-gray-100 px-4 py-3"
           >
-            <li
-              className={`flex items-center ${
-                hasUppercase ? "text-green-600" : "text-gray-500"
-              }`}
-            >
-              <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
-              Uppercase letter
-            </li>
-            <li
-              className={`flex items-center ${
-                hasNumber ? "text-green-600" : "text-gray-500"
-              }`}
-            >
-              <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
-              Number
-            </li>
-            <li
-              className={`flex items-center ${
-                hasSymbol ? "text-green-600" : "text-gray-500"
-              }`}
-            >
-              <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
-              Special character
-            </li>
-            <li
-              className={`flex items-center ${
-                hasMinLength ? "text-green-600" : "text-gray-500"
-              }`}
-            >
-              <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
-              characters
-            </li>
-          </motion.ul>
+            <ul className="text-sm space-y-1">
+              <li
+                className={`flex items-center ${
+                  hasUppercase ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
+                Uppercase letter
+              </li>
+              <li
+                className={`flex items-center ${
+                  hasNumber ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
+                Number
+              </li>
+              <li
+                className={`flex items-center ${
+                  hasSymbol ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
+                Special character
+              </li>
+              <li
+                className={`flex items-center ${
+                  hasMinLength ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
+                characters
+              </li>
+            </ul>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 }
 
-/* ═══════════ Sign-Up form (unchanged logic) ═══════════ */
+/* ═══════════ Sign-Up form, Sign-In form, Master component, and PromoCard
+   are identical to Release 5-a.  No further changes needed.  The file
+   below includes them in full for copy-paste convenience. ═══════════ */
+
+/* ---------------------------- SIGN-UP FORM --------------------------- */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -212,7 +221,6 @@ function SignUpForm(props: SignUpProps) {
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  /* name errors */
   const firstEmpty = firstName.trim() === "";
   const lastEmpty = lastName.trim() === "";
   const firstInvalid = firstName !== "" && !isValidName(firstName);
@@ -347,7 +355,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* e-mail + Send Code */}
+          {/* email + send code */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -392,7 +400,7 @@ function SignUpForm(props: SignUpProps) {
             )}
           </div>
 
-          {/* verification code (collapsible) */}
+          {/* verification */}
           {codeSent && (
             <div className="mt-4 flex gap-3 items-center">
               <div className="relative flex-1">
@@ -459,7 +467,7 @@ function SignUpForm(props: SignUpProps) {
   );
 }
 
-/* ═══════════ Sign-In form (unchanged) ═══════════ */
+/* ---------------------------- SIGN-IN FORM --------------------------- */
 function SignInForm({
   email,
   setEmail,
@@ -509,6 +517,7 @@ function SignInForm({
             onSubmit();
           }}
         >
+          {/* email */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -530,6 +539,7 @@ function SignInForm({
             </div>
           </div>
 
+          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -587,7 +597,7 @@ function SignInForm({
   );
 }
 
-/* ═══════════ Master component (identical to 4-b) ═══════════ */
+/* ------------------------------- AUTH ------------------------------- */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -613,7 +623,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live email availability check */
+  /* live email availability */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -658,7 +668,7 @@ export default function Auth() {
     }
   };
 
-  /* verify */
+  /* verify code */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -705,7 +715,7 @@ export default function Auth() {
     }
   };
 
-  /* sync URL */
+  /* URL sync */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -845,7 +855,7 @@ export default function Auth() {
   );
 }
 
-/* promo card */
+/* ---------------------------- PROMO CARD ---------------------------- */
 function PromoCard({
   title,
   subtitle,
