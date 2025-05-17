@@ -1,9 +1,9 @@
 /* ────────────────────────────────────────────────────────────────
    src/views/pages/Legal/terms.tsx
 
-   RELEASE 1-b • 2025-05-17
-   ‣ Added animated Bubble background (double density) behind the content,
-     matching the “hero” effect on the Home page but with more bubbles.
+   RELEASE 1-c • 2025-05-17
+   ‣ Bubble background density boosted (four layers instead of two)
+     for a richer animated backdrop.
 ────────────────────────────────────────────────────────────────── */
 
 import React from "react";
@@ -21,7 +21,7 @@ import {
   FaGavel,
   FaEnvelope,
 } from "react-icons/fa";
-import { BubbleGenerator } from "../Home/home"; // reuse component
+import { BubbleGenerator } from "../Home/home"; // re-use existing bubbles
 
 /* ───────────────────────── Terms sections ───────────────────────── */
 const SECTIONS = [
@@ -90,7 +90,9 @@ export default function TermsOfService() {
         id="terms"
         className="relative bg-[#f7ede1] px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 overflow-hidden"
       >
-        {/* double bubble layers for higher density */}
+        {/* quadruple bubble layers for maximum density */}
+        <BubbleGenerator />
+        <BubbleGenerator />
         <BubbleGenerator />
         <BubbleGenerator />
 
