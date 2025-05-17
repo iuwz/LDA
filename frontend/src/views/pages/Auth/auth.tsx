@@ -1,10 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-b • 2025-05-17
-• Password-rules checklist now appears inside a soft grey container  
-  with rounded corners and smoother slide-fade (0.45 s).  
-• All other behaviour identical to 5-a.
+RELEASE 5-c • 2025-05-17
+Adds: “Send Code” is now disabled while the app is still checking
+whether the e-mail is registered, and the button shows a spinner during
+that check.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -57,7 +57,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════ Password section (rules in grey box, smooth) ═══════════ */
+/* ═══════════ Password section (unchanged from 5-b) ═══════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -150,11 +150,7 @@ function PasswordSection({
   );
 }
 
-/* ═══════════ Sign-Up form, Sign-In form, Master component, and PromoCard
-   are identical to Release 5-a.  No further changes needed.  The file
-   below includes them in full for copy-paste convenience. ═══════════ */
-
-/* ---------------------------- SIGN-UP FORM --------------------------- */
+/* ═══════════ Sign-Up form (Send Code logic updated) ═══════════ */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -270,7 +266,6 @@ function SignUpForm(props: SignUpProps) {
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
       <div>
-        {/* header */}
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-[#2C2C4A] mb-2">
             Create&nbsp;Account
@@ -278,7 +273,6 @@ function SignUpForm(props: SignUpProps) {
           <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
-        {/* banners */}
         {globalError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -310,7 +304,6 @@ function SignUpForm(props: SignUpProps) {
           </motion.div>
         )}
 
-        {/* form */}
         <form className="space-y-5" onSubmit={submit}>
           {/* names */}
           <div className="flex gap-3">
@@ -355,7 +348,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* email + send code */}
+          {/* e-mail + Send Code */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -374,17 +367,22 @@ function SignUpForm(props: SignUpProps) {
                 />
                 {emailError || liveEmailErr ? (
                   <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
-                ) : isValidEmail(email) && !checkingEmail ? (
+                ) : checkingEmail ? (
+                  <FaCircleNotch className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />
+                ) : isValidEmail(email) ? (
                   <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
                 ) : null}
               </div>
+
               <Button
                 type="button"
                 disabled={!canSend || isSending}
                 onClick={handleSend}
                 className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
-                {isSending ? (
+                {checkingEmail ? (
+                  <FaCircleNotch className="h-4 w-4 animate-spin" />
+                ) : isSending ? (
                   <FaCircleNotch className="h-4 w-4 animate-spin" />
                 ) : codeSent ? (
                   "Resend"
@@ -447,7 +445,6 @@ function SignUpForm(props: SignUpProps) {
             hasMinLength={hasMinLength}
           />
 
-          {/* submit */}
           <Button
             type="submit"
             disabled={
@@ -467,7 +464,7 @@ function SignUpForm(props: SignUpProps) {
   );
 }
 
-/* ---------------------------- SIGN-IN FORM --------------------------- */
+/* ---------------------------- SIGN-IN FORM (unchanged) ---------------------------- */
 function SignInForm({
   email,
   setEmail,
@@ -517,7 +514,6 @@ function SignInForm({
             onSubmit();
           }}
         >
-          {/* email */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -539,7 +535,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -597,7 +592,7 @@ function SignInForm({
   );
 }
 
-/* ------------------------------- AUTH ------------------------------- */
+/* ---------------------------- AUTH COMPONENT (unchanged except canSend) ---------------------------- */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -618,12 +613,12 @@ export default function Auth() {
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
 
-  const canSend = !codeSent && isValidEmail(email) && !signupEmailError;
+  const canSend =
+    !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live email availability */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -647,7 +642,6 @@ export default function Auth() {
     };
   }, [email]);
 
-  /* send code */
   const handleSendCode = async (): Promise<boolean> => {
     setCodeError(null);
     setSignupEmailError(null);
@@ -668,7 +662,6 @@ export default function Auth() {
     }
   };
 
-  /* verify code */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -679,7 +672,6 @@ export default function Auth() {
     }
   };
 
-  /* sign-up */
   const handleSignUp = async () => {
     setGlobalError(null);
     setSignupEmailError(null);
@@ -698,7 +690,6 @@ export default function Auth() {
     }
   };
 
-  /* sign-in */
   const handleSignIn = async () => {
     setGlobalError(null);
     setLoginCredError(null);
@@ -715,7 +706,6 @@ export default function Auth() {
     }
   };
 
-  /* URL sync */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -727,14 +717,12 @@ export default function Auth() {
     }
   }, [location]);
 
-  /* password flags */
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
   const hasMinLength = password.length >= 8;
   const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  /* JSX */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
@@ -744,7 +732,6 @@ export default function Auth() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          {/* form side */}
           <div className="w-full md:w-1/2 p-8 md:p-16 flex items-center justify-center">
             <div className="w-full max-w-md">
               <AnimatePresence mode="wait">
@@ -809,7 +796,6 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* illustration side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
@@ -836,7 +822,6 @@ export default function Auth() {
             </motion.div>
           </div>
 
-          {/* mobile toggle */}
           <div className="md:hidden w-full p-4 text-center border-t border-gray-100">
             <p className="text-gray-600 mb-3 text-sm">
               {isSignUp ? "Already have an account?" : "New to our platform?"}
