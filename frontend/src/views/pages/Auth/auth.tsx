@@ -1,12 +1,16 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 4-b • 2025-05-17
-• Strict e-mail validator (all rules)  
-• First / Last name: required + letters-only (error appears only after
-  blur or an attempted submit)  
-• No spinner in e-mail field while checking availability  
-• ✗ icon + red border on **Invalid code** (verify step)  
+RELEASE 5-a • 2025-05-17
+Changes vs 4-b
+1. **Progressive disclosure** – the four password-rules bullets are
+   hidden until the user types at least one character in the password
+   field, then they fade + slide in.  
+2. E-mail verification section was already collapsible (shown only after
+   “Send Code” succeeds); no code change required.
+
+Copy-paste this ENTIRE file over  
+src/views/pages/Auth/auth.tsx
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -51,7 +55,7 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
-/* ═══════════ Misc UI helpers ═══════════ */
+/* ═══════════ Helpers ═══════════ */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -59,7 +63,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════ Password section ═══════════ */
+/* ═══════════ Password section (rules appear after typing) ═══════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -70,6 +74,8 @@ function PasswordSection({
   hasSymbol,
   hasMinLength,
 }: any) {
+  const rulesVisible = password.length > 0;
+
   return (
     <div>
       <div className="relative">
@@ -92,44 +98,54 @@ function PasswordSection({
         </button>
       </div>
 
-      <ul className="mt-2 text-sm space-y-0.5">
-        <li
-          className={`flex items-center ${
-            hasUppercase ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
-          Uppercase letter
-        </li>
-        <li
-          className={`flex items-center ${
-            hasNumber ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
-          Number
-        </li>
-        <li
-          className={`flex items-center ${
-            hasSymbol ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
-          Special character
-        </li>
-        <li
-          className={`flex items-center ${
-            hasMinLength ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8 characters
-        </li>
-      </ul>
+      <AnimatePresence initial={false}>
+        {rulesVisible && (
+          <motion.ul
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="mt-2 text-sm space-y-0.5"
+          >
+            <li
+              className={`flex items-center ${
+                hasUppercase ? "text-green-600" : "text-gray-500"
+              }`}
+            >
+              <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>
+              Uppercase letter
+            </li>
+            <li
+              className={`flex items-center ${
+                hasNumber ? "text-green-600" : "text-gray-500"
+              }`}
+            >
+              <span className="mr-2">{hasNumber ? "✓" : "○"}</span>
+              Number
+            </li>
+            <li
+              className={`flex items-center ${
+                hasSymbol ? "text-green-600" : "text-gray-500"
+              }`}
+            >
+              <span className="mr-2">{hasSymbol ? "✓" : "○"}</span>
+              Special character
+            </li>
+            <li
+              className={`flex items-center ${
+                hasMinLength ? "text-green-600" : "text-gray-500"
+              }`}
+            >
+              <span className="mr-2">{hasMinLength ? "✓" : "○"}</span>≥ 8
+              characters
+            </li>
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* ═══════════ Sign-Up form ═══════════ */
+/* ═══════════ Sign-Up form (unchanged logic) ═══════════ */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -192,12 +208,11 @@ function SignUpForm(props: SignUpProps) {
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* flags to know if fields were interacted with */
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  /* ─── per-field error strings ─── */
+  /* name errors */
   const firstEmpty = firstName.trim() === "";
   const lastEmpty = lastName.trim() === "";
   const firstInvalid = firstName !== "" && !isValidName(firstName);
@@ -224,7 +239,6 @@ function SignUpForm(props: SignUpProps) {
     if (globalError || emailError || codeError) setShowSuccess(false);
   }, [globalError, emailError, codeError]);
 
-  /* ─── handlers ─── */
   const handleSend = async () => {
     setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
@@ -232,20 +246,19 @@ function SignUpForm(props: SignUpProps) {
     setShowSuccess(ok);
   };
 
-  const submitForm = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
     onSubmit();
   };
 
-  const makeBlur =
+  const blur =
     (setTouched: React.Dispatch<React.SetStateAction<boolean>>) =>
     (e: FocusEvent<HTMLInputElement>) => {
       if (e.target.value.trim() === "") setTouched(true);
     };
 
-  /* ─── JSX ─── */
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
       <div>
@@ -290,15 +303,14 @@ function SignUpForm(props: SignUpProps) {
         )}
 
         {/* form */}
-        <form className="space-y-5" onSubmit={submitForm}>
+        <form className="space-y-5" onSubmit={submit}>
           {/* names */}
           <div className="flex gap-3">
-            {/* first */}
             <div className="relative w-1/2">
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                onBlur={makeBlur(setFirstTouched)}
+                onBlur={blur(setFirstTouched)}
                 placeholder="First name"
                 className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
                   firstErr
@@ -314,12 +326,11 @@ function SignUpForm(props: SignUpProps) {
               )}
             </div>
 
-            {/* last */}
             <div className="relative w-1/2">
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                onBlur={makeBlur(setLastTouched)}
+                onBlur={blur(setLastTouched)}
                 placeholder="Last name"
                 className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
                   lastErr
@@ -336,7 +347,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* email + send code */}
+          {/* e-mail + Send Code */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -381,7 +392,7 @@ function SignUpForm(props: SignUpProps) {
             )}
           </div>
 
-          {/* verification */}
+          {/* verification code (collapsible) */}
           {codeSent && (
             <div className="mt-4 flex gap-3 items-center">
               <div className="relative flex-1">
@@ -498,7 +509,6 @@ function SignInForm({
             onSubmit();
           }}
         >
-          {/* email field */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -520,7 +530,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -561,7 +570,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* submit */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -579,9 +587,8 @@ function SignInForm({
   );
 }
 
-/* ═══════════ Master Auth component ═══════════ */
+/* ═══════════ Master component (identical to 4-b) ═══════════ */
 export default function Auth() {
-  /* base state */
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -601,13 +608,12 @@ export default function Auth() {
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
 
-  /* derived */
   const canSend = !codeSent && isValidEmail(email) && !signupEmailError;
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* e-mail availability check */
+  /* live email availability check */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -699,7 +705,7 @@ export default function Auth() {
     }
   };
 
-  /* sync URL ?form=login|register */
+  /* sync URL */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const form = q.get("form");
@@ -718,7 +724,7 @@ export default function Auth() {
   const hasMinLength = password.length >= 8;
   const isAllValid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  /* ─── JSX layout ─── */
+  /* JSX */
   return (
     <main className="bg-gradient-to-r from-[#f7ede1] to-white min-h-screen w-full flex items-center justify-center overflow-y-auto py-4">
       <div className="relative z-10 px-4 py-12 w-full max-w-7xl flex justify-center">
@@ -839,7 +845,7 @@ export default function Auth() {
   );
 }
 
-/* promo card used on illustration side */
+/* promo card */
 function PromoCard({
   title,
   subtitle,
