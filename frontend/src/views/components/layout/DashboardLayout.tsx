@@ -153,6 +153,22 @@ const DashboardLayout: React.FC = () => {
 
           {/* nav */}
           <div className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+            {/* Home link – only visible on mobile */}
+            <NavLink
+              to="/"
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors md:hidden ${
+                  isActive
+                    ? "bg-[#f7ede1] text-[#C17829] border-l-4 border-[#C17829]"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`
+              }
+            >
+              <HiHome className="mr-3" />
+              <span className="truncate">Home</span>
+            </NavLink>
+
             {navItems.map(({ icon: Icon, title, path, end }) => (
               <NavLink
                 key={path}
