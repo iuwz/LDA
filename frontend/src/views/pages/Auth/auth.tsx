@@ -1,10 +1,11 @@
 /* ────────────────────────────────────────────────────────────────
-frontend/src/views/pages/Auth/auth.tsx
+   frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-j • 2025-05-17
-‣ “Send Code / Resend” and “Verify” are now *exactly*
-  112 × 44 px (Tailwind `w-28 h-11`).  
-‣ Everything else unchanged from 5-i.
+   RELEASE 5-k • 2025-05-17
+   ‣ “Resend” is now clickable right after the first e-mail is sent.
+     (canSend no longer depends on codeSent.)
+   ‣ Button sizes remain exactly 112 × 44 px (w-28 h-11).
+   ‣ Everything else unchanged from 5-j.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -569,8 +570,8 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const canSend =
-    !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
+  /*  ▶▶  Resend now allowed immediately  ◀◀  */
+  const canSend = isValidEmail(email) && !signupEmailError && !checkingEmail;
 
   /* live email availability */
   useEffect(() => {
