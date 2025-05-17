@@ -11,7 +11,7 @@ import {
   FaArrowRight,
   FaCloudUploadAlt,
   FaDownload,
-  FaTrashAlt,
+  FaTrash,
   FaTimes,
   FaSpinner,
 } from "react-icons/fa";
@@ -206,13 +206,12 @@ export default function DashboardHome() {
         <FaDownload /> Download
       </a>
 
-      {/* icon-only Remove button, matching AllUploads styling */}
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
-        className="flex items-center justify-center rounded-md p-2 text-red-600 hover:bg-red-600/10 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-sm text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
       >
-        <FaTrashAlt />
+        <FaTrash /> Remove
       </button>
     </motion.div>
   );
