@@ -11,7 +11,7 @@ import {
   FaArrowRight,
   FaCloudUploadAlt,
   FaDownload,
-  FaTrashAlt,
+  FaTrash,
   FaTimes,
   FaSpinner,
 } from "react-icons/fa";
@@ -63,6 +63,186 @@ const tools: ToolCard[] = [
   },
 ];
 
+export default function DashboardHome() {
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [pendingDel, setPendingDel] = useState<Doc | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchDocs = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API_BASE}/documents`, {
+        credentials: "include",
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail ?? "Could not load documents");
+      setDocs(data);
+      setErr(null);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchDocs();
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!pendingDel) return;
+    setIsDeleting(true);
+    try {
+      await fetch(`${API_BASE}/documents/${pendingDel._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setDocs((d) => d.filter((x) => x._id !== pendingDel._id));
+    } catch {
+      alert("Delete failed");
+    } finally {
+      setPendingDel(null);
+      setIsDeleting(false);
+    }
+  };
+
+  const Row = ({ d, i }: { d: Doc; i: number }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.02 }}
+      className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 sm:gap-4 rounded-lg border px-4 py-3 bg-white/90 hover:bg-gray-50/90"
+    >
+      <FaCloudUploadAlt className="text-indigo-600" />
+      <div className="truncate">
+        <p className="truncate font-medium text-gray-800">{d.filename}</p>
+        <p className="text-xs text-gray-500">{toDate(d._id)}</p>
+      </div>
+      <a
+        href={`${API_BASE}/documents/download/${d._id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50 sm:w-auto"
+      >
+        <FaDownload /> Download
+      </a>
+      <button
+        onClick={() => setPendingDel(d)}
+        disabled={isDeleting}
+        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
+      >
+        <FaTrash /> Remove
+      </button>
+    </motion.div>
+  );
+
+  const recent = docs
+    .slice()
+    .sort((a, b) => (a._id < b._id ? 1 : -1))
+    .slice(0, 5);
+
+  return (
+    <>
+      <div className="space-y-14 p-6 max-w-6xl mx-auto">
+        <Banner />
+
+        {/* tools */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Your tools</h2>
+          <ToolList tools={tools} hoverIdx={null} setHoverIdx={() => {}} />
+        </section>
+
+        {/* uploads */}
+        <div className="mx-auto max-w-4xl p-6">
+          <section className="rounded-2xl border bg-white p-8 shadow space-y-6">
+            <div className="flex flex-col gap-6">
+              <h3 className="text-2xl font-semibold">Recent uploads</h3>
+              <InlineUpload onDone={fetchDocs} />
+
+              {loading ? (
+                <p className="text-gray-600">Loading…</p>
+              ) : err ? (
+                <p className="text-red-600">{err}</p>
+              ) : docs.length === 0 ? (
+                <p className="text-gray-600">No documents uploaded yet.</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {recent.map((d, i) => (
+                    <Row key={d._id} d={d} i={i} />
+                  ))}
+                </div>
+              )}
+
+              {docs.length > 5 && (
+                <Link
+                  to="/dashboard/uploads"
+                  className="flex items-center gap-1 text-[#c17829] hover:underline"
+                >
+                  <span>View all</span> <FaArrowRight size={12} />
+                </Link>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* delete modal */}
+      <AnimatePresence>
+        {pendingDel && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black/40 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setPendingDel(null)}
+            />
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
+                  Delete Document
+                </h4>
+                <p className="text-sm text-gray-700">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium">{pendingDel.filename}</span>?
+                  This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setPendingDel(null)}
+                    disabled={isDeleting}
+                    className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isDeleting && (
+                      <FaSpinner className="mr-2 inline-block animate-spin" />
+                    )}
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// InlineUpload (styled exactly as in AllUploads.tsx)
 function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -134,196 +314,5 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
         </span>
       )}
     </div>
-  );
-}
-
-export default function DashboardHome() {
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [docs, setDocs] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [pendingDel, setPendingDel] = useState<Doc | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const refresh = async () => {
-    setLoading(true);
-    try {
-      const r = await fetch(`${API_BASE}/documents`, {
-        credentials: "include",
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail ?? "Could not load documents");
-      setDocs(data);
-      setErr(null);
-    } catch (e: any) {
-      setErr(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  const confirmDelete = async () => {
-    if (!pendingDel) return;
-    setIsDeleting(true);
-    try {
-      await fetch(`${API_BASE}/documents/${pendingDel._id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      setDocs((p) => p.filter((d) => d._id !== pendingDel._id));
-    } catch {
-      alert("Delete failed");
-    } finally {
-      setPendingDel(null);
-      setIsDeleting(false);
-    }
-  };
-
-  const Row = ({ d, i }: { d: Doc; i: number }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.02 }}
-      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
-    >
-      <FaCloudUploadAlt className="text-indigo-600" />
-      <div className="truncate">
-        <p className="font-medium text-gray-800 truncate">{d.filename}</p>
-        <p className="text-xs text-gray-500">{toDate(d._id)}</p>
-      </div>
-      <a
-        href={`${API_BASE}/documents/download/${d._id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 sm:w-auto"
-      >
-        <FaDownload /> Download
-      </a>
-      <button
-        onClick={() => setPendingDel(d)}
-        disabled={isDeleting}
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
-      >
-        <FaTrashAlt /> Remove
-      </button>
-    </motion.div>
-  );
-
-  const recent = docs
-    .slice()
-    .sort((a, b) => (a._id < b._id ? 1 : -1))
-    .slice(0, 5);
-
-  return (
-    <>
-      <div className="space-y-14 p-6 max-w-6xl mx-auto">
-        <Banner />
-
-        {/* tools */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Your tools</h2>
-          <ToolList
-            tools={tools}
-            hoverIdx={hoverIdx}
-            setHoverIdx={setHoverIdx}
-          />
-        </section>
-
-        {/* uploads */}
-        <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h3 className="text-xl font-semibold">Recent uploads</h3>
-            <InlineUpload onDone={refresh} />
-          </div>
-
-          {loading && docs.length === 0 ? (
-            <p className="text-gray-600">Loading documents…</p>
-          ) : err ? (
-            <p className="text-red-600 py-4">
-              Error: {err}.{" "}
-              <button
-                onClick={refresh}
-                className="text-[#c17829] hover:underline rounded-md font-medium"
-              >
-                Try again
-              </button>
-            </p>
-          ) : docs.length === 0 ? (
-            <p className="text-gray-600">No documents uploaded yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {recent.map((d, i) => (
-                <Row key={d._id} d={d} i={i} />
-              ))}
-            </div>
-          )}
-
-          {docs.length > 5 && (
-            <div className="self-end">
-              <Link
-                to="/dashboard/uploads"
-                className="inline-flex items-center gap-1 text-[#c17829] hover:underline rounded-md font-medium"
-              >
-                View all <FaArrowRight size={12} />
-              </Link>
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* delete modal */}
-      <AnimatePresence>
-        {pendingDel && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/40 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !isDeleting && setPendingDel(null)}
-            />
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <div className="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
-                <h4 className="text-lg font-semibold text-[color:var(--brand-dark)]">
-                  Remove document
-                </h4>
-                <p className="text-sm text-gray-700">
-                  Are you sure you want to delete{" "}
-                  <span className="font-medium">{pendingDel.filename}</span>?
-                  This action cannot be undone.
-                </p>
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    onClick={() => setPendingDel(null)}
-                    disabled={isDeleting}
-                    className="rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    disabled={isDeleting}
-                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {isDeleting && (
-                      <FaSpinner className="mr-2 inline-block animate-spin" />
-                    )}
-                    {isDeleting ? "Deleting…" : "Delete"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
   );
 }
