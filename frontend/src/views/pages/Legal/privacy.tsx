@@ -1,8 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
    src/views/pages/Legal/privacy.tsx
 
-   RELEASE 1-c • 2025-05-17
-   ‣ Hero removed — page now opens directly on the policy content.
+   RELEASE 1-d • 2025-05-17
+   ‣ Removed top accent bar that sat under the Navbar.
+   ‣ Each policy card now has overflow-hidden and the gradient bar gets
+     rounded-t-2xl so it perfectly follows the curved corners.
 ────────────────────────────────────────────────────────────────── */
 
 import React from "react";
@@ -78,9 +80,6 @@ const SECTIONS = [
 export default function PrivacyPolicy() {
   return (
     <main className="font-sans text-gray-800 bg-white">
-      {/* gradient accent bar */}
-      <div className="w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
-
       {/* policy body */}
       <section
         id="policy"
@@ -100,12 +99,12 @@ export default function PrivacyPolicy() {
           {SECTIONS.map(({ icon: Icon, title, text }, i) => (
             <motion.div
               key={title}
-              className="relative bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-8 last:mb-0"
+              className="relative bg-white rounded-2xl overflow-hidden p-6 sm:p-8 shadow-md mb-8 last:mb-0"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
+              <div className="absolute top-0 left-0 w-full h-1 rounded-t-2xl bg-gradient-to-r from-[#C17829] to-[#2C2C4A]" />
               <div className="flex items-start">
                 <Icon className="text-2xl text-[#C17829] mt-1 mr-3 flex-shrink-0" />
                 <div>
