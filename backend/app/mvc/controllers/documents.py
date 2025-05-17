@@ -16,6 +16,7 @@ from __future__ import annotations
 import io
 import logging
 from io import BytesIO
+import os
 from typing import List
 
 from bson import ObjectId
