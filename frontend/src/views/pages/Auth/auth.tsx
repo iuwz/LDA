@@ -1,10 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-c • 2025-05-17
-Adds: “Send Code” is now disabled while the app is still checking
-whether the e-mail is registered, and the button shows a spinner during
-that check.
+RELEASE 5-d • 2025-05-17
+UI tweak — e-mail field no longer shows a grey spinner during the
+“checking e-mail” phase.  
+The spinner remains on the **Send Code** button.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ═══════════ Validators ═══════════ */
+/* ───────────────── Validators ───────────────── */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
 
@@ -49,7 +49,7 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
-/* ═══════════ Helpers ═══════════ */
+/* ───────────────── Tooltip ───────────────── */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -57,7 +57,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════ Password section (unchanged from 5-b) ═══════════ */
+/* ───────────────── Password section ───────────────── */
 function PasswordSection({
   password,
   setPassword,
@@ -150,7 +150,7 @@ function PasswordSection({
   );
 }
 
-/* ═══════════ Sign-Up form (Send Code logic updated) ═══════════ */
+/* ───────────────── Sign-Up form ───────────────── */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -348,7 +348,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* e-mail + Send Code */}
+          {/* e-mail + send code */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -367,9 +367,7 @@ function SignUpForm(props: SignUpProps) {
                 />
                 {emailError || liveEmailErr ? (
                   <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
-                ) : checkingEmail ? (
-                  <FaCircleNotch className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />
-                ) : isValidEmail(email) ? (
+                ) : !checkingEmail && isValidEmail(email) ? (
                   <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
                 ) : null}
               </div>
@@ -380,9 +378,7 @@ function SignUpForm(props: SignUpProps) {
                 onClick={handleSend}
                 className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
-                {checkingEmail ? (
-                  <FaCircleNotch className="h-4 w-4 animate-spin" />
-                ) : isSending ? (
+                {checkingEmail || isSending ? (
                   <FaCircleNotch className="h-4 w-4 animate-spin" />
                 ) : codeSent ? (
                   "Resend"
@@ -464,7 +460,7 @@ function SignUpForm(props: SignUpProps) {
   );
 }
 
-/* ---------------------------- SIGN-IN FORM (unchanged) ---------------------------- */
+/* ───────────────── Sign-In form (unchanged) ───────────────── */
 function SignInForm({
   email,
   setEmail,
@@ -592,7 +588,7 @@ function SignInForm({
   );
 }
 
-/* ---------------------------- AUTH COMPONENT (unchanged except canSend) ---------------------------- */
+/* ───────────────── Auth component ───────────────── */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -840,7 +836,7 @@ export default function Auth() {
   );
 }
 
-/* ---------------------------- PROMO CARD ---------------------------- */
+/* ───────────────── Promo card ───────────────── */
 function PromoCard({
   title,
   subtitle,
