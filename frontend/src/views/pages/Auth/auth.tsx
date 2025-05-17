@@ -1,10 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-i • 2025-05-17
-* Send Code / Resend and Verify are now exactly 112 × 44 px
-  (w-28 + py-2.5), so both match.
-* Everything else identical to the previous version.
+RELEASE 5-j • 2025-05-17
+‣ “Send Code / Resend” and “Verify” are now *exactly*
+  112 × 44 px (Tailwind `w-28 h-11`).  
+‣ Everything else unchanged from 5-i.
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -27,9 +27,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ═════════════════════ Validators ═════════════════════ */
+/* ═════════════════════ Validation helpers ═════════════════════ */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
+
 function isValidEmail(e: string) {
   if (!e || e.length > 320 || /\s/.test(e)) return false;
   const [l, d] = e.split("@");
@@ -52,7 +53,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ═══════════════ Password rules block ═══════════════ */
+/* ═════════════════════ Password rules ═════════════════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -137,8 +138,8 @@ function PasswordSection({
   );
 }
 
-/* ═══════════════════ Sign-Up form ═══════════════════ */
-function SignUpForm(p: any) {
+/* ═════════════════════ Sign-Up form ═════════════════════ */
+function SignUpForm(props: any) {
   const {
     firstName,
     setFirstName,
@@ -166,53 +167,48 @@ function SignUpForm(p: any) {
     hasMinLength,
     isAllValid,
     canSend,
-  } = p;
+  } = props;
 
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
-  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const firstErr =
-    firstName.trim() === "" && (attemptedSubmit || firstTouched)
+    firstName.trim() === "" && (attempted || firstTouched)
       ? "First name is required"
-      : firstName !== "" && !isValidName(firstName)
+      : firstName && !isValidName(firstName)
       ? "Invalid name"
       : "";
   const lastErr =
-    lastName.trim() === "" && (attemptedSubmit || lastTouched)
+    lastName.trim() === "" && (attempted || lastTouched)
       ? "Last name is required"
-      : lastName !== "" && !isValidName(lastName)
+      : lastName && !isValidName(lastName)
       ? "Invalid name"
       : "";
   const liveEmailErr =
     email && !isValidEmail(email) ? "Write a valid e-mail" : "";
 
-  /* banners hide logic */
   useEffect(() => {
     if (globalError || emailError || codeError) setShowSuccess(false);
   }, [globalError, emailError, codeError]);
 
-  /* blur helper */
   const blur =
     (fn: (b: boolean) => void) => (e: FocusEvent<HTMLInputElement>) => {
-      if (e.target.value.trim() === "") fn(true);
+      if (!e.target.value.trim()) fn(true);
     };
 
-  /* send code */
   const send = async () => {
-    setAttemptedSubmit(true);
+    setAttempted(true);
     if (firstErr || lastErr || liveEmailErr) return;
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
 
-  /* submit form */
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    setAttemptedSubmit(true);
+    setAttempted(true);
     if (firstErr || lastErr || liveEmailErr) return;
     onSubmit();
   };
@@ -302,7 +298,7 @@ function SignUpForm(p: any) {
             </div>
           </div>
 
-          {/* e-mail */}
+          {/* email row */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -326,15 +322,15 @@ function SignUpForm(p: any) {
                 ) : null}
               </div>
 
-              {/* 112×44 button (w-28 py-2.5) */}
+              {/* Send / Resend button (112 × 44) */}
               <Button
                 type="button"
                 disabled={!canSend || isSending}
                 onClick={send}
-                className="shrink-0 w-28 flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                className="shrink-0 w-28 h-11 flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 {checkingEmail || isSending ? (
-                  <FaCircleNotch className="h-4 w-4 animate-spin mx-auto" />
+                  <FaCircleNotch className="h-4 w-4 animate-spin" />
                 ) : codeSent ? (
                   "Resend"
                 ) : (
@@ -373,12 +369,12 @@ function SignUpForm(p: any) {
                   ) : null}
                 </div>
 
-                {/* same 112×44 verify */}
+                {/* Verify button (112 × 44) */}
                 <Button
                   type="button"
                   onClick={handleVerifyCode}
                   disabled={code.length !== 6 || codeVerified}
-                  className="w-28 flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                  className="w-28 h-11 flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
                 >
                   Verify
                 </Button>
@@ -390,7 +386,7 @@ function SignUpForm(p: any) {
             </>
           )}
 
-          {/* password */}
+          {/* password section */}
           <PasswordSection
             password={password}
             setPassword={setPassword}
@@ -402,7 +398,6 @@ function SignUpForm(p: any) {
             hasMinLength={hasMinLength}
           />
 
-          {/* submit */}
           <Button
             type="submit"
             disabled={
@@ -422,7 +417,7 @@ function SignUpForm(p: any) {
   );
 }
 
-/* ═══════════════════ Sign-In form ═══════════════════ */
+/* ═════════════════════ Sign-In form ═════════════════════ */
 function SignInForm({
   email,
   setEmail,
@@ -472,7 +467,6 @@ function SignInForm({
             onSubmit();
           }}
         >
-          {/* email */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -494,7 +488,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -552,7 +545,7 @@ function SignInForm({
   );
 }
 
-/* ═══════════════════ Auth component ═══════════════════ */
+/* ═════════════════════ Auth master component ═════════════════════ */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -573,13 +566,13 @@ export default function Auth() {
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
 
-  const canSend =
-    !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
-
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live e-mail check */
+  const canSend =
+    !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
+
+  /* live email availability */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -635,7 +628,7 @@ export default function Auth() {
     }
   };
 
-  /* sign up */
+  /* sign-up */
   const handleSignUp = async () => {
     setGlobalError(null);
     setSignupEmailError(null);
@@ -654,7 +647,7 @@ export default function Auth() {
     }
   };
 
-  /* sign in */
+  /* sign-in */
   const handleSignIn = async () => {
     setGlobalError(null);
     setLoginCredError(null);
@@ -671,7 +664,7 @@ export default function Auth() {
     }
   };
 
-  /* sync ?form param */
+  /* ?form param sync */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const f = q.get("form");
@@ -810,7 +803,7 @@ export default function Auth() {
   );
 }
 
-/* ═══════════════════ Promo card ═══════════════════ */
+/* ═════════════════════ Promo card ═════════════════════ */
 function PromoCard({
   title,
   subtitle,
