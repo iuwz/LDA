@@ -1,8 +1,8 @@
+// src/views/pages/Auth/ResetPassword.tsx
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../../../api";
 import { motion } from "framer-motion";
-import { Button } from "../../components/common/button";
 import { FaSpinner } from "react-icons/fa";
 
 export default function ResetPassword() {
@@ -23,20 +23,24 @@ export default function ResetPassword() {
 
   const valid = hasUppercase && hasNumber && hasSymbol && hasMinLength;
 
-  const strengthScore = [hasUppercase, hasNumber, hasSymbol, hasMinLength].filter(Boolean).length;
+  const strengthScore = [
+    hasUppercase,
+    hasNumber,
+    hasSymbol,
+    hasMinLength,
+  ].filter(Boolean).length;
   const strengthColor =
     strengthScore === 4
       ? "bg-green-500"
       : strengthScore === 3
-        ? "bg-yellow-400"
-        : strengthScore === 2
-          ? "bg-orange-400"
-          : "bg-red-400";
+      ? "bg-yellow-400"
+      : strengthScore === 2
+      ? "bg-orange-400"
+      : "bg-red-400";
   const strengthWidth = `${(strengthScore / 4) * 100}%`;
 
   useEffect(() => {
     if (!token) return;
-    // clear any previous state if reloading
     setPassword("");
     setConfirm("");
     setError(null);
@@ -127,24 +131,46 @@ export default function ResetPassword() {
 
             {/* Rule checklist */}
             <div className="mt-1 text-sm space-y-1 bg-gray-50 p-3 rounded-lg">
-              <p className={`${hasUppercase ? "text-green-600" : "text-gray-500"} flex items-center`}>
-                <span className="mr-2">{hasUppercase ? "✓" : "○"}</span> Uppercase letter
+              <p
+                className={`${
+                  hasUppercase ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
+              >
+                <span className="mr-2">{hasUppercase ? "✓" : "○"}</span>{" "}
+                Uppercase letter
               </p>
-              <p className={`${hasNumber ? "text-green-600" : "text-gray-500"} flex items-center`}>
+              <p
+                className={`${
+                  hasNumber ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
+              >
                 <span className="mr-2">{hasNumber ? "✓" : "○"}</span> Number
               </p>
-              <p className={`${hasSymbol ? "text-green-600" : "text-gray-500"} flex items-center`}>
-                <span className="mr-2">{hasSymbol ? "✓" : "○"}</span> Special character
+              <p
+                className={`${
+                  hasSymbol ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
+              >
+                <span className="mr-2">{hasSymbol ? "✓" : "○"}</span> Special
+                character
               </p>
-              <p className={`${hasMinLength ? "text-green-600" : "text-gray-500"} flex items-center`}>
-                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span> At least 8 characters
+              <p
+                className={`${
+                  hasMinLength ? "text-green-600" : "text-gray-500"
+                } flex items-center`}
+              >
+                <span className="mr-2">{hasMinLength ? "✓" : "○"}</span> At
+                least 8 characters
               </p>
             </div>
 
             {/* Strength bar */}
             {password.length > 0 && (
               <div className="mt-3 h-2 w-full bg-gray-200 rounded">
-                <div className={`${strengthColor} h-full rounded`} style={{ width: strengthWidth }} />
+                <div
+                  className={`${strengthColor} h-full rounded`}
+                  style={{ width: strengthWidth }}
+                />
               </div>
             )}
 
@@ -167,12 +193,16 @@ export default function ResetPassword() {
               <>
                 <div className="mt-1 h-2 w-full bg-gray-200 rounded">
                   <div
-                    className={`h-full rounded ${password === confirm ? "bg-green-500" : "bg-red-500"}`}
+                    className={`h-full rounded ${
+                      password === confirm ? "bg-green-500" : "bg-red-500"
+                    }`}
                     style={{ width: "100%" }}
                   />
                 </div>
                 {password !== confirm && (
-                  <p className="text-sm text-red-600 mt-1 ml-1">Passwords do not match</p>
+                  <p className="text-sm text-red-600 mt-1 ml-1">
+                    Passwords do not match
+                  </p>
                 )}
               </>
             )}
@@ -188,22 +218,22 @@ export default function ResetPassword() {
               </motion.div>
             )}
 
-            <Button
+            <button
               type="submit"
               disabled={isSending}
-              className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823] disabled:opacity-50 flex items-center justify-center mt-4"
+              className="inline-flex items-center justify-center w-full px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 mt-4"
             >
               {isSending && <FaSpinner className="animate-spin mr-2" />}
               Reset Password
-            </Button>
+            </button>
           </motion.form>
         )}
 
         <div className="text-center">
           <p className="text-gray-600 text-sm">
-            Remembered your password?{' '}
+            Remembered your password?{" "}
             <button
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate("/auth")}
               className="text-[#C17829] hover:text-[#ad6823] font-medium"
             >
               Sign In

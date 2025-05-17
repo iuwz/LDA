@@ -1,8 +1,8 @@
+// src/views/pages/Auth/ForgotPassword.tsx
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "../../../api";
-import { Button } from "../../components/common/button";
 import { FaSpinner } from "react-icons/fa";
 
 export default function ForgotPassword() {
@@ -80,14 +80,14 @@ export default function ForgotPassword() {
               </motion.div>
             )}
 
-            <Button
+            <button
               type="submit"
               disabled={isSending}
-              className="w-full bg-[#C17829] text-white py-3 rounded-full text-base hover:bg-[#ad6823] disabled:opacity-50 flex items-center justify-center"
+              className="inline-flex items-center justify-center w-full px-8 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-full font-semibold text-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50"
             >
               {isSending && <FaSpinner className="animate-spin mr-2" />}
               Send Reset Link
-            </Button>
+            </button>
           </motion.form>
         )}
 
