@@ -1,11 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
    frontend/src/views/pages/Auth/auth.tsx
 
-   RELEASE 5-k • 2025-05-17
-   ‣ “Resend” is now clickable right after the first e-mail is sent.
-     (canSend no longer depends on codeSent.)
-   ‣ Button sizes remain exactly 112 × 44 px (w-28 h-11).
-   ‣ Everything else unchanged from 5-j.
+   RELEASE 5-n • 2025-05-17
+   ‣ Visible feedback on every “Resend” click.
+   ‣ 60-second client-side cooldown after each e-mail to avoid spam.
+   ‣ All auth buttons remain exactly 112 × 44 px (Tailwind `w-28 h-11`).
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -168,6 +167,7 @@ function SignUpForm(props: any) {
     hasMinLength,
     isAllValid,
     canSend,
+    cooldown,
   } = props;
 
   const [showPw, setShowPw] = useState(false);
@@ -203,6 +203,7 @@ function SignUpForm(props: any) {
   const send = async () => {
     setAttempted(true);
     if (firstErr || lastErr || liveEmailErr) return;
+    setShowSuccess(false); // reset banner, so animation repeats
     const ok = await handleSendCode();
     setShowSuccess(ok);
   };
@@ -326,12 +327,14 @@ function SignUpForm(props: any) {
               {/* Send / Resend button (112 × 44) */}
               <Button
                 type="button"
-                disabled={!canSend || isSending}
+                disabled={!canSend || isSending || cooldown > 0}
                 onClick={send}
                 className="shrink-0 w-28 h-11 flex items-center justify-center bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
-                {checkingEmail || isSending ? (
+                {isSending ? (
                   <FaCircleNotch className="h-4 w-4 animate-spin" />
+                ) : cooldown > 0 ? (
+                  `Resend (${cooldown})`
                 ) : codeSent ? (
                   "Resend"
                 ) : (
@@ -387,7 +390,7 @@ function SignUpForm(props: any) {
             </>
           )}
 
-          {/* password section */}
+          {/* password rules */}
           <PasswordSection
             password={password}
             setPassword={setPassword}
@@ -418,7 +421,7 @@ function SignUpForm(props: any) {
   );
 }
 
-/* ═════════════════════ Sign-In form ═════════════════════ */
+/* ═════════════════════ Sign-In form (unchanged) ═════════════════════ */
 function SignInForm({
   email,
   setEmail,
@@ -567,13 +570,26 @@ export default function Auth() {
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
 
+  /* ◀ NEW cool-down timer (s) */
+  const [cooldown, setCooldown] = useState(0);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  /*  ▶▶  Resend now allowed immediately  ◀◀  */
-  const canSend = isValidEmail(email) && !signupEmailError && !checkingEmail;
+  /* timer tick: minus 1 each second */
+  useEffect(() => {
+    if (cooldown === 0) return;
+    const id = setInterval(() => setCooldown((t) => Math.max(t - 1, 0)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
-  /* live email availability */
+  const canSend =
+    cooldown === 0 &&
+    isValidEmail(email) &&
+    !signupEmailError &&
+    !checkingEmail;
+
+  /* live e-mail availability check */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -605,6 +621,7 @@ export default function Auth() {
     try {
       await sendVerificationCode(email);
       setCodeSent(true);
+      setCooldown(60); // start 60 s cooldown
       return true;
     } catch (e: any) {
       if (e.message?.toLowerCase().includes("email already registered"))
@@ -618,7 +635,7 @@ export default function Auth() {
     }
   };
 
-  /* verify */
+  /* verify code */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -665,7 +682,7 @@ export default function Auth() {
     }
   };
 
-  /* ?form param sync */
+  /* ?form query-param sync */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const f = q.get("form");
@@ -732,6 +749,7 @@ export default function Auth() {
                       hasMinLength={hasMinLength}
                       isAllValid={isAllValid}
                       canSend={canSend}
+                      cooldown={cooldown}
                     />
                   </motion.div>
                 ) : (
