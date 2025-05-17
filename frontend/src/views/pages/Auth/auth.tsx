@@ -1,10 +1,15 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-d • 2025-05-17
-UI tweak — e-mail field no longer shows a grey spinner during the
-“checking e-mail” phase.  
-The spinner remains on the **Send Code** button.
+RELEASE 5-e • 2025-05-17  
+Unifies sizing:
+
+• “Send Code / Resend” and “Verify” buttons now share a fixed width  
+  (w-28, ≈112 px) so both input rows align perfectly.  
+• The 6-digit code input already stretches the same as the e-mail
+  field by using flex-1, so no further change needed.
+
+Copy-paste this file over **src/views/pages/Auth/auth.tsx**
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -27,11 +32,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ───────────────── Validators ───────────────── */
+/* ─── Validators ─── */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
-
-function isValidEmail(email: string): boolean {
+function isValidEmail(email: string) {
   if (!email || email.length > 320 || /\s/.test(email)) return false;
   const [local, domain] = email.split("@");
   if (!local || !domain) return false;
@@ -45,11 +49,10 @@ function isValidEmail(email: string): boolean {
     return false;
   if (local.includes("..") || domain.includes("..")) return false;
   const tld = domain.split(".").pop()!;
-  if (!/^[A-Za-z]{2,}$/.test(tld)) return false;
-  return true;
+  return /^[A-Za-z]{2,}$/.test(tld);
 }
 
-/* ───────────────── Tooltip ───────────────── */
+/* ─── Tooltip ─── */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -57,7 +60,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ───────────────── Password section ───────────────── */
+/* ─── Password Section ─── */
 function PasswordSection({
   password,
   setPassword,
@@ -69,7 +72,6 @@ function PasswordSection({
   hasMinLength,
 }: any) {
   const rulesVisible = password.length > 0;
-
   return (
     <div>
       <div className="relative">
@@ -91,22 +93,13 @@ function PasswordSection({
           <Tooltip text={showPw ? "Hide password" : "Show password"} />
         </button>
       </div>
-
       <AnimatePresence initial={false}>
         {rulesVisible && (
           <motion.div
             key="rules"
             initial={{ opacity: 0, y: -6 }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.45, ease: "easeOut" },
-            }}
-            exit={{
-              opacity: 0,
-              y: -6,
-              transition: { duration: 0.3, ease: "easeIn" },
-            }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.45 } }}
+            exit={{ opacity: 0, y: -6, transition: { duration: 0.3 } }}
             className="mt-3 rounded-lg bg-gray-100 px-4 py-3"
           >
             <ul className="text-sm space-y-1">
@@ -150,7 +143,7 @@ function PasswordSection({
   );
 }
 
-/* ───────────────── Sign-Up form ───────────────── */
+/* ─── Sign-Up Form ─── */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -179,8 +172,7 @@ interface SignUpProps {
   isAllValid: boolean;
   canSend: boolean;
 }
-
-function SignUpForm(props: SignUpProps) {
+function SignUpForm(p: SignUpProps) {
   const {
     firstName,
     setFirstName,
@@ -208,11 +200,10 @@ function SignUpForm(props: SignUpProps) {
     hasMinLength,
     isAllValid,
     canSend,
-  } = props;
+  } = p;
 
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
@@ -228,14 +219,12 @@ function SignUpForm(props: SignUpProps) {
       : firstInvalid
       ? "Invalid name"
       : "";
-
   const lastErr =
     lastEmpty && (attemptedSubmit || lastTouched)
       ? "Last name is required"
       : lastInvalid
       ? "Invalid name"
       : "";
-
   const liveEmailErr =
     email && !isValidEmail(email) ? "Write a valid e-mail" : "";
 
@@ -243,7 +232,12 @@ function SignUpForm(props: SignUpProps) {
     if (globalError || emailError || codeError) setShowSuccess(false);
   }, [globalError, emailError, codeError]);
 
-  const handleSend = async () => {
+  const blur =
+    (setTouched: (v: boolean) => void) => (e: FocusEvent<HTMLInputElement>) => {
+      if (e.target.value.trim() === "") setTouched(true);
+    };
+
+  const send = async () => {
     setAttemptedSubmit(true);
     if (firstErr || lastErr || liveEmailErr) return;
     const ok = await handleSendCode();
@@ -256,12 +250,6 @@ function SignUpForm(props: SignUpProps) {
     if (firstErr || lastErr || liveEmailErr) return;
     onSubmit();
   };
-
-  const blur =
-    (setTouched: React.Dispatch<React.SetStateAction<boolean>>) =>
-    (e: FocusEvent<HTMLInputElement>) => {
-      if (e.target.value.trim() === "") setTouched(true);
-    };
 
   return (
     <div className="min-h-[480px] flex flex-col justify-between">
@@ -326,7 +314,6 @@ function SignUpForm(props: SignUpProps) {
                 <p className="text-red-600 text-xs mt-1">{firstErr}</p>
               )}
             </div>
-
             <div className="relative w-1/2">
               <input
                 value={lastName}
@@ -348,7 +335,7 @@ function SignUpForm(props: SignUpProps) {
             </div>
           </div>
 
-          {/* e-mail + send code */}
+          {/* email */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -371,12 +358,11 @@ function SignUpForm(props: SignUpProps) {
                   <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
                 ) : null}
               </div>
-
               <Button
                 type="button"
                 disabled={!canSend || isSending}
-                onClick={handleSend}
-                className="shrink-0 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                onClick={send}
+                className="shrink-0 w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 {checkingEmail || isSending ? (
                   <FaCircleNotch className="h-4 w-4 animate-spin" />
@@ -419,7 +405,7 @@ function SignUpForm(props: SignUpProps) {
                 type="button"
                 onClick={handleVerifyCode}
                 disabled={code.length !== 6 || codeVerified}
-                className="px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                className="w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 Verify
               </Button>
@@ -460,7 +446,7 @@ function SignUpForm(props: SignUpProps) {
   );
 }
 
-/* ───────────────── Sign-In form (unchanged) ───────────────── */
+/* ─── Sign-In form stays unchanged from 5-d ─── */
 function SignInForm({
   email,
   setEmail,
@@ -481,7 +467,6 @@ function SignInForm({
   credError?: string | null;
 }) {
   const [showPw, setShowPw] = useState(false);
-
   return (
     <div className="min-h-[440px] flex flex-col justify-between">
       <div>
@@ -491,7 +476,6 @@ function SignInForm({
           </h2>
           <p className="text-gray-600 text-base">Access your account</p>
         </div>
-
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -502,7 +486,6 @@ function SignInForm({
             {error}
           </motion.div>
         )}
-
         <form
           className="space-y-5"
           onSubmit={(e) => {
@@ -530,7 +513,6 @@ function SignInForm({
               )}
             </div>
           </div>
-
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -556,11 +538,9 @@ function SignInForm({
                 <Tooltip text={showPw ? "Hide password" : "Show password"} />
               </button>
             </div>
-
             {credError && (
               <p className="text-red-600 text-sm mt-1">{credError}</p>
             )}
-
             <div className="mt-2 text-right">
               <a
                 href="/forgot-password"
@@ -570,7 +550,6 @@ function SignInForm({
               </a>
             </div>
           </div>
-
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -588,30 +567,25 @@ function SignInForm({
   );
 }
 
-/* ───────────────── Auth component ───────────────── */
+/* ─── Auth master component (unchanged except new w-28 buttons already handled) ─── */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
-
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [loginCredError, setLoginCredError] = useState<string | null>(null);
   const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
-
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
-
   const canSend =
     !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -638,7 +612,7 @@ export default function Auth() {
     };
   }, [email]);
 
-  const handleSendCode = async (): Promise<boolean> => {
+  const handleSendCode = async () => {
     setCodeError(null);
     setSignupEmailError(null);
     setIsSending(true);
@@ -657,7 +631,6 @@ export default function Auth() {
       setIsSending(false);
     }
   };
-
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -667,7 +640,6 @@ export default function Auth() {
       setCodeError(e.message);
     }
   };
-
   const handleSignUp = async () => {
     setGlobalError(null);
     setSignupEmailError(null);
@@ -685,7 +657,6 @@ export default function Auth() {
       else setGlobalError(e.message);
     }
   };
-
   const handleSignIn = async () => {
     setGlobalError(null);
     setLoginCredError(null);
@@ -701,12 +672,11 @@ export default function Auth() {
       setIsSigningIn(false);
     }
   };
-
   useEffect(() => {
     const q = new URLSearchParams(location.search);
-    const form = q.get("form");
-    if (form === "login") setIsSignUp(false);
-    else if (form === "register") setIsSignUp(true);
+    const f = q.get("form");
+    if (f === "login") setIsSignUp(false);
+    else if (f === "register") setIsSignUp(true);
     else if (location.state && typeof location.state === "object") {
       const s = location.state as { isSignUp?: boolean };
       if (s.isSignUp !== undefined) setIsSignUp(s.isSignUp);
@@ -791,15 +761,11 @@ export default function Auth() {
               </AnimatePresence>
             </div>
           </div>
-
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
               animate={{ x: isSignUp ? "-100%" : "0%" }}
-              transition={{
-                duration: 0.6,
-                ease: [0.43, 0.13, 0.23, 0.96],
-              }}
+              transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
             >
               <PromoCard
                 title="New to our platform?"
@@ -817,7 +783,6 @@ export default function Auth() {
               />
             </motion.div>
           </div>
-
           <div className="md:hidden w-full p-4 text-center border-t border-gray-100">
             <p className="text-gray-600 mb-3 text-sm">
               {isSignUp ? "Already have an account?" : "New to our platform?"}
@@ -836,7 +801,7 @@ export default function Auth() {
   );
 }
 
-/* ───────────────── Promo card ───────────────── */
+/* ─── Promo card ─── */
 function PromoCard({
   title,
   subtitle,
