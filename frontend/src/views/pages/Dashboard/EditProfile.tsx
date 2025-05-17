@@ -257,6 +257,10 @@ const EditProfile: React.FC = () => {
       if (!e.target.value.trim()) fn(true);
     };
 
+  /* ─── unified button classes (match rephrase button) ─── */
+  const primaryBtn =
+    "flex items-center justify-center gap-2 rounded-md bg-[#c17829] text-white px-6 py-2 transition-colors hover:bg-[#a66224] disabled:opacity-50";
+
   /* ─── rendering ─── */
   return (
     <div className="space-y-8">
@@ -383,12 +387,12 @@ const EditProfile: React.FC = () => {
                       type="button"
                       disabled={!canSend || isSending}
                       onClick={sendCode}
-                      className="w-28 h-11 shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)] text-white text-sm shadow-lg transition hover:scale-105 disabled:opacity-40"
+                      className={`${primaryBtn} shrink-0 w-32 h-11`}
                     >
                       {isSending ? (
                         <FaCircleNotch className="h-4 w-4 animate-spin" />
                       ) : cooldown > 0 ? (
-                        `Resend (${cooldown})`
+                        <>Resend&nbsp;({cooldown})</>
                       ) : codeSent ? (
                         "Resend"
                       ) : (
@@ -434,7 +438,7 @@ const EditProfile: React.FC = () => {
                   type="button"
                   onClick={verifyCode}
                   disabled={code.length !== 6 || codeVerified}
-                  className="w-28 h-11 flex items-center justify-center rounded-lg bg-gradient-to-r from-[color:var(--accent-dark)] to-[color:var(--accent-light)] text-white text-sm shadow-lg transition hover:scale-105 disabled:opacity-40"
+                  className={`${primaryBtn} w-32 h-11`}
                 >
                   Verify
                 </button>
@@ -574,7 +578,7 @@ const EditProfile: React.FC = () => {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 rounded-md bg-[color:var(--accent-dark)] px-6 py-2 text-white shadow-sm hover:bg-[color:var(--accent-light)] transition disabled:opacity-50"
+                className={`${primaryBtn}`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
