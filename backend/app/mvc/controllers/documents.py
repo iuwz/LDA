@@ -48,6 +48,8 @@ logger = logging.getLogger(__name__)
 # tuned heuristics
 MIN_PRINTABLE_RATIO = 0.05     # < 5 % printable → likely garbage
 OCR_MAX_PAGES       = 50       # OCR is expensive but we allow up to 50 pages
+# vision:
+VISION_MAX_PAGES    = 15       # safety cap – don’t upload huge PDFs to GPT
 
 
 # ═════════════════ TEXT EXTRACTION ══════════════════
@@ -130,7 +132,45 @@ async def extract_full_text_from_stream(stream, filename: str) -> str:
         except Exception:
             pass
 
-    # ───── all layers failed ────────────────────────────────────────────────
+    # 6️⃣  GPT-4o VISION FALLBACK  (images → text) ---------------------
+    try:
+        imgs: list[bytes] = []
+
+        if ext == "pdf":
+            # → rasterise pages
+            from pdf2image import convert_from_bytes
+            pages = convert_from_bytes(
+                raw, dpi=300, fmt="png",
+                first_page=1, last_page=min(VISION_MAX_PAGES, 999)
+            )
+            for p in pages:
+                buf = BytesIO();  p.save(buf, format="PNG");  imgs.append(buf.getvalue())
+
+        elif ext in {"docx", "docm", "dotx", "dotm"} and DOCX_AVAILABLE:
+            # → DOCX is just a ZIP – take everything in word/media/
+            import zipfile
+            with zipfile.ZipFile(BytesIO(raw)) as z:
+                for n in z.namelist():
+                    if n.startswith("word/media/"):
+                        imgs.append(z.read(n))
+
+        if imgs:
+            logger.info("Vision fallback: sending %d image(s) to GPT-4o", len(imgs))
+            from backend.app.core.openai_client import call_gpt   # local import
+            vision_txt = await call_gpt(
+                prompt="Please transcribe every bit of visible text.",
+                system_message="You are a precise OCR assistant.",
+                model="gpt-4o",           # ← ONLY here, everywhere else still o4-mini
+                temperature=0.0,
+                images=imgs,
+                max_completion_tokens=8192,
+            )
+            if _has_enough_text(vision_txt, accept_short=True):
+                return vision_txt
+    except Exception as e:
+        logger.error("Vision fallback failed on %s: %s", filename, e, exc_info=True)
+
+    # ───── all layers failed ──────────────────────────────────────────
     logger.error("All extraction layers failed for %s", filename)
     return "Error: Unable to extract text from document."
 
