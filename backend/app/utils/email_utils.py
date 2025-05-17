@@ -2,10 +2,11 @@
 Utility helpers for sending transactional e-mails via the external
 EC2 “email-worker” service.
 
-RELEASE 2.4 • 2025-05-17
-‣ Every resend carries a unique RFC-5322 Message-ID header.
-‣ Plain-text body now includes a random nonce → providers can’t
-  drop it as a duplicate even if they hash the plain part only.
+RELEASE 2.5 • 2025-05-17
+‣ Unique Message-ID now sent in *both* places Nodemailer/SES accept:
+    • top-level  messageId="…"
+    • custom     headers["Message-ID"]="…"
+‣ Plain-text nonce remains → no body-hash duplicates.
 """
 
 from __future__ import annotations
@@ -44,11 +45,22 @@ def random_code() -> str:
     return f"{randint(0, 999_999):06d}"
 
 
-# ───────────────────────── Password-reset ────────────────────────────
+# ───────────────────────── helpers ──────────────────────────
+def _make_msg_id() -> str:
+    uid = uuid4().hex
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S.%f")
+    return f"<{uid}.{ts}@{DOMAIN}>"
+
+
+# ───────────────────────── Password-reset ───────────────────
 def send_reset_email(to_email: str, reset_link: str) -> None:
+    msg_id = _make_msg_id()
+
     payload = {
         "to_email": to_email,
         "subject": "Password Reset Request",
+        "messageId": msg_id,                # ← NEW (top-level)
+        "headers": {"Message-ID": msg_id},  # echoed for logging
         "plain": (
             "Hello,\n\n"
             f"Reset link: {reset_link}\n\n"
@@ -64,61 +76,43 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
     _post_email(payload)
 
 
-# ───────────────────────── Verification code ─────────────────────────
-def _unique_headers() -> dict[str, str]:
-    """
-    Generate headers that guarantee SMTP-level uniqueness:
-      • Message-ID with UUID and high-resolution UTC timestamp
-      • X-LDA-Mail-UUID for extra debugging on the worker
-    """
-    uid = uuid4().hex
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S.%f")
-    msg_id = f"<{uid}.{ts}@{DOMAIN}>"
-    return {
-        "Message-ID": msg_id,       # honoured by most providers
-        "X-LDA-Mail-UUID": uid,     # logged by our email-worker
-    }
-
-
+# ───────────────────────── Verification code ────────────────
 def send_verification_email(to_email: str, code: str) -> None:
-    """
-    Send a 6-digit verification code.
-
-    Each call:
-      • Crafts a brand-new Message-ID header.
-      • Appends an invisible HTML comment holding a UUID so the HTML
-        body is always different.
-      • Adds the same UUID to the plain-text part ( [id:…] ) so providers
-        that hash only text/plain still see a unique body.
-    """
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
     subject = f"Your Verification Code – {code} · {now}"
 
-    nonce = uuid4().hex  # single nonce used in plain + HTML
+    nonce = uuid4().hex
+    msg_id = _make_msg_id()
 
     payload = {
         "to_email": to_email,
         "subject": subject,
+        "messageId": msg_id,                # ← NEW (top-level)
+        "headers": {                        # still logged by the worker
+            "Message-ID": msg_id,
+            "X-LDA-Mail-UUID": nonce,
+        },
         "plain": (
             f"Your verification code is {code}\n\n"
             "This code will expire in 10 minutes."
-            f"\n[id:{nonce}]"                # ← makes plain part unique
+            f"\n[id:{nonce}]"
         ),
         "html": (
             "<p>Hello,</p>"
             "<p>Your verification code is:</p>"
             f"<h2>{code}</h2>"
             "<p>This code will expire in 10&nbsp;minutes.</p>"
-            f"<!-- {nonce} -->"              # keeps HTML unique
+            f"<!-- {nonce} -->"
         ),
-        "headers": _unique_headers(),
     }
     _post_email(payload)
 
 
-# ───────────────────── Contact-form relay ────────────────────────────
+# ───────────────────── Contact-form relay ───────────────────
 def send_contact_email(name: str, email: str, subject: str, message: str) -> None:
     support_addr = os.getenv("SUPPORT_EMAIL", "support@lda-legal.com")
+
+    msg_id = _make_msg_id()
 
     plaintext = (
         "New contact-form submission\n"
@@ -139,8 +133,9 @@ def send_contact_email(name: str, email: str, subject: str, message: str) -> Non
     payload = {
         "to_email": support_addr,
         "subject": f"[LDA Contact] {subject}",
+        "messageId": msg_id,
+        "headers": {"Message-ID": msg_id},
         "plain": plaintext,
         "html": html,
-        "headers": _unique_headers(),
     }
     _post_email(payload)
