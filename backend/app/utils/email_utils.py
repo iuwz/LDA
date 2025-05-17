@@ -2,36 +2,36 @@
 Utility helpers for sending transactional e-mails via the external
 EC2 “email-worker” service.
 
-RELEASE 2.2 • 2025-05-17
-‣ Verification e-mail subject now includes the code **and** a UTC
-  timestamp to guarantee uniqueness across rapid “Resend” clicks.
+RELEASE 2.3 • 2025-05-17
+‣ Every resend now carries a unique RFC-5322 Message-ID header
+  and an invisible random HTML comment → providers can’t treat
+  it as a duplicate, so the mail is always delivered.
 """
+
+from __future__ import annotations
 
 import os
 import logging
 import requests
 from random import randint
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
-# URL of the EC2 email-worker (set in Render /.env or Docker secrets)
+# ---------------------------------------------------------------------
+
 EMAIL_WORKER_URL = os.getenv("EMAIL_WORKER_URL", "")
 HEADERS = {"Content-Type": "application/json"}
+DOMAIN = os.getenv("MAIL_DOMAIN", "lda-legal.com")  # fallback if not set
 
 
-# ─────────────────────────── helpers ────────────────────────────
 def _post_email(payload: dict) -> None:
-    """
-    Forward a JSON payload to the email-worker.
-    Raises RuntimeError on *any* failure so the caller can surface a
-    5xx / 4xx to the front-end.
-    """
+    """Forward JSON to the email-worker; raise on any HTTP error."""
     try:
         resp = requests.post(
             f"{EMAIL_WORKER_URL}/send-email",
             json=payload,
             headers=HEADERS,
-            timeout=10,                         # ↑ little more breathing room
+            timeout=10,
         )
         resp.raise_for_status()
     except Exception:
@@ -44,7 +44,7 @@ def random_code() -> str:
     return f"{randint(0, 999_999):06d}"
 
 
-# ───────────────────── password-reset flow ──────────────────────
+# ───────────────────────── Password-reset ────────────────────────────
 def send_reset_email(to_email: str, reset_link: str) -> None:
     payload = {
         "to_email": to_email,
@@ -64,19 +64,36 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
     _post_email(payload)
 
 
-# ───────────────────── verification-code flow ───────────────────
+# ───────────────────────── Verification code ─────────────────────────
+def _unique_headers() -> dict[str, str]:
+    """
+    Generate headers that guarantee SMTP-level uniqueness:
+      • Message-ID with UUID and high-resolution UTC timestamp
+      • X-LDA-Mail-UUID for extra debugging on the worker
+    """
+    uid = uuid4().hex
+    ts  = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S.%f")
+    msg_id = f"<{uid}.{ts}@{DOMAIN}>"
+    return {
+        "Message-ID": msg_id,       # honoured by most providers
+        "X-LDA-Mail-UUID": uid,     # logged by our email-worker
+    }
+
+
 def send_verification_email(to_email: str, code: str) -> None:
     """
-    Send a 6-digit e-mail-verification code.
+    Send a 6-digit verification code.
 
-    **Uniqueness tweaks (2025-05-17):**
-    – Subject line now contains the code *and* a timestamp so that
-      mail providers treat every resend as a totally separate message.
-    – A per-message UUID is injected via custom header to bust any
-      provider-side de-duplication caches.
+    Each call now:
+      • Crafts a *brand-new* Message-ID header.
+      • Appends an invisible HTML comment holding a UUID so the body
+        is always different (belt-and-suspenders approach).
     """
-    utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    subject = f"Your Verification Code – {code} · {utc_time}"
+    now     = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    subject = f"Your Verification Code – {code} · {now}"
+
+    # invisible random comment
+    nonce = uuid4().hex
 
     payload = {
         "to_email": to_email,
@@ -90,15 +107,14 @@ def send_verification_email(to_email: str, code: str) -> None:
             "<p>Your verification code is:</p>"
             f"<h2>{code}</h2>"
             "<p>This code will expire in 10&nbsp;minutes.</p>"
+            f"<!-- {nonce} -->"
         ),
-        "headers": {                     # forwarded by email-worker
-            "X-LDA-Mail-UUID": str(uuid4())
-        },
+        "headers": _unique_headers(),
     }
     _post_email(payload)
 
 
-# ─────────────────── contact-form forwarding ────────────────────
+# ──────────────────────── Contact-form relay ─────────────────────────
 def send_contact_email(name: str, email: str, subject: str, message: str) -> None:
     support_addr = os.getenv("SUPPORT_EMAIL", "support@lda-legal.com")
 
@@ -123,5 +139,6 @@ def send_contact_email(name: str, email: str, subject: str, message: str) -> Non
         "subject": f"[LDA Contact] {subject}",
         "plain": plaintext,
         "html": html,
+        "headers": _unique_headers(),
     }
     _post_email(payload)
