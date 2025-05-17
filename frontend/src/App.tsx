@@ -16,6 +16,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 import Home from "./views/pages/Home/home";
 import About from "./views/pages/About/about";
 import Contact from "./views/pages/Contact/contact";
+import PrivacyPolicy from "./views/pages/Legal/privacy";
 import Auth from "./views/pages/Auth/auth";
 import ForgotPassword from "./views/pages/Auth/ForgotPassword";
 import ResetPassword from "./views/pages/Auth/ResetPassword";
@@ -40,8 +41,6 @@ import DashboardLayout from "./views/components/layout/DashboardLayout";
 import LoadingScreen from "./views/components/common/LoadingScreen";
 
 /* ── RoleChecker (optional) ─────────── */
-// If you still want an automatic redirect based on role,
-// mount it at "/redirect" instead of "/".
 const RoleChecker = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -158,6 +157,16 @@ export default function App() {
           }
         />
         <Route
+          path="/privacy"
+          element={
+            <>
+              <Navbar />
+              <PrivacyPolicy />
+              <Footer />
+            </>
+          }
+        />
+        <Route
           path="/auth"
           element={
             <>
@@ -187,6 +196,7 @@ export default function App() {
             </>
           }
         />
+
         {/* Dashboard (protected) */}
         <Route
           path="/dashboard/*"
