@@ -1,5 +1,5 @@
 // src/components/common/toolList.tsx
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FaExternalLinkAlt } from "react-icons/fa";
@@ -19,9 +19,13 @@ const fadeContainer = {
 
 const fadeItem = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
-const ToolList: React.FC<{ tools: ToolCard[] }> = ({ tools }) => {
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+export interface ToolListProps {
+  tools: ToolCard[];
+  hoverIdx: number | null;
+  setHoverIdx: React.Dispatch<React.SetStateAction<number | null>>;
+}
 
+const ToolList: React.FC<ToolListProps> = ({ tools, hoverIdx, setHoverIdx }) => {
   return (
     <section className="space-y-6">
       <motion.div
@@ -40,7 +44,7 @@ const ToolList: React.FC<{ tools: ToolCard[] }> = ({ tools }) => {
               <motion.div
                 whileHover={{ y: -4, scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="
+                className={`
                   group
                   relative
                   flex flex-col
@@ -49,9 +53,9 @@ const ToolList: React.FC<{ tools: ToolCard[] }> = ({ tools }) => {
                   bg-white
                   border border-gray-200
                   shadow-sm
-                  hover:shadow-lg
+                  ${hoverIdx === i ? "shadow-lg" : "hover:shadow-lg"}
                   transition-shadow duration-300
-                "
+                `}
               >
                 <div
                   className="

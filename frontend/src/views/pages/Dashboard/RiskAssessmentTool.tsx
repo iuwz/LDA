@@ -334,16 +334,16 @@ function RiskAssessmentTool() {
 
   const filtered = results
     ? results.riskItems.filter(
-        (i) =>
-          activeSection === "all" ||
-          i.section.toLowerCase() === activeSection.toLowerCase()
-      )
+      (i) =>
+        activeSection === "all" ||
+        i.section.toLowerCase() === activeSection.toLowerCase()
+    )
     : [];
   const counts = results
     ? results.riskItems.reduce(
-        (acc, i) => ((acc[i.risk] = (acc[i.risk] || 0) + 1), acc),
-        { high: 0, medium: 0, low: 0 } as Record<Severity, number>
-      )
+      (acc, i) => ((acc[i.risk] = (acc[i.risk] || 0) + 1), acc),
+      { high: 0, medium: 0, low: 0 } as Record<Severity, number>
+    )
     : { high: 0, medium: 0, low: 0 };
 
   const reportHistoryItem = results
@@ -623,9 +623,8 @@ function ExistingDocPicker({
             ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
             : "Choose Document"}
           <FaChevronDown
-            className={`ml-2 transition-transform ${
-              docSelectOpen ? "rotate-180" : ""
-            }`}
+            className={`ml-2 transition-transform ${docSelectOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
 
@@ -649,9 +648,8 @@ function ExistingDocPicker({
                 uploadedDocs.map((doc) => (
                   <li
                     key={doc._id}
-                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                      selectedDocId === doc._id ? "bg-gray-100" : ""
-                    }`}
+                    className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${selectedDocId === doc._id ? "bg-gray-100" : ""
+                      }`}
                     onClick={() => {
                       handleDocSelection(doc._id);
                       setDocSelectOpen(false);
@@ -704,11 +702,10 @@ function UploadDropZone({
 }: UploadDropZoneProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
-        isDisabled
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${isDisabled
           ? "cursor-not-allowed opacity-60"
           : "cursor-pointer hover:border-[color:var(--accent-dark)]"
-      }`}
+        }`}
       onClick={() => !isDisabled && fileInputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
@@ -742,7 +739,7 @@ function UploadDropZone({
         <>
           <FaCloudUploadAlt className="text-5xl text-gray-400" />
           <p className="mt-2">Drag & drop or click to upload</p>
-          <p className="text-xs text-gray-400">Accepted: PDF, DOCX</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX (Text only)</p>
         </>
       )}
     </div>
@@ -828,11 +825,10 @@ function ResultPane(props: {
               <button
                 key={sec}
                 onClick={() => setActiveSection(sec)}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors ${
-                  activeSection.toLowerCase() === sec.toLowerCase()
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors ${activeSection.toLowerCase() === sec.toLowerCase()
                     ? "bg-[rgb(193,120,41)] text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {sec === "all" ? "All Sections" : sec}
               </button>
@@ -859,9 +855,8 @@ function ResultPane(props: {
                   {item.title}
                 </h4>
                 <span
-                  className={`rounded border px-2 py-1 text-xs font-medium ${
-                    palette[item.risk]
-                  }`}
+                  className={`rounded border px-2 py-1 text-xs font-medium ${palette[item.risk]
+                    }`}
                 >
                   {item.risk[0].toUpperCase() + item.risk.slice(1)} Risk
                 </span>
@@ -888,9 +883,8 @@ function ResultPane(props: {
           >
             {showAll ? "Show Less" : `Show ${filtered.length - 3} More`}
             <FaChevronDown
-              className={`ml-1 inline-block transition-transform ${
-                showAll ? "rotate-180" : ""
-              }`}
+              className={`ml-1 inline-block transition-transform ${showAll ? "rotate-180" : ""
+                }`}
             />
           </button>
         )}

@@ -128,9 +128,8 @@ const RephrasingTool: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
     setOriginalText(
       id
-        ? `Document selected: ${
-            uploadedDocs.find((d) => d._id === id)?.filename
-          }`
+        ? `Document selected: ${uploadedDocs.find((d) => d._id === id)?.filename
+        }`
         : ""
     );
     setRephrasedText("");
@@ -292,9 +291,8 @@ const RephrasingTool: React.FC = () => {
             ? uploadedDocs.find((d) => d._id === selectedDocId)?.filename
             : "Choose Document"}
           <FaChevronDown
-            className={`ml-2 transition-transform ${
-              docSelectOpen ? "rotate-180" : ""
-            }`}
+            className={`ml-2 transition-transform ${docSelectOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
         <AnimatePresence>
@@ -317,9 +315,8 @@ const RephrasingTool: React.FC = () => {
                 uploadedDocs.map((doc) => (
                   <li
                     key={doc._id}
-                    className={`cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                      selectedDocId === doc._id ? "bg-gray-100" : ""
-                    }`}
+                    className={`cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${selectedDocId === doc._id ? "bg-gray-100" : ""
+                      }`}
                     onClick={() => {
                       handleDocSelection(doc._id);
                       setDocSelectOpen(false);
@@ -353,11 +350,10 @@ const RephrasingTool: React.FC = () => {
 
   const UploadDropZone = () => (
     <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
-        isLoading
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${isLoading
           ? "cursor-not-allowed opacity-60"
           : "cursor-pointer hover:border-[#c17829]"
-      }`}
+        }`}
       onClick={() => !isLoading && fileInputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
@@ -390,7 +386,7 @@ const RephrasingTool: React.FC = () => {
         <>
           <FaCloudUploadAlt className="text-5xl text-gray-400" />
           <p className="mt-2">Drag & drop or click to upload</p>
-          <p className="text-xs text-gray-400">Accepted: PDF, DOC, DOCX</p>
+          <p className="text-xs text-gray-400">Accepted: PDF, DOCX (Text only)</p>
         </>
       )}
     </div>
@@ -488,11 +484,10 @@ const RephrasingTool: React.FC = () => {
           <button
             key={id}
             onClick={() => setActiveStyle(id)}
-            className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
-              activeStyle === id
+            className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${activeStyle === id
                 ? "bg-[#c17829] text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+              }`}
           >
             {label}
           </button>
