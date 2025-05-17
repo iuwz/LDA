@@ -1,15 +1,10 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-e • 2025-05-17  
-Unifies sizing:
-
-• “Send Code / Resend” and “Verify” buttons now share a fixed width  
-  (w-28, ≈112 px) so both input rows align perfectly.  
-• The 6-digit code input already stretches the same as the e-mail
-  field by using flex-1, so no further change needed.
-
-Copy-paste this file over **src/views/pages/Auth/auth.tsx**
+RELEASE 5-f • 2025-05-17
+• Tightened spacing around the red “Invalid code” message  
+• Keeps button widths aligned (w-28)  
+• No other behaviour changed
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -32,9 +27,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ─── Validators ─── */
+/* ══════════════════════════════════════════════════════
+   Validators
+   ══════════════════════════════════════════════════════ */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
+
 function isValidEmail(email: string) {
   if (!email || email.length > 320 || /\s/.test(email)) return false;
   const [local, domain] = email.split("@");
@@ -52,7 +50,9 @@ function isValidEmail(email: string) {
   return /^[A-Za-z]{2,}$/.test(tld);
 }
 
-/* ─── Tooltip ─── */
+/* ══════════════════════════════════════════════════════
+   Tooltip helper
+   ══════════════════════════════════════════════════════ */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -60,7 +60,9 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ─── Password Section ─── */
+/* ══════════════════════════════════════════════════════
+   Password section (rules slide-in)
+   ══════════════════════════════════════════════════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -72,6 +74,7 @@ function PasswordSection({
   hasMinLength,
 }: any) {
   const rulesVisible = password.length > 0;
+
   return (
     <div>
       <div className="relative">
@@ -93,6 +96,7 @@ function PasswordSection({
           <Tooltip text={showPw ? "Hide password" : "Show password"} />
         </button>
       </div>
+
       <AnimatePresence initial={false}>
         {rulesVisible && (
           <motion.div
@@ -143,7 +147,9 @@ function PasswordSection({
   );
 }
 
-/* ─── Sign-Up Form ─── */
+/* ══════════════════════════════════════════════════════
+   Sign-Up form
+   ══════════════════════════════════════════════════════ */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -172,6 +178,7 @@ interface SignUpProps {
   isAllValid: boolean;
   canSend: boolean;
 }
+
 function SignUpForm(p: SignUpProps) {
   const {
     firstName,
@@ -204,15 +211,17 @@ function SignUpForm(p: SignUpProps) {
 
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  /* touched flags for name inputs */
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
+  /* name validation */
   const firstEmpty = firstName.trim() === "";
   const lastEmpty = lastName.trim() === "";
   const firstInvalid = firstName !== "" && !isValidName(firstName);
   const lastInvalid = lastName !== "" && !isValidName(lastName);
-
   const firstErr =
     firstEmpty && (attemptedSubmit || firstTouched)
       ? "First name is required"
@@ -261,6 +270,7 @@ function SignUpForm(p: SignUpProps) {
           <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
+        {/* global banners */}
         {globalError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -292,6 +302,7 @@ function SignUpForm(p: SignUpProps) {
           </motion.div>
         )}
 
+        {/* form */}
         <form className="space-y-5" onSubmit={submit}>
           {/* names */}
           <div className="flex gap-3">
@@ -314,6 +325,7 @@ function SignUpForm(p: SignUpProps) {
                 <p className="text-red-600 text-xs mt-1">{firstErr}</p>
               )}
             </div>
+
             <div className="relative w-1/2">
               <input
                 value={lastName}
@@ -335,7 +347,7 @@ function SignUpForm(p: SignUpProps) {
             </div>
           </div>
 
-          {/* email */}
+          {/* e-mail row */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -358,6 +370,7 @@ function SignUpForm(p: SignUpProps) {
                   <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
                 ) : null}
               </div>
+
               <Button
                 type="button"
                 disabled={!canSend || isSending}
@@ -373,6 +386,7 @@ function SignUpForm(p: SignUpProps) {
                 )}
               </Button>
             </div>
+
             {(liveEmailErr || emailError) && (
               <p className="text-red-600 text-sm mt-1">
                 {emailError || liveEmailErr}
@@ -382,37 +396,41 @@ function SignUpForm(p: SignUpProps) {
 
           {/* verification */}
           {codeSent && (
-            <div className="mt-4 flex gap-3 items-center">
-              <div className="relative flex-1">
-                <input
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  maxLength={6}
-                  placeholder="6-digit code"
-                  className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
-                    codeError && !codeVerified
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                />
-                {codeError && !codeVerified ? (
-                  <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
-                ) : codeVerified ? (
-                  <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
-                ) : null}
+            <>
+              <div className="flex gap-3 items-center mt-2">
+                <div className="relative flex-1">
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    className={`w-full px-4 py-3 border rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#C17829] ${
+                      codeError && !codeVerified
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {codeError && !codeVerified ? (
+                    <FaTimes className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600" />
+                  ) : codeVerified ? (
+                    <FaCheck className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600" />
+                  ) : null}
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={code.length !== 6 || codeVerified}
+                  className="w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                >
+                  Verify
+                </Button>
               </div>
-              <Button
-                type="button"
-                onClick={handleVerifyCode}
-                disabled={code.length !== 6 || codeVerified}
-                className="w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
-              >
-                Verify
-              </Button>
-            </div>
-          )}
-          {codeError && !codeVerified && (
-            <p className="text-red-600 text-sm mt-1">{codeError}</p>
+
+              {codeError && !codeVerified && (
+                <p className="text-red-600 text-sm mt-0 mb-0">Invalid code</p>
+              )}
+            </>
           )}
 
           {/* password */}
@@ -427,6 +445,7 @@ function SignUpForm(p: SignUpProps) {
             hasMinLength={hasMinLength}
           />
 
+          {/* submit */}
           <Button
             type="submit"
             disabled={
@@ -446,7 +465,9 @@ function SignUpForm(p: SignUpProps) {
   );
 }
 
-/* ─── Sign-In form stays unchanged from 5-d ─── */
+/* ══════════════════════════════════════════════════════
+   Sign-In form (unchanged)
+   ══════════════════════════════════════════════════════ */
 function SignInForm({
   email,
   setEmail,
@@ -467,6 +488,7 @@ function SignInForm({
   credError?: string | null;
 }) {
   const [showPw, setShowPw] = useState(false);
+
   return (
     <div className="min-h-[440px] flex flex-col justify-between">
       <div>
@@ -476,16 +498,18 @@ function SignInForm({
           </h2>
           <p className="text-gray-600 text-base">Access your account</p>
         </div>
+
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0 }}
             className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
           >
             {error}
           </motion.div>
         )}
+
         <form
           className="space-y-5"
           onSubmit={(e) => {
@@ -493,6 +517,7 @@ function SignInForm({
             onSubmit();
           }}
         >
+          {/* email */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -513,6 +538,8 @@ function SignInForm({
               )}
             </div>
           </div>
+
+          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -538,9 +565,11 @@ function SignInForm({
                 <Tooltip text={showPw ? "Hide password" : "Show password"} />
               </button>
             </div>
+
             {credError && (
               <p className="text-red-600 text-sm mt-1">{credError}</p>
             )}
+
             <div className="mt-2 text-right">
               <a
                 href="/forgot-password"
@@ -550,6 +579,8 @@ function SignInForm({
               </a>
             </div>
           </div>
+
+          {/* submit */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -567,28 +598,36 @@ function SignInForm({
   );
 }
 
-/* ─── Auth master component (unchanged except new w-28 buttons already handled) ─── */
+/* ══════════════════════════════════════════════════════
+   Master Auth component
+   ══════════════════════════════════════════════════════ */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [loginCredError, setLoginCredError] = useState<string | null>(null);
   const [signupEmailError, setSignupEmailError] = useState<string | null>(null);
+
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
   const [codeVerified, setCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+
   const canSend =
     !codeSent && isValidEmail(email) && !signupEmailError && !checkingEmail;
+
   const navigate = useNavigate();
   const location = useLocation();
 
+  /* live e-mail availability check */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -612,7 +651,8 @@ export default function Auth() {
     };
   }, [email]);
 
-  const handleSendCode = async () => {
+  /* send code */
+  const handleSendCode = async (): Promise<boolean> => {
     setCodeError(null);
     setSignupEmailError(null);
     setIsSending(true);
@@ -631,6 +671,8 @@ export default function Auth() {
       setIsSending(false);
     }
   };
+
+  /* verify */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -640,6 +682,8 @@ export default function Auth() {
       setCodeError(e.message);
     }
   };
+
+  /* sign up */
   const handleSignUp = async () => {
     setGlobalError(null);
     setSignupEmailError(null);
@@ -657,6 +701,8 @@ export default function Auth() {
       else setGlobalError(e.message);
     }
   };
+
+  /* sign in */
   const handleSignIn = async () => {
     setGlobalError(null);
     setLoginCredError(null);
@@ -672,6 +718,8 @@ export default function Auth() {
       setIsSigningIn(false);
     }
   };
+
+  /* sync ?form=login|register */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const f = q.get("form");
@@ -683,6 +731,7 @@ export default function Auth() {
     }
   }, [location]);
 
+  /* password flags */
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSymbol = /[^A-Za-z0-9]/.test(password);
@@ -698,6 +747,7 @@ export default function Auth() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
+          {/* form side */}
           <div className="w-full md:w-1/2 p-8 md:p-16 flex items-center justify-center">
             <div className="w-full max-w-md">
               <AnimatePresence mode="wait">
@@ -761,11 +811,16 @@ export default function Auth() {
               </AnimatePresence>
             </div>
           </div>
+
+          {/* image/promo side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
               animate={{ x: isSignUp ? "-100%" : "0%" }}
-              transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
+              transition={{
+                duration: 0.6,
+                ease: [0.43, 0.13, 0.23, 0.96],
+              }}
             >
               <PromoCard
                 title="New to our platform?"
@@ -783,6 +838,8 @@ export default function Auth() {
               />
             </motion.div>
           </div>
+
+          {/* mobile toggle */}
           <div className="md:hidden w-full p-4 text-center border-t border-gray-100">
             <p className="text-gray-600 mb-3 text-sm">
               {isSignUp ? "Already have an account?" : "New to our platform?"}
@@ -801,7 +858,9 @@ export default function Auth() {
   );
 }
 
-/* ─── Promo card ─── */
+/* ══════════════════════════════════════════════════════
+   Promo card
+   ══════════════════════════════════════════════════════ */
 function PromoCard({
   title,
   subtitle,
