@@ -93,7 +93,7 @@ async def extract_text_from_stream(stream, filename: str):
                 txt = page.extract_text() or ""
                 text_parts.append(txt)
             return "".join(text_parts)
-        except Exception as e: # Catching a broad exception for robustness
+        except Exception as e: # Catching a broad exception for robustness a
             logger.error(f"Error extracting text from PDF {filename}: {e}")
             return f"Error extracting text from PDF file: {filename}. Content preview might be incomplete or unavailable."
     else:
