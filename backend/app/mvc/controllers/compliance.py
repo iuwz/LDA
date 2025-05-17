@@ -184,8 +184,7 @@ Respond with VALID JSON only—no markdown and no additional commentary.
 
     for idx, chunk in enumerate(_split_into_chunks(document_text)):
         try:
-            resp = await run_in_threadpool(
-                call_gpt,
+            resp = await call_gpt(
                 chunk,
                 system_message=system_message,
                 model="o4-mini",

@@ -30,7 +30,6 @@ from typing import List, Optional, Tuple
 import tiktoken                              # pip install tiktoken
 from bson.objectid import ObjectId
 from fastapi import HTTPException
-from fastapi.concurrency import run_in_threadpool
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from backend.app.core.openai_client import call_gpt
@@ -101,14 +100,13 @@ async def _analyse_chunk(chunk: str, idx: int, total: int) -> List[dict]:
         "Return ONLY the JSON specified by the system message."
     )
 
-    raw = await run_in_threadpool(
-    call_gpt,
-    prompt=prompt,
-    system_message=SYSTEM_MESSAGE,
-    model="o4-mini",
-    temperature=GPT_TEMP,
-    response_format={"type": "json_object"},
-    max_tokens=16384,
+    raw = await call_gpt(
+        prompt=prompt,
+        system_message=SYSTEM_MESSAGE,
+        model="o4-mini",
+        temperature=GPT_TEMP,
+        response_format={"type": "json_object"},
+        max_tokens=16384,
     )
 
     # best-case: valid JSON
