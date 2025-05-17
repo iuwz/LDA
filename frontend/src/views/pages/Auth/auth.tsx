@@ -1,10 +1,7 @@
 /* ────────────────────────────────────────────────────────────────
 frontend/src/views/pages/Auth/auth.tsx
 
-RELEASE 5-f • 2025-05-17
-• Tightened spacing around the red “Invalid code” message  
-• Keeps button widths aligned (w-28)  
-• No other behaviour changed
+RELEASE 5-h • 2025-05-17
 ────────────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, FocusEvent } from "react";
@@ -27,32 +24,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "../../components/common/button";
 import myImage from "../../../assets/images/pic.jpg";
 
-/* ══════════════════════════════════════════════════════
-   Validators
-   ══════════════════════════════════════════════════════ */
+/* ═════════════════════ Validators ═════════════════════ */
 const nameRegex = /^[A-Za-z]+$/;
 const isValidName = (s: string) => nameRegex.test(s);
 
-function isValidEmail(email: string) {
-  if (!email || email.length > 320 || /\s/.test(email)) return false;
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return false;
-  if (local.length < 1 || local.length > 64) return false;
-  if (domain.length < 1 || domain.length > 255) return false;
-  if (domain.indexOf(".") === -1) return false;
-  if (!/^[A-Za-z0-9._+-]+$/.test(local)) return false;
-  if (!/^[A-Za-z0-9.-]+$/.test(domain)) return false;
-  if (!/^[A-Za-z0-9]/.test(local) || !/[A-Za-z0-9]$/.test(local)) return false;
-  if (!/^[A-Za-z0-9]/.test(domain) || !/[A-Za-z0-9]$/.test(domain))
-    return false;
-  if (local.includes("..") || domain.includes("..")) return false;
-  const tld = domain.split(".").pop()!;
+function isValidEmail(e: string) {
+  if (!e || e.length > 320 || /\s/.test(e)) return false;
+  const [l, d] = e.split("@");
+  if (!l || !d || l.length > 64 || d.length > 255) return false;
+  if (d.indexOf(".") === -1) return false;
+  if (!/^[A-Za-z0-9._+-]+$/.test(l)) return false;
+  if (!/^[A-Za-z0-9.-]+$/.test(d)) return false;
+  if (!/^[A-Za-z0-9]/.test(l) || !/[A-Za-z0-9]$/.test(l)) return false;
+  if (!/^[A-Za-z0-9]/.test(d) || !/[A-Za-z0-9]$/.test(d)) return false;
+  if (l.includes("..") || d.includes("..")) return false;
+  const tld = d.split(".").pop()!;
   return /^[A-Za-z]{2,}$/.test(tld);
 }
 
-/* ══════════════════════════════════════════════════════
-   Tooltip helper
-   ══════════════════════════════════════════════════════ */
+/* ═════════════════════ Tooltip ═════════════════════ */
 const Tooltip = ({ text }: { text: string }) => (
   <span className="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 text-white text-xs px-2 py-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
     {text}
@@ -60,9 +50,7 @@ const Tooltip = ({ text }: { text: string }) => (
   </span>
 );
 
-/* ══════════════════════════════════════════════════════
-   Password section (rules slide-in)
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════ Password rules block ═══════════════ */
 function PasswordSection({
   password,
   setPassword,
@@ -73,7 +61,7 @@ function PasswordSection({
   hasSymbol,
   hasMinLength,
 }: any) {
-  const rulesVisible = password.length > 0;
+  const open = password.length > 0;
 
   return (
     <div>
@@ -98,7 +86,7 @@ function PasswordSection({
       </div>
 
       <AnimatePresence initial={false}>
-        {rulesVisible && (
+        {open && (
           <motion.div
             key="rules"
             initial={{ opacity: 0, y: -6 }}
@@ -147,9 +135,7 @@ function PasswordSection({
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   Sign-Up form
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════════ Sign-Up form ═══════════════════ */
 interface SignUpProps {
   firstName: string;
   setFirstName: (v: string) => void;
@@ -212,26 +198,20 @@ function SignUpForm(p: SignUpProps) {
   const [showPw, setShowPw] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  /* touched flags for name inputs */
   const [firstTouched, setFirstTouched] = useState(false);
   const [lastTouched, setLastTouched] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  /* name validation */
-  const firstEmpty = firstName.trim() === "";
-  const lastEmpty = lastName.trim() === "";
-  const firstInvalid = firstName !== "" && !isValidName(firstName);
-  const lastInvalid = lastName !== "" && !isValidName(lastName);
   const firstErr =
-    firstEmpty && (attemptedSubmit || firstTouched)
+    firstName.trim() === "" && (attemptedSubmit || firstTouched)
       ? "First name is required"
-      : firstInvalid
+      : firstName !== "" && !isValidName(firstName)
       ? "Invalid name"
       : "";
   const lastErr =
-    lastEmpty && (attemptedSubmit || lastTouched)
+    lastName.trim() === "" && (attemptedSubmit || lastTouched)
       ? "Last name is required"
-      : lastInvalid
+      : lastName !== "" && !isValidName(lastName)
       ? "Invalid name"
       : "";
   const liveEmailErr =
@@ -242,8 +222,8 @@ function SignUpForm(p: SignUpProps) {
   }, [globalError, emailError, codeError]);
 
   const blur =
-    (setTouched: (v: boolean) => void) => (e: FocusEvent<HTMLInputElement>) => {
-      if (e.target.value.trim() === "") setTouched(true);
+    (fn: (b: boolean) => void) => (e: FocusEvent<HTMLInputElement>) => {
+      if (e.target.value.trim() === "") fn(true);
     };
 
   const send = async () => {
@@ -270,12 +250,12 @@ function SignUpForm(p: SignUpProps) {
           <p className="text-gray-600 text-base">Join us today</p>
         </div>
 
-        {/* global banners */}
+        {/* banners */}
         {globalError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0 }}
             className="mb-4 rounded border border-red-300 bg-red-100 px-4 py-3 text-sm text-red-700"
           >
             {globalError}
@@ -347,7 +327,7 @@ function SignUpForm(p: SignUpProps) {
             </div>
           </div>
 
-          {/* e-mail row */}
+          {/* email */}
           <div>
             <div className="flex gap-3">
               <div className="relative flex-1">
@@ -375,10 +355,10 @@ function SignUpForm(p: SignUpProps) {
                 type="button"
                 disabled={!canSend || isSending}
                 onClick={send}
-                className="shrink-0 w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                className="shrink-0 w-28 flex items-center justify-center px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
               >
                 {checkingEmail || isSending ? (
-                  <FaCircleNotch className="h-4 w-4 animate-spin" />
+                  <FaCircleNotch className="h-4 w-4 animate-spin mx-auto" />
                 ) : codeSent ? (
                   "Resend"
                 ) : (
@@ -421,14 +401,14 @@ function SignUpForm(p: SignUpProps) {
                   type="button"
                   onClick={handleVerifyCode}
                   disabled={code.length !== 6 || codeVerified}
-                  className="w-28 px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
+                  className="w-28 flex items-center justify-center px-4 py-3 bg-gradient-to-r from-[#C17829] to-[#E3A063] text-white rounded-lg text-sm shadow-lg transition transform hover:scale-105 disabled:opacity-40"
                 >
                   Verify
                 </Button>
               </div>
 
               {codeError && !codeVerified && (
-                <p className="text-red-600 text-sm mt-0 mb-0">Invalid code</p>
+                <p className="-mt-2 mb-0 text-red-600 text-sm">Invalid code</p>
               )}
             </>
           )}
@@ -465,9 +445,7 @@ function SignUpForm(p: SignUpProps) {
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   Sign-In form (unchanged)
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════ Sign-In form ═══════════════ */
 function SignInForm({
   email,
   setEmail,
@@ -517,7 +495,6 @@ function SignInForm({
             onSubmit();
           }}
         >
-          {/* email */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Email</label>
             <div className="relative">
@@ -539,7 +516,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* password */}
           <div>
             <label className="block text-gray-700 mb-2 text-sm">Password</label>
             <div className="relative">
@@ -580,7 +556,6 @@ function SignInForm({
             </div>
           </div>
 
-          {/* submit */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -598,9 +573,7 @@ function SignInForm({
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   Master Auth component
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════ Auth master component ═══════════════ */
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -627,7 +600,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* live e-mail availability check */
+  /* live email check */
   useEffect(() => {
     if (!isValidEmail(email)) {
       setSignupEmailError(null);
@@ -652,7 +625,7 @@ export default function Auth() {
   }, [email]);
 
   /* send code */
-  const handleSendCode = async (): Promise<boolean> => {
+  const handleSendCode = async () => {
     setCodeError(null);
     setSignupEmailError(null);
     setIsSending(true);
@@ -672,7 +645,7 @@ export default function Auth() {
     }
   };
 
-  /* verify */
+  /* verify code */
   const handleVerifyCode = async () => {
     setCodeError(null);
     try {
@@ -719,7 +692,7 @@ export default function Auth() {
     }
   };
 
-  /* sync ?form=login|register */
+  /* sync ?form param */
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const f = q.get("form");
@@ -812,7 +785,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* image/promo side */}
+          {/* illustration side */}
           <div className="hidden md:block md:w-1/2 bg-cover bg-center relative overflow-hidden">
             <motion.div
               className="absolute inset-0 z-10 flex"
@@ -858,9 +831,7 @@ export default function Auth() {
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   Promo card
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════ Promo card ═══════════════ */
 function PromoCard({
   title,
   subtitle,
