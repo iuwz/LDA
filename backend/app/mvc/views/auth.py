@@ -1,4 +1,3 @@
-# backend/app/mvc/views/auth.py
 """
 Auth-related HTTP endpoints.
 
@@ -10,7 +9,6 @@ import os
 import re
 import logging
 from datetime import datetime, timedelta
-from random import randint
 
 from fastapi import (
     APIRouter,
@@ -29,6 +27,7 @@ from backend.app.mvc.controllers.auth import register_user, login_user
 from backend.app.utils.email_utils import (
     send_reset_email,
     send_verification_email,
+    random_code,                # ← NEW
 )
 from backend.app.utils.security import (
     generate_reset_token,
@@ -194,7 +193,7 @@ async def send_code(payload: SendCodeRequest, request: Request):
     if await db["users"].find_one({"email": payload.email}):
         raise HTTPException(400, "Email already registered")
 
-    code = f"{randint(0, 999_999):06d}"
+    code = random_code()                           # ← NEW utility
     hashed = _pwd_ctx.hash(code)
     expires = datetime.utcnow() + timedelta(minutes=10)
 
@@ -204,8 +203,8 @@ async def send_code(payload: SendCodeRequest, request: Request):
         upsert=True,
     )
 
-    # Send the e-mail in a worker thread
     try:
+        # Send the e-mail in a worker thread
         await run_in_threadpool(send_verification_email, payload.email, code)
     except RuntimeError as exc:
         await db["email_verifications"].delete_one({"email": payload.email})
@@ -240,7 +239,7 @@ async def verify_code(payload: VerifyCodeRequest, request: Request):
     return {"verified": True}
 
 
-# ──────────────── NEW: instant availability check ──────────────
+# ──────────────── instant availability check ──────────────
 
 
 @router.get("/check-email")
@@ -250,11 +249,7 @@ async def check_email(
     request: Request,
 ):
     """
-    Return **200 OK** with JSON ➜ {"exists": true | false}
-
-    Front-end shows:
-      • exists:true  ➜ red ✗  (already registered)
-      • exists:false ➜ green ✓ (available)
+    Return **200 OK** with JSON → {"exists": true | false}
     """
     db = request.app.state.db
     exists = bool(await db["users"].find_one({"email": email}))

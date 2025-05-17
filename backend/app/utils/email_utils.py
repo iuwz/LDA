@@ -1,17 +1,18 @@
-# backend/app/utils/email_utils.py
 """
 Utility helpers for sending transactional e-mails via the external
 EC2 “email-worker” service.
 
-RELEASE 2.1 • 2025-05-17
-‣ Verification e-mail subject now includes the code, ensuring providers
-  don’t silently drop or merge consecutive “Resend” messages.
+RELEASE 2.2 • 2025-05-17
+‣ Verification e-mail subject now includes the code **and** a UTC
+  timestamp to guarantee uniqueness across rapid “Resend” clicks.
 """
 
 import os
 import logging
 import requests
 from random import randint
+from datetime import datetime
+from uuid import uuid4
 
 # URL of the EC2 email-worker (set in Render /.env or Docker secrets)
 EMAIL_WORKER_URL = os.getenv("EMAIL_WORKER_URL", "")
@@ -30,7 +31,7 @@ def _post_email(payload: dict) -> None:
             f"{EMAIL_WORKER_URL}/send-email",
             json=payload,
             headers=HEADERS,
-            timeout=5,
+            timeout=10,                         # ↑ little more breathing room
         )
         resp.raise_for_status()
     except Exception:
@@ -45,9 +46,6 @@ def random_code() -> str:
 
 # ───────────────────── password-reset flow ──────────────────────
 def send_reset_email(to_email: str, reset_link: str) -> None:
-    """
-    Send a password-reset email via the EC2 worker.
-    """
     payload = {
         "to_email": to_email,
         "subject": "Password Reset Request",
@@ -66,17 +64,19 @@ def send_reset_email(to_email: str, reset_link: str) -> None:
     _post_email(payload)
 
 
-# ───────────────────── verification code flow ───────────────────
+# ───────────────────── verification-code flow ───────────────────
 def send_verification_email(to_email: str, code: str) -> None:
     """
     Send a 6-digit e-mail-verification code.
 
-    **Uniqueness tweak (2025-05-17):**
-    – Subject line now contains the code itself so that providers
-      treat every resend as a brand-new message and don’t collapse it
-      into the previous thread.
+    **Uniqueness tweaks (2025-05-17):**
+    – Subject line now contains the code *and* a timestamp so that
+      mail providers treat every resend as a totally separate message.
+    – A per-message UUID is injected via custom header to bust any
+      provider-side de-duplication caches.
     """
-    subject = f"Your Verification Code – {code}"
+    utc_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    subject = f"Your Verification Code – {code} · {utc_time}"
 
     payload = {
         "to_email": to_email,
@@ -91,15 +91,15 @@ def send_verification_email(to_email: str, code: str) -> None:
             f"<h2>{code}</h2>"
             "<p>This code will expire in 10&nbsp;minutes.</p>"
         ),
+        "headers": {                     # forwarded by email-worker
+            "X-LDA-Mail-UUID": str(uuid4())
+        },
     }
     _post_email(payload)
 
 
-# ──────────────────── contact-form forwarding ───────────────────
+# ─────────────────── contact-form forwarding ────────────────────
 def send_contact_email(name: str, email: str, subject: str, message: str) -> None:
-    """
-    Forward a contact-form submission to the support inbox.
-    """
     support_addr = os.getenv("SUPPORT_EMAIL", "support@lda-legal.com")
 
     plaintext = (
