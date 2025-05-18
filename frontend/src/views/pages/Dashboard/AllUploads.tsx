@@ -167,8 +167,10 @@ const AllUploads: React.FC = () => {
                 </h4>
                 <p className="text-sm text-gray-700">
                   Are you sure you want to delete{" "}
-                  <span className="font-medium">{pendingDel?.filename}</span>?
-                  This action cannot be undone.
+                  <span className="font-medium break-all">
+                    {pendingDel?.filename}
+                  </span>
+                  ? This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <button
