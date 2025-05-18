@@ -1,5 +1,12 @@
 // src/views/pages/Dashboard/DashboardHome.tsx
-import React, { useEffect, useRef, useState, useCallback, memo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  memo,
+  useMemo,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -32,25 +39,25 @@ interface Doc {
 
 // ← Add this back in!
 const tools: ToolCard[] = [
-    {
+  {
     icon: FaEdit,
     title: "Rephrasing",
     desc: "Improve clarity & tone.",
     link: "/dashboard/rephrasing",
   },
-    {
+  {
     icon: FaShieldAlt,
     title: "Risk Assessment",
     desc: "Spot legal issues fast.",
     link: "/dashboard/risk-assessment",
   },
-    {
+  {
     icon: FaClipboardCheck,
     title: "Compliance",
     desc: "Verify standards.",
     link: "/dashboard/compliance",
   },
-    {
+  {
     icon: FaLanguage,
     title: "Translation",
     desc: "Translate accurately.",
@@ -62,7 +69,6 @@ const tools: ToolCard[] = [
     desc: "Ask legal-doc questions.",
     link: "/dashboard/chatbot",
   },
-
 ];
 
 // Memoized upload component to prevent re-renders on hoverIdx changes
@@ -152,7 +158,6 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // memoized so InlineUpload never re-renders when hoverIdx changes
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
@@ -174,7 +179,7 @@ export default function DashboardHome() {
     refresh();
   }, [refresh]);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!pendingDel) return;
     setIsDeleting(true);
     try {
@@ -189,42 +194,87 @@ export default function DashboardHome() {
       setPendingDel(null);
       setIsDeleting(false);
     }
-  };
+  }, [pendingDel]);
 
-  const Row = ({ d, i }: { d: Doc; i: number }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.02 }}
-      className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
-    >
-      <FaCloudUploadAlt className="text-indigo-600" />
-      <div className="truncate">
-        <p className="font-medium text-gray-800 truncate">{d.filename}</p>
-        <p className="text-xs text-gray-500">{toDate(d._id)}</p>
-      </div>
-      <a
-        href={`${API_BASE}/documents/download/${d._id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-1 rounded-md w-[105px] h-[28px] text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50"
+  // Memoize the upload section so hoverIdx changes won't re-render it
+  const recentSection = useMemo(() => {
+    const Row = ({ d, i }: { d: Doc; i: number }) => (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.02 }}
+        className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
       >
-        <FaDownload /> Download
-      </a>
-      <button
-        onClick={() => setPendingDel(d)}
-        disabled={isDeleting}
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-sm text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
-      >
-        <FaTrash /> Remove
-      </button>
-    </motion.div>
-  );
+        <FaCloudUploadAlt className="text-indigo-600" />
+        <div className="truncate">
+          <p className="font-medium text-gray-800 truncate">{d.filename}</p>
+          <p className="text-xs text-gray-500">{toDate(d._id)}</p>
+        </div>
+        <a
+          href={`${API_BASE}/documents/download/${d._id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1 rounded-md w-[105px] h-[28px] text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50"
+        >
+          <FaDownload /> Download
+        </a>
+        <button
+          onClick={() => setPendingDel(d)}
+          disabled={isDeleting}
+          className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-sm text-red-600 hover:bg-red-600/10 disabled:opacity-50 sm:w-auto"
+        >
+          <FaTrash /> Remove
+        </button>
+      </motion.div>
+    );
 
-  const recent = docs
-    .slice()
-    .sort((a, b) => (a._id < b._id ? 1 : -1))
-    .slice(0, 5);
+    const recent = docs
+      .slice()
+      .sort((a, b) => (a._id < b._id ? 1 : -1))
+      .slice(0, 5);
+
+    return (
+      <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h3 className="text-xl font-semibold">Recent uploads</h3>
+          <InlineUpload onDone={refresh} />
+        </div>
+
+        {loading && docs.length === 0 ? (
+          <p className="text-gray-600">Loading documents…</p>
+        ) : err ? (
+          <p className="text-red-600 py-4">
+            Error: {err}.{" "}
+            <button
+              onClick={refresh}
+              className="text-[#c17829] hover:underline rounded-md font-medium"
+            >
+              Try again
+            </button>
+          </p>
+        ) : docs.length === 0 ? (
+          <p className="text-gray-600">No documents uploaded yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {recent.map((d, i) => (
+              <Row key={d._id} d={d} i={i} />
+            ))}
+          </div>
+        )}
+
+        {docs.length > 5 && (
+          <div className="self-end">
+            <Link
+              to="/dashboard/uploads"
+              className="inline-flex items-center gap-1 text-[#c17829] hover:underline rounded-md font-medium"
+            >
+              View all <FaArrowRight size={12} />
+            </Link>
+          </div>
+        )}
+      </section>
+    );
+  }, [docs, loading, err, refresh]);
 
   return (
     <>
@@ -241,46 +291,8 @@ export default function DashboardHome() {
           />
         </section>
 
-        {/* recent uploads */}
-        <section className="rounded-2xl overflow-hidden bg-white shadow border p-8 flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h3 className="text-xl font-semibold">Recent uploads</h3>
-            <InlineUpload onDone={refresh} />
-          </div>
-
-          {loading && docs.length === 0 ? (
-            <p className="text-gray-600">Loading documents…</p>
-          ) : err ? (
-            <p className="text-red-600 py-4">
-              Error: {err}.{" "}
-              <button
-                onClick={refresh}
-                className="text-[#c17829] hover:underline rounded-md font-medium"
-              >
-                Try again
-              </button>
-            </p>
-          ) : docs.length === 0 ? (
-            <p className="text-gray-600">No documents uploaded yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {recent.map((d, i) => (
-                <Row key={d._id} d={d} i={i} />
-              ))}
-            </div>
-          )}
-
-          {docs.length > 5 && (
-            <div className="self-end">
-              <Link
-                to="/dashboard/uploads"
-                className="inline-flex items-center gap-1 text-[#c17829] hover:underline rounded-md font-medium"
-              >
-                View all <FaArrowRight size={12} />
-              </Link>
-            </div>
-          )}
-        </section>
+        {/* recent uploads (memoized) */}
+        {recentSection}
       </div>
 
       {/* delete modal */}
