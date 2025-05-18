@@ -32,36 +32,37 @@ interface Doc {
 
 // ← Add this back in!
 const tools: ToolCard[] = [
+    {
+    icon: FaEdit,
+    title: "Rephrasing",
+    desc: "Improve clarity & tone.",
+    link: "/dashboard/rephrasing",
+  },
+    {
+    icon: FaShieldAlt,
+    title: "Risk Assessment",
+    desc: "Spot legal issues fast.",
+    link: "/dashboard/risk-assessment",
+  },
+    {
+    icon: FaClipboardCheck,
+    title: "Compliance",
+    desc: "Verify standards.",
+    link: "/dashboard/compliance",
+  },
+    {
+    icon: FaLanguage,
+    title: "Translation",
+    desc: "Translate accurately.",
+    link: "/dashboard/translation",
+  },
   {
     icon: FaRobot,
     title: "Chatbot",
     desc: "Ask legal-doc questions.",
     link: "/dashboard/chatbot",
   },
-  {
-    icon: FaEdit,
-    title: "Rephrasing",
-    desc: "Improve clarity & tone.",
-    link: "/dashboard/rephrasing",
-  },
-  {
-    icon: FaShieldAlt,
-    title: "Risk Assessment",
-    desc: "Spot legal issues fast.",
-    link: "/dashboard/risk-assessment",
-  },
-  {
-    icon: FaClipboardCheck,
-    title: "Compliance",
-    desc: "Verify standards.",
-    link: "/dashboard/compliance",
-  },
-  {
-    icon: FaLanguage,
-    title: "Translation",
-    desc: "Translate accurately.",
-    link: "/dashboard/translation",
-  },
+
 ];
 
 // Memoized upload component to prevent re-renders on hoverIdx changes
