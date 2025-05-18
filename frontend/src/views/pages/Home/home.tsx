@@ -30,9 +30,9 @@ const SERVICES = [
     description:
       "Polish your documents, removing ambiguity and pre-empting pitfalls.",
     bullets: [
-      "Automated language refinement",
-      "Customizable risk thresholds",
-      "Change-tracking for collaboration",
+      "Detect ambiguous language",
+      "Refine legal phrasing",
+      "Minimize legal risks",
     ],
     link: "/dashboard",
   },
@@ -42,9 +42,9 @@ const SERVICES = [
     description:
       "Keep up with evolving regulations effortlessly, reduce non-compliance risks.",
     bullets: [
-      "Real-time standards updates",
-      "Industry-specific checks",
-      "Detailed compliance reports",
+      "Identify non-compliance",
+      "Recommend legal corrections",
+      "Align with regulations",
     ],
     link: "/dashboard",
   },
@@ -54,7 +54,7 @@ const SERVICES = [
     description:
       "Accurately translate legal documents between English and Arabic while preserving meaning.",
     bullets: [
-      "Bidirectional English ↔ Arabic support",
+      "Translate legal documents",
       "Terminology-aware translations",
       "Works with PDF & DOCX files",
     ],
@@ -65,7 +65,11 @@ const SERVICES = [
     title: "AI-Powered Legal Chatbot",
     description:
       "On-demand legal guidance and quick references to relevant statutes or precedents.",
-    bullets: ["24/7 availability", "Context-aware Q&A", "Seamless integration"],
+    bullets: [
+      "24/7 availability",
+      "Context-aware Q&A",
+      "Provide legal guidance",
+    ],
     link: "/dashboard",
   },
 ];
