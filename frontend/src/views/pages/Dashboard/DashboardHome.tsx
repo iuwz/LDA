@@ -188,7 +188,7 @@ export default function DashboardHome() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: i * 0.02 }}
-      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
+      className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
 
