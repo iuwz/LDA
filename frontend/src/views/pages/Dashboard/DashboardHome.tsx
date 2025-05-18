@@ -1,5 +1,5 @@
 // src/views/pages/Dashboard/DashboardHome.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -30,6 +30,7 @@ interface Doc {
   file_id: string;
 }
 
+// ← Add this back in!
 const tools: ToolCard[] = [
   {
     icon: FaRobot,
@@ -63,7 +64,12 @@ const tools: ToolCard[] = [
   },
 ];
 
-function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
+// Memoized upload component to prevent re-renders on hoverIdx changes
+const InlineUpload = memo(function InlineUpload({
+  onDone,
+}: {
+  onDone: () => Promise<void>;
+}) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -135,7 +141,7 @@ function InlineUpload({ onDone }: { onDone: () => Promise<void> }) {
       )}
     </div>
   );
-}
+});
 
 export default function DashboardHome() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -145,7 +151,8 @@ export default function DashboardHome() {
   const [pendingDel, setPendingDel] = useState<Doc | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const refresh = async () => {
+  // memoized so InlineUpload never re-renders when hoverIdx changes
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/documents`, {
@@ -160,11 +167,11 @@ export default function DashboardHome() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   const confirmDelete = async () => {
     if (!pendingDel) return;
@@ -191,12 +198,10 @@ export default function DashboardHome() {
       className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-lg border px-5 py-3 bg-white hover:bg-gray-50"
     >
       <FaCloudUploadAlt className="text-indigo-600" />
-
       <div className="truncate">
         <p className="font-medium text-gray-800 truncate">{d.filename}</p>
         <p className="text-xs text-gray-500">{toDate(d._id)}</p>
       </div>
-
       <a
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
@@ -205,7 +210,6 @@ export default function DashboardHome() {
       >
         <FaDownload /> Download
       </a>
-
       <button
         onClick={() => setPendingDel(d)}
         disabled={isDeleting}
@@ -226,7 +230,7 @@ export default function DashboardHome() {
       <div className="space-y-14 p-6 max-w-6xl mx-auto">
         <Banner />
 
-        {/* tools */}
+        {/* your tools */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Your tools</h2>
           <ToolList
@@ -278,7 +282,7 @@ export default function DashboardHome() {
         </section>
       </div>
 
-      {/* delete confirmation modal */}
+      {/* delete modal */}
       <AnimatePresence>
         {pendingDel && (
           <>
