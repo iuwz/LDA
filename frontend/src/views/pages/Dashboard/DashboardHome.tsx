@@ -201,7 +201,7 @@ export default function DashboardHome() {
         href={`${API_BASE}/documents/download/${d._id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-1 rounded-md px-3 py-1 text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50 sm:w-auto"
+        className="flex items-center justify-center gap-1 rounded-md w-[105px] h-[28px] text-[#c17829] hover:bg-[#a66224]/10 disabled:opacity-50"
       >
         <FaDownload /> Download
       </a>
