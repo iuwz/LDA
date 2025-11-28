@@ -215,7 +215,8 @@ async def verify_code(payload: VerifyCodeRequest, request: Request):
 # ─────────────── Quick check ───────────────
 
 @router.get("/check-email")
-async def check_email(email: EmailStr = Query(...), request: Request):
+async def check_email(request: Request, email: EmailStr = Query(...)):
     db = request.app.state.db
     exists = bool(await db["users"].find_one({"email": email}))
     return {"exists": exists}
+
