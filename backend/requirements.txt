@@ -5,7 +5,8 @@ python-jose
 pymongo
 motor
 python-dotenv
-passlib[bcrypt]
+bcrypt==4.1.2
+passlib==1.7.4
 pyjwt
 openai
 python-docx
